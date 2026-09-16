@@ -1,0 +1,633 @@
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { CMSData, EventDetails, ExpertSpeaker, AgendaItem, HighlightItem, Partner, AttendeeBadge, FooterConfig } from '../types';
+import {
+  EVENT_DETAILS as DEFAULT_EVENT_DETAILS,
+  LEADING_EXPERTS as DEFAULT_EXPERTS,
+  AGENDA_ITEMS as DEFAULT_AGENDA,
+  KEY_HIGHLIGHTS as DEFAULT_HIGHLIGHTS,
+  PARTNERS as DEFAULT_PARTNERS,
+} from '../data/symposiumData';
+
+const STORAGE_KEY = 'viet_han_aesthetic_cms_data_v2';
+
+const DEFAULT_MEDIA_LIBRARY: string[] = [
+  '/BG.png',
+  'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=500&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=500&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=500&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=500&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=500&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1651008376811-b90baee60c1f?w=500&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=800&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=800&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=800&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1516549655169-df83a0774514?w=800&auto=format&fit=crop&q=80',
+  'https://lh3.googleusercontent.com/aida-public/AB6AXuDIHJ-Vq-wq5Ptv2DpIpbDE_IQvGsvFIOWjt3jXAxjuYOI-4H-eWuqsSoDEP1igpa9kmsFCplUxu3fzYVrsHUD9yMOAM68YA85dW--acVETd0RuhMl8B0j41QaXHDLz6o2wesa4jcv4pFP-P8HDEEzJJ_YmYKqvu_FiILyCQPDXSIvVqziGXyEkA3iwZh1762s_hX3RGQ4gOrJULyBtb68z-l25uo0UyZOP-uoT61B1PwwKzbrwENE6Dw',
+];
+
+const INITIAL_REGISTRATIONS: AttendeeBadge[] = [
+  {
+    id: 'sample-1',
+    registrationCode: 'KBIT-DOC-8899',
+    fullName: 'TS.BS. Nguyễn Văn Hùng',
+    attendeeType: 'doctor',
+    selectedEvents: ['SYM', 'KAT'],
+    degree: 'Bác sĩ CKII',
+    institution: 'Bệnh viện Chợ Rẫy, TP.HCM',
+    titleRole: 'Phó Trưởng Khoa Phẫu Thuật Tạo Hình',
+    specialty: 'Tạo hình Thẩm mỹ',
+    license: '012345/HCM-CCHN',
+    phone: '0908 123 456',
+    email: 'dr.hungnguyen@choray.vn',
+    city: 'TP. Hồ Chí Minh',
+    country: 'Việt Nam',
+    interests: ['Thẩm mỹ khuôn mặt', 'Tiêm chích'],
+    goals: ['Học kỹ thuật mới', 'Kiến thức lâm sàng'],
+    notes: 'Đăng ký CME 8 tiết cho sự kiện Bệnh viện 175',
+    wantsCme: true,
+    cmeNeed: 'yes',
+    consentNews: true,
+    sessionPref: 'both',
+    registeredAt: '14/09/2026 14:20',
+    qrCodeUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=KBIT-DOC-8899%7CTS.BS.%20Nguy%E1%BB%85n%20V%C4%83n%20H%C3%B9ng%7CBV175',
+  },
+  {
+    id: 'sample-2',
+    registrationCode: 'KBIT-BIZ-4521',
+    fullName: 'Bà Trần Mai Phương',
+    attendeeType: 'business',
+    selectedEvents: ['SYM'],
+    degree: 'Tổng Giám Đốc',
+    institution: 'Công ty Cổ phần Thẩm mỹ Quốc tế K-Beauty Med',
+    titleRole: 'Giám Đốc Điều Hành (CEO)',
+    specialty: 'Thiết bị thẩm mỹ',
+    license: '0316892345',
+    phone: '0912 345 678',
+    email: 'phuong.tran@kbeautymed.vn',
+    city: 'TP. Hồ Chí Minh',
+    country: 'Việt Nam',
+    interests: ['Thiết bị Thẩm mỹ', 'Chăm sóc Da & Dược mỹ phẩm'],
+    goals: ['Tìm nhà phân phối & đối tác', 'Kết nối B2B'],
+    notes: 'Quan tâm kết nối B2B với các đối tác y tế Hàn Quốc',
+    wantsCme: false,
+    cmeNeed: 'no',
+    consentNews: true,
+    sessionPref: 'both',
+    registeredAt: '14/09/2026 16:05',
+    qrCodeUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=KBIT-BIZ-4521%7CTr%E1%BA%A7n%20Mai%20Ph%C6%B0%C6%A1ng%7CK-Beauty',
+  },
+];
+
+export const DEFAULT_FOOTER_CONFIG: FooterConfig = {
+  brandTitle: 'VIỆT – HÀN 2026',
+  brandDescription:
+    'Diễn đàn khoa học đỉnh cao về phẫu thuật tạo hình và da liễu thẩm mỹ kỹ thuật cao, thúc đẩy hợp tác chuyển giao y khoa song phương giữa Việt Nam và Hàn Quốc.',
+  tag1: 'CME 8 Giờ',
+  tag2: 'Phiên Dịch Song Song',
+  organizersTitle: 'ĐƠN VỊ CHỦ TRÌ & TỔ CHỨC',
+  organizer1Name: 'Bệnh viện Quân y 175',
+  organizer1Sub: 'Bộ Quốc phòng Việt Nam',
+  organizer2Name: 'Bộ Y tế & Phúc lợi Hàn Quốc (MOHW)',
+  organizer2Sub: 'Korea Health Industry Development Institute (KHIDI)',
+  partnersTitle: 'HIỆP HỘI CHUYÊN MÔN ĐỒNG HÀNH',
+  partner1Name: 'KSAPS',
+  partner1Sub: 'Hội Phẫu thuật Tạo hình Thẩm mỹ Hàn Quốc',
+  partner2Name: 'VSAPS',
+  partner2Sub: 'Hội Phẫu thuật Tạo hình Thẩm mỹ Việt Nam',
+  contactTitle: 'THÔNG TIN LIÊN HỆ & HOTLINE',
+  hotline: '0903 000 175',
+  email: 'secretary@kbitassociation.com',
+  venueName: 'Trung tâm Hội nghị Bệnh viện Quân Y 175, TP.HCM',
+  copyrightText: '© 2026 Hội thảo Khoa học Thẩm mỹ Việt–Hàn 2026. Bản quyền thuộc về BV Quân Y 175 & Ban Tổ Chức Hội Thảo.',
+};
+
+const INITIAL_CMS_DATA: CMSData = {
+  eventDetails: DEFAULT_EVENT_DETAILS,
+  experts: DEFAULT_EXPERTS,
+  agenda: DEFAULT_AGENDA,
+  highlights: DEFAULT_HIGHLIGHTS,
+  partners: DEFAULT_PARTNERS,
+  registrations: INITIAL_REGISTRATIONS,
+  mediaLibrary: DEFAULT_MEDIA_LIBRARY,
+  footerConfig: DEFAULT_FOOTER_CONFIG,
+};
+
+interface CMSContextType {
+  cmsData: CMSData;
+  isAdminOpen: boolean;
+  setIsAdminOpen: (open: boolean) => void;
+  openAdmin: (tab?: string) => void;
+  closeAdmin: () => void;
+  activeAdminTab: string;
+  setActiveAdminTab: (tab: string) => void;
+  updateEventDetails: (details: Partial<EventDetails>) => void;
+  updateExpert: (id: string, updated: Partial<ExpertSpeaker>) => void;
+  addExpert: (expert: ExpertSpeaker) => void;
+  deleteExpert: (id: string) => void;
+  updateAgendaItem: (id: string, updated: Partial<AgendaItem>) => void;
+  addAgendaItem: (item: AgendaItem) => void;
+  deleteAgendaItem: (id: string) => void;
+  updateHighlight: (id: string, updated: Partial<HighlightItem>) => void;
+  updatePartner: (id: string, updated: Partial<Partner>) => void;
+  addPartner: (partner: Partner) => void;
+  deletePartner: (id: string) => void;
+  addRegistration: (attendee: AttendeeBadge) => void;
+  updateRegistration: (id: string, updated: Partial<AttendeeBadge>) => void;
+  deleteRegistration: (id: string) => void;
+  updateFooterConfig: (updated: Partial<FooterConfig>) => void;
+  resetToDefaults: () => void;
+  exportDataToJson: () => void;
+  importDataFromJson: (jsonStr: string) => boolean;
+  addImageToLibrary: (imageUrl: string) => void;
+  uploadImageFile: (file: File) => Promise<string>;
+  isCloudDbConnected: boolean;
+  refreshFromCloud: () => Promise<void>;
+  saveCmsToCloud: () => Promise<boolean>;
+}
+
+export const isPathAdmin = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  const path = window.location.pathname.toLowerCase();
+  const hash = window.location.hash.toLowerCase();
+  const search = new URLSearchParams(window.location.search);
+  return (
+    path === '/admin' ||
+    path === '/admin/' ||
+    path.startsWith('/admin/') ||
+    hash === '#admin' ||
+    hash === '#/admin' ||
+    hash.startsWith('#/admin') ||
+    search.get('admin') === 'true'
+  );
+};
+
+export const getInitialAdminTab = (): string => {
+  if (typeof window === 'undefined') return 'general';
+  const search = new URLSearchParams(window.location.search);
+  const tabParam = search.get('tab');
+  if (tabParam) return tabParam;
+  const hash = window.location.hash.replace(/^#\/?admin\/?/, '').replace(/^#/, '');
+  const validTabs = ['general', 'speakers', 'agenda', 'media', 'partners', 'highlights', 'registrations', 'footer'];
+  if (validTabs.includes(hash)) {
+    return hash;
+  }
+  return 'general';
+};
+
+const CMSContext = createContext<CMSContextType | undefined>(undefined);
+
+export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [cmsData, setCmsData] = useState<CMSData>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // ensure missing fields get merged with defaults
+        return {
+          ...INITIAL_CMS_DATA,
+          ...parsed,
+          eventDetails: { ...DEFAULT_EVENT_DETAILS, ...(parsed.eventDetails || {}) },
+          experts: parsed.experts && parsed.experts.length > 0 ? parsed.experts : DEFAULT_EXPERTS,
+          agenda: parsed.agenda && parsed.agenda.length > 0 ? parsed.agenda : DEFAULT_AGENDA,
+          highlights: parsed.highlights || DEFAULT_HIGHLIGHTS,
+          partners: parsed.partners && parsed.partners.length > 0
+            ? parsed.partners.map((p: any) => {
+                const def = DEFAULT_PARTNERS.find((dp) => dp.id === p.id);
+                return {
+                  ...p,
+                  logoUrl: p.logoUrl || def?.logoUrl || '',
+                };
+              })
+            : DEFAULT_PARTNERS,
+          registrations: parsed.registrations || INITIAL_REGISTRATIONS,
+          mediaLibrary: parsed.mediaLibrary || DEFAULT_MEDIA_LIBRARY,
+          footerConfig: { ...DEFAULT_FOOTER_CONFIG, ...(parsed.footerConfig || {}) },
+        };
+      }
+    } catch (e) {
+      console.error('Failed to load CMS data from localStorage:', e);
+    }
+    return INITIAL_CMS_DATA;
+  });
+
+  const [isAdminOpen, setIsAdminOpenState] = useState<boolean>(() => isPathAdmin());
+  const [activeAdminTab, setActiveAdminTabState] = useState<string>(() => getInitialAdminTab());
+  const [isCloudDbConnected, setIsCloudDbConnected] = useState<boolean>(false);
+
+  // Cloud Database Synchronization (Vercel Postgres)
+  const refreshFromCloud = async () => {
+    try {
+      // 1. Fetch Registrations from Vercel Postgres
+      const regRes = await fetch('/api/registrations');
+      if (regRes.ok) {
+        const regJson = await regRes.json();
+        if (regJson.isDbConfigured) {
+          setIsCloudDbConnected(true);
+          if (regJson.success && Array.isArray(regJson.data) && regJson.data.length > 0) {
+            setCmsData((prev) => ({
+              ...prev,
+              registrations: regJson.data,
+              eventDetails: {
+                ...prev.eventDetails,
+                initialRegistered: Math.max(prev.eventDetails.initialRegistered, regJson.data.length),
+              },
+            }));
+          }
+        }
+      }
+
+      // 2. Fetch CMS Configuration from Vercel Postgres
+      const cmsRes = await fetch('/api/cms');
+      if (cmsRes.ok) {
+        const cmsJson = await cmsRes.json();
+        if (cmsJson.isDbConfigured) {
+          setIsCloudDbConnected(true);
+          if (cmsJson.success && cmsJson.hasCustomData && cmsJson.data) {
+            setCmsData((prev) => ({
+              ...prev,
+              ...cmsJson.data,
+              registrations: prev.registrations,
+            }));
+          }
+        }
+      }
+    } catch {
+      // Running locally or offline - localStorage fallback active
+    }
+  };
+
+  const saveCmsToCloud = async (): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/cms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cmsData),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success) {
+          setIsCloudDbConnected(true);
+          return true;
+        }
+      }
+    } catch (err) {
+      console.warn('Could not sync CMS to Vercel Postgres:', err);
+    }
+    return false;
+  };
+
+  // Initial cloud sync on mount
+  useEffect(() => {
+    refreshFromCloud();
+  }, []);
+
+  // URL Synchronization: Keep /admin in browser URL when CMS is opened
+  const setIsAdminOpen = (open: boolean) => {
+    setIsAdminOpenState(open);
+    if (typeof window !== 'undefined') {
+      if (open) {
+        const currentPath = window.location.pathname.toLowerCase();
+        if (currentPath !== '/admin' && currentPath !== '/admin/') {
+          const targetUrl = activeAdminTab && activeAdminTab !== 'general' 
+            ? `/admin?tab=${encodeURIComponent(activeAdminTab)}` 
+            : '/admin';
+          window.history.pushState({ admin: true, tab: activeAdminTab }, '', targetUrl);
+        }
+      } else {
+        const currentPath = window.location.pathname.toLowerCase();
+        if (currentPath === '/admin' || currentPath === '/admin/' || currentPath.startsWith('/admin/')) {
+          window.history.pushState({ admin: false }, '', '/');
+        }
+      }
+    }
+  };
+
+  const openAdmin = (tab?: string) => {
+    if (tab) {
+      setActiveAdminTabState(tab);
+    }
+    setIsAdminOpenState(true);
+    if (typeof window !== 'undefined') {
+      const selectedTab = tab || activeAdminTab;
+      const targetUrl = selectedTab && selectedTab !== 'general' 
+        ? `/admin?tab=${encodeURIComponent(selectedTab)}` 
+        : '/admin';
+      window.history.pushState({ admin: true, tab: selectedTab }, '', targetUrl);
+    }
+  };
+
+  const closeAdmin = () => {
+    setIsAdminOpen(false);
+  };
+
+  const setActiveAdminTab = (tab: string) => {
+    setActiveAdminTabState(tab);
+    if (typeof window !== 'undefined' && isAdminOpen) {
+      const targetUrl = tab && tab !== 'general' 
+        ? `/admin?tab=${encodeURIComponent(tab)}` 
+        : '/admin';
+      window.history.replaceState({ admin: true, tab }, '', targetUrl);
+    }
+  };
+
+  // Sync state with browser back/forward and hash navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      const adminActive = isPathAdmin();
+      setIsAdminOpenState(adminActive);
+      if (adminActive) {
+        const initialTab = getInitialAdminTab();
+        setActiveAdminTabState(initialTab);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    window.addEventListener('hashchange', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('hashchange', handlePopState);
+    };
+  }, []);
+
+  // Save to localStorage on any data modification
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cmsData));
+    } catch (err) {
+      console.warn('LocalStorage quota or serialization error:', err);
+    }
+  }, [cmsData]);
+
+  const updateEventDetails = (details: Partial<EventDetails>) => {
+    setCmsData((prev) => ({
+      ...prev,
+      eventDetails: { ...prev.eventDetails, ...details },
+    }));
+  };
+
+  const updateExpert = (id: string, updated: Partial<ExpertSpeaker>) => {
+    setCmsData((prev) => ({
+      ...prev,
+      experts: prev.experts.map((exp) => (exp.id === id ? { ...exp, ...updated } : exp)),
+    }));
+  };
+
+  const addExpert = (expert: ExpertSpeaker) => {
+    setCmsData((prev) => ({
+      ...prev,
+      experts: [...prev.experts, expert],
+    }));
+  };
+
+  const deleteExpert = (id: string) => {
+    setCmsData((prev) => ({
+      ...prev,
+      experts: prev.experts.filter((exp) => exp.id !== id),
+    }));
+  };
+
+  const updateAgendaItem = (id: string, updated: Partial<AgendaItem>) => {
+    setCmsData((prev) => ({
+      ...prev,
+      agenda: prev.agenda.map((item) => (item.id === id ? { ...item, ...updated } : item)),
+    }));
+  };
+
+  const addAgendaItem = (item: AgendaItem) => {
+    setCmsData((prev) => ({
+      ...prev,
+      agenda: [...prev.agenda, item],
+    }));
+  };
+
+  const deleteAgendaItem = (id: string) => {
+    setCmsData((prev) => ({
+      ...prev,
+      agenda: prev.agenda.filter((item) => item.id !== id),
+    }));
+  };
+
+  const updateHighlight = (id: string, updated: Partial<HighlightItem>) => {
+    setCmsData((prev) => ({
+      ...prev,
+      highlights: prev.highlights.map((item) => (item.id === id ? { ...item, ...updated } : item)),
+    }));
+  };
+
+  const updatePartner = (id: string, updated: Partial<Partner>) => {
+    setCmsData((prev) => ({
+      ...prev,
+      partners: prev.partners.map((p) => (p.id === id ? { ...p, ...updated } : p)),
+    }));
+  };
+
+  const addPartner = (partner: Partner) => {
+    setCmsData((prev) => ({
+      ...prev,
+      partners: [...prev.partners, partner],
+    }));
+  };
+
+  const deletePartner = (id: string) => {
+    setCmsData((prev) => ({
+      ...prev,
+      partners: prev.partners.filter((p) => p.id !== id),
+    }));
+  };
+
+  const addRegistration = (attendee: AttendeeBadge) => {
+    setCmsData((prev) => ({
+      ...prev,
+      registrations: [attendee, ...prev.registrations],
+      eventDetails: {
+        ...prev.eventDetails,
+        initialRegistered: (prev.eventDetails.initialRegistered || 0) + 1,
+      },
+    }));
+
+    // Async sync to Vercel Postgres
+    fetch('/api/registrations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(attendee),
+    })
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success) {
+          setIsCloudDbConnected(true);
+        }
+      })
+      .catch(() => {
+        // Fallback: stored in localStorage
+      });
+  };
+
+  const updateRegistration = (id: string, updated: Partial<AttendeeBadge>) => {
+    let updatedPayload: AttendeeBadge | undefined;
+    setCmsData((prev) => {
+      const nextRegs = prev.registrations.map((r) => {
+        if (r.id === id) {
+          updatedPayload = { ...r, ...updated };
+          return updatedPayload;
+        }
+        return r;
+      });
+      return { ...prev, registrations: nextRegs };
+    });
+
+    if (updatedPayload) {
+      fetch('/api/registrations', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedPayload),
+      })
+        .then((res) => res.json())
+        .then((json) => {
+          if (json.success) {
+            setIsCloudDbConnected(true);
+          }
+        })
+        .catch(() => {});
+    }
+  };
+
+  const deleteRegistration = (id: string) => {
+    setCmsData((prev) => ({
+      ...prev,
+      registrations: prev.registrations.filter((r) => r.id !== id),
+    }));
+
+    fetch(`/api/registrations?id=${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    })
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success) {
+          setIsCloudDbConnected(true);
+        }
+      })
+      .catch(() => {});
+  };
+
+  const updateFooterConfig = (updated: Partial<FooterConfig>) => {
+    setCmsData((prev) => ({
+      ...prev,
+      footerConfig: {
+        ...(prev.footerConfig || DEFAULT_FOOTER_CONFIG),
+        ...updated,
+      },
+    }));
+  };
+
+  const addImageToLibrary = (imageUrl: string) => {
+    if (!imageUrl) return;
+    setCmsData((prev) => {
+      if (prev.mediaLibrary.includes(imageUrl)) return prev;
+      return {
+        ...prev,
+        mediaLibrary: [imageUrl, ...prev.mediaLibrary],
+      };
+    });
+  };
+
+  const uploadImageFile = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      if (!file.type.startsWith('image/')) {
+        reject(new Error('Vui lòng chọn định dạng file ảnh (PNG, JPG, WEBP, SVG)'));
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        if (result) {
+          addImageToLibrary(result);
+          resolve(result);
+        } else {
+          reject(new Error('Không thể đọc file hình ảnh'));
+        }
+      };
+      reader.onerror = () => reject(new Error('Lỗi khi đọc file'));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const resetToDefaults = () => {
+    if (window.confirm('Bạn có chắc chắn muốn khôi phục lại toàn bộ nội dung và hình ảnh gốc mặc định của trang? Tất cả thay đổi chỉnh sửa thủ công sẽ được hoàn tác.')) {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem('custom_hero_bg');
+      setCmsData(INITIAL_CMS_DATA);
+    }
+  };
+
+  const exportDataToJson = () => {
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(cmsData, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute('href', dataStr);
+    downloadAnchor.setAttribute('download', `viet_han_symposium_cms_backup_${new Date().toISOString().slice(0, 10)}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
+
+  const importDataFromJson = (jsonStr: string): boolean => {
+    try {
+      const parsed = JSON.parse(jsonStr);
+      if (parsed && parsed.eventDetails && parsed.experts) {
+        setCmsData(parsed);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+        return true;
+      }
+    } catch (e) {
+      console.error('Import JSON error:', e);
+    }
+    return false;
+  };
+
+  return (
+    <CMSContext.Provider
+      value={{
+        cmsData,
+        isAdminOpen,
+        setIsAdminOpen,
+        openAdmin,
+        closeAdmin,
+        activeAdminTab,
+        setActiveAdminTab,
+        updateEventDetails,
+        updateExpert,
+        addExpert,
+        deleteExpert,
+        updateAgendaItem,
+        addAgendaItem,
+        deleteAgendaItem,
+        updateHighlight,
+        updatePartner,
+        addPartner,
+        deletePartner,
+        addRegistration,
+        updateRegistration,
+        deleteRegistration,
+        updateFooterConfig,
+        resetToDefaults,
+        exportDataToJson,
+        importDataFromJson,
+        addImageToLibrary,
+        uploadImageFile,
+        isCloudDbConnected,
+        refreshFromCloud,
+        saveCmsToCloud,
+      }}
+    >
+      {children}
+    </CMSContext.Provider>
+  );
+};
+
+export const useCMS = () => {
+  const context = useContext(CMSContext);
+  if (!context) {
+    throw new Error('useCMS must be used within a CMSProvider');
+  }
+  return context;
+};
