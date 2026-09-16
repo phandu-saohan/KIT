@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { HeroBanner } from './components/HeroBanner';
 import { KeyHighlights } from './components/KeyHighlights';
 import { ScientificAgenda } from './components/ScientificAgenda';
-import { PartnersSection } from './components/PartnersSection';
 import { RegistrationSection } from './components/RegistrationSection';
 import { VenueSection } from './components/VenueSection';
 import { Footer } from './components/Footer';
@@ -66,13 +65,10 @@ function MainApp() {
         {/* Section 3: Detailed Scientific Timetable / Agenda */}
         <ScientificAgenda />
 
-        {/* Section 4: Hosting & Partner Organizations */}
-        <PartnersSection />
-
-        {/* Section 5: Official Registration Portal & Interactive E-Badge */}
+        {/* Section 4: Official Registration Portal & Interactive E-Badge */}
         <RegistrationSection />
 
-        {/* Section 6: Hospital Venue Directions & Map */}
+        {/* Section 5: Hospital Venue Directions & Map */}
         <VenueSection />
       </main>
 
