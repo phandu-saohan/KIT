@@ -43,7 +43,7 @@ const INITIAL_REGISTRATIONS: AttendeeBadge[] = [
     country: 'Việt Nam',
     interests: ['Thẩm mỹ khuôn mặt', 'Tiêm chích'],
     goals: ['Học kỹ thuật mới', 'Kiến thức lâm sàng'],
-    notes: 'Đăng ký CME 8 tiết cho sự kiện Bệnh viện 175',
+    notes: 'Đăng ký CME: 3h tín chỉ (Phí thu tại Hội Thảo)',
     wantsCme: true,
     cmeNeed: 'yes',
     consentNews: true,
@@ -82,7 +82,7 @@ export const DEFAULT_FOOTER_CONFIG: FooterConfig = {
   brandTitle: 'VIỆT – HÀN 2026',
   brandDescription:
     'Diễn đàn khoa học đỉnh cao về phẫu thuật tạo hình và da liễu thẩm mỹ kỹ thuật cao, thúc đẩy hợp tác chuyển giao y khoa song phương giữa Việt Nam và Hàn Quốc.',
-  tag1: 'CME 8 Giờ',
+  tag1: 'CME 3h Tín Chỉ',
   tag2: 'Phiên Dịch Song Song',
   organizersTitle: 'ĐƠN VỊ CHỦ TRÌ & TỔ CHỨC',
   organizer1Name: 'Bệnh viện Quân y 175',

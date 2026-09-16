@@ -56,9 +56,9 @@ export const KEY_HIGHLIGHTS: HighlightItem[] = [
   },
   {
     id: 'cme',
-    metric: 'CME BV 175',
-    label: 'CHỨNG NHẬN ĐÀO TẠO',
-    description: 'Được cấp chứng nhận đào tạo y khoa liên tục (CME) chính thức bởi Bệnh viện Quân y 175 – Bộ Quốc phòng có giá trị toàn quốc.',
+    metric: '3h Tín Chỉ',
+    label: 'CHỨNG NHẬN CME',
+    description: 'CME: 3h tín chỉ chính thức bởi Bệnh viện Quân y 175 – Bộ Quốc phòng. Phí CME sẽ được thu tại Hội Thảo.',
     icon: 'verified',
     accentColor: 'gradient',
   },
@@ -181,7 +181,7 @@ export const AGENDA_ITEMS: AgendaItem[] = [
     time: '16:50 – 17:00',
     duration: "10'",
     title: 'TỔNG KẾT • BẾ MẠC HỘI THẢO',
-    description: 'Tri ân các hiệp hội, đơn vị tài trợ & đối tác đồng hành • Chụp ảnh lưu niệm toàn thể đại biểu • Hướng dẫn nhận cấp chứng nhận CME.',
+    description: 'Tri ân các hiệp hội, đơn vị tài trợ & đối tác đồng hành • Chụp ảnh lưu niệm toàn thể đại biểu • Hướng dẫn nhận cấp chứng chỉ CME: 3h tín chỉ (Phí CME sẽ được thu tại Hội Thảo).',
     session: 'plenary',
   },
 ];

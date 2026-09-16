@@ -644,17 +644,22 @@ export const RegistrationSection: React.FC = () => {
 
                       {/* CME Checkbox */}
                       <div className="md:col-span-2 pt-1">
-                        <label className="flex items-center gap-2.5 p-3 rounded-xl border border-[#c83271]/20 bg-[#fff5f9] cursor-pointer hover:bg-[#ffeef4] transition-colors">
+                        <label className="flex items-start gap-3 p-3.5 rounded-xl border border-[#c83271]/25 bg-[#fff5f9] cursor-pointer hover:bg-[#ffeef4] transition-colors">
                           <input
                             type="checkbox"
                             name="wantsCme"
                             checked={formData.wantsCme}
                             onChange={handleInputChange}
-                            className="size-4 rounded accent-[#c83271] cursor-pointer"
+                            className="size-4 rounded accent-[#c83271] cursor-pointer mt-0.5 shrink-0"
                           />
-                          <span className="text-[12.5px] font-semibold text-[#002045]">
-                            Yêu cầu cấp Chứng chỉ Đào tạo Liên tục CME (Bệnh viện Quân Y 175)
-                          </span>
+                          <div className="flex flex-col">
+                            <span className="text-[12.5px] font-bold text-[#002045]">
+                              CME: 3h tín chỉ (Phí CME sẽ được thu tại Hội Thảo)
+                            </span>
+                            <span className="text-[11.5px] text-slate-500 mt-0.5 leading-relaxed">
+                              Chứng nhận đào tạo y khoa liên tục do Bệnh viện Quân Y 175 cấp. Đại biểu xuất trình CCHN hoặc văn bằng chuyên môn và hoàn tất lệ phí tại bàn đón tiếp.
+                            </span>
+                          </div>
                         </label>
                       </div>
                     </>
@@ -1019,9 +1024,9 @@ export const RegistrationSection: React.FC = () => {
 
                   {formData.attendeeType === 'doctor' && (
                     <div className="p-2.5 rounded-lg bg-[#fff5f9] border border-[#f8d0e0] flex items-center justify-between">
-                      <span className="font-medium text-[#002045]">Chứng chỉ CME BV 175:</span>
-                      <span className={`font-bold ${formData.wantsCme ? 'text-[#c83271]' : 'text-slate-400'}`}>
-                        {formData.wantsCme ? 'Có đăng ký' : 'Không'}
+                      <span className="font-medium text-[#002045]">CME (3h tín chỉ):</span>
+                      <span className={`font-bold text-[12px] ${formData.wantsCme ? 'text-[#c83271]' : 'text-slate-400'}`}>
+                        {formData.wantsCme ? 'Có đăng ký (Thu phí tại Hội Thảo)' : 'Không'}
                       </span>
                     </div>
                   )}
@@ -1080,7 +1085,7 @@ export const RegistrationSection: React.FC = () => {
                   </h3>
                 </div>
                 <span className="px-2.5 py-1 rounded-lg bg-white/15 backdrop-blur-md text-[11px] font-bold text-white font-mono">
-                  {registeredBadge.wantsCme ? 'CME 8 TIẾT' : 'KHÁCH MỜI'}
+                  {registeredBadge.wantsCme ? 'CME 3H TÍN CHỈ' : 'KHÁCH MỜI'}
                 </span>
               </div>
 
@@ -1116,6 +1121,13 @@ export const RegistrationSection: React.FC = () => {
                   <span className="text-[9px] text-gray-500 uppercase">Check-in Cửa Hội Trường</span>
                 </div>
               </div>
+
+              {registeredBadge.wantsCme && (
+                <div className="mb-3 p-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-[11px] text-pink-100 flex items-center gap-2">
+                  <span className="font-bold">CME: 3h tín chỉ:</span>
+                  <span>Phí CME sẽ được thu tại Hội Thảo (Bàn đón tiếp BV Quân Y 175).</span>
+                </div>
+              )}
 
               <div className="pt-3 border-t border-white/15 flex items-center justify-between text-[11px] text-white/70">
                 <span>Cấp lúc: {registeredBadge.registeredAt}</span>

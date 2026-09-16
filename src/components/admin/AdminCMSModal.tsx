@@ -357,7 +357,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
       'Email',
       'Tỉnh / Thành Phố',
       'Quốc Gia',
-      'Cấp CME BV 175',
+      'Cấp CME BV 175 (3h tín chỉ - Phí thu tại HT)',
       'Chủ Đề Quan Tâm',
       'Mục Tiêu Tham Dự',
       'Ghi Chú',
@@ -2827,7 +2827,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                                     Hội thảo Khoa học Thẩm mỹ Việt–Hàn 2026
                                   </h4>
                                   <p className="text-[10.5px] text-slate-500 mt-1">
-                                    Bệnh viện Quân Y 175 • 8 tiết CME
+                                    Bệnh viện Quân Y 175 • CME: 3h tín chỉ (Phí thu tại Hội Thảo)
                                   </p>
                                 </div>
                                 <div
@@ -2888,7 +2888,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                               className="w-4 h-4 rounded text-[#174ea6] focus:ring-[#174ea6]"
                             />
                             <span className="text-[12px] font-bold text-slate-800">
-                              Yêu cầu cấp Chứng nhận đào tạo Y khoa liên tục (CME 8 tiết BV 175)
+                              Yêu cầu cấp Chứng chỉ Đào tạo Y khoa liên tục (CME: 3h tín chỉ BV 175 - Phí thu tại Hội Thảo)
                             </span>
                           </label>
                         </div>

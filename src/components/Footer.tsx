@@ -13,7 +13,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenModal }) => {
     brandTitle: 'VIỆT – HÀN 2026',
     brandDescription:
       'Diễn đàn khoa học đỉnh cao về phẫu thuật tạo hình và da liễu thẩm mỹ kỹ thuật cao, thúc đẩy hợp tác chuyển giao y khoa song phương giữa Việt Nam và Hàn Quốc.',
-    tag1: 'CME 8 Giờ',
+    tag1: 'CME 3h Tín Chỉ',
     tag2: 'Phiên Dịch Song Song',
     organizersTitle: 'ĐƠN VỊ CHỦ TRÌ & TỔ CHỨC',
     organizer1Name: 'Bệnh viện Quân y 175',

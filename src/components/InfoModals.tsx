@@ -41,17 +41,21 @@ export const InfoModals: React.FC<InfoModalsProps> = ({ modalType, onClose }) =>
               </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#eff4ff] border border-[#dce9ff] text-[13px] text-primary space-y-2">
+            <div className="p-4 rounded-2xl bg-[#eff4ff] border border-[#dce9ff] text-[13px] text-primary space-y-2.5">
               <p className="font-semibold">
                 Đơn vị cấp: Trung tâm Đào tạo &amp; Chỉ đạo tuyến — Bệnh viện Quân y 175 (Bộ Quốc phòng)
               </p>
               <p className="text-on-surface-variant">
-                Chương trình đào tạo cập nhật kiến thức y khoa liên tục trong phẫu thuật tạo hình và da liễu thẩm mỹ kỹ thuật cao song phương Việt Nam – Hàn Quốc (Thời lượng tương đương 8 tiết học thuật).
+                Chương trình đào tạo cập nhật kiến thức y khoa liên tục trong phẫu thuật tạo hình và da liễu thẩm mỹ kỹ thuật cao song phương Việt Nam – Hàn Quốc (<strong>CME: 3h tín chỉ</strong>).
               </p>
+              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200/80 text-amber-900 text-[12.5px] font-medium flex items-center gap-2">
+                <span className="font-bold text-amber-800 shrink-0">Lệ phí CME:</span>
+                <span><strong>Phí CME sẽ được thu tại Hội Thảo</strong> (thu trực tiếp tại bàn đón tiếp của Bệnh viện Quân Y 175).</span>
+              </div>
             </div>
 
             <div className="space-y-3 text-[13px] text-on-surface-variant">
-              <h4 className="font-bold text-primary text-[14px]">Điều kiện nhận chứng chỉ CME:</h4>
+              <h4 className="font-bold text-primary text-[14px]">Điều kiện nhận chứng chỉ CME (3h tín chỉ):</h4>
               <ul className="space-y-2">
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-4 h-4 text-secondary shrink-0 mt-0.5" />
@@ -68,7 +72,7 @@ export const InfoModals: React.FC<InfoModalsProps> = ({ modalType, onClose }) =>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-4 h-4 text-secondary shrink-0 mt-0.5" />
                   <span>
-                    <strong>Hồ sơ nộp kèm:</strong> 01 Bản sao công chứng bằng Bác sĩ / CCHN + 01 ảnh thẻ 3x4 (có thể gửi bổ sung trước ngày hội thảo hoặc tại bàn đón tiếp).
+                    <strong>Hồ sơ nộp kèm &amp; Lệ phí:</strong> 01 Bản sao công chứng bằng Bác sĩ / CCHN + 01 ảnh thẻ 3x4 và hoàn tất lệ phí CME tại bàn đón tiếp hội thảo.
                   </span>
                 </li>
               </ul>
