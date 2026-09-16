@@ -9,11 +9,16 @@ import { Footer } from './components/Footer';
 import { InfoModals } from './components/InfoModals';
 import { CMSProvider, useCMS } from './context/CMSContext';
 import { AdminCMSModal } from './components/admin/AdminCMSModal';
+import { AdminLoginScreen } from './components/admin/AdminLoginScreen';
 import { MobileQuickNav } from './components/MobileQuickNav';
 
 function MainApp() {
-  const { isAdminOpen } = useCMS();
+  const { isAdminOpen, closeAdmin } = useCMS();
   const [modalType, setModalType] = useState<'cme' | 'layout' | 'privacy' | null>(null);
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return sessionStorage.getItem('kbit_admin_auth') === 'true';
+  });
 
   const handleOpenModal = (type: 'cme' | 'layout' | 'privacy') => {
     setModalType(type);
@@ -23,9 +28,26 @@ function MainApp() {
     setModalType(null);
   };
 
+  const handleLoginSuccess = () => {
+    setIsAdminAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('kbit_admin_auth');
+    setIsAdminAuthenticated(false);
+  };
+
   // CMS is rendered as a standalone full page (not a popup modal)
   if (isAdminOpen) {
-    return <AdminCMSModal />;
+    if (!isAdminAuthenticated) {
+      return (
+        <AdminLoginScreen
+          onLoginSuccess={handleLoginSuccess}
+          onBackHome={closeAdmin}
+        />
+      );
+    }
+    return <AdminCMSModal onLogout={handleLogout} />;
   }
 
   return (

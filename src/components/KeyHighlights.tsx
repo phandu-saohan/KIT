@@ -69,7 +69,7 @@ export const KeyHighlights: React.FC<KeyHighlightsProps> = () => {
               <div
                 key={expert.id}
                 onClick={() => setSelectedExpert(expert)}
-                className="group relative bg-white rounded-3xl border border-slate-200/90 hover:border-[#c83271]/50 shadow-xs hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-row overflow-hidden cursor-pointer"
+                className="group relative bg-white rounded-2xl sm:rounded-3xl border border-slate-200/90 hover:border-[#c83271]/50 shadow-xs hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-row overflow-hidden cursor-pointer h-[165px] sm:h-[185px]"
               >
                 {/* Left Vertical Accent Line */}
                 <div
@@ -80,8 +80,8 @@ export const KeyHighlights: React.FC<KeyHighlightsProps> = () => {
                   }`}
                 />
 
-                {/* Speaker Photo Left Column */}
-                <div className="relative w-32 xs:w-36 sm:w-48 md:w-52 shrink-0 bg-gradient-to-b from-slate-100 to-slate-200 overflow-hidden">
+                {/* Speaker Photo Left Column - Reduced height & proportional width */}
+                <div className="relative w-28 xs:w-32 sm:w-40 md:w-44 shrink-0 bg-gradient-to-b from-slate-100 to-slate-200 overflow-hidden h-full">
                   <img
                     src={expert.avatarUrl}
                     alt={expert.name}
@@ -94,29 +94,29 @@ export const KeyHighlights: React.FC<KeyHighlightsProps> = () => {
                   />
 
                   {/* Dark subtle overlay for depth */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-transparent to-transparent pointer-events-none" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent pointer-events-none" />
 
                   {/* Floating Badges on Photo */}
-                  <div className="absolute top-2.5 left-2.5 z-10">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/95 backdrop-blur-md text-slate-800 shadow-xs border border-white/80">
+                  <div className="absolute top-2 left-2 z-10">
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-white/95 backdrop-blur-md text-slate-800 shadow-xs border border-white/80">
                       <span>🇰🇷</span>
-                      <span className="text-[9.5px] text-slate-500 font-semibold">HQ</span>
+                      <span className="text-[9px] text-slate-500 font-semibold">HQ</span>
                     </span>
                   </div>
 
                   {/* Bottom Role tag on photo */}
-                  <div className="absolute bottom-2 left-2 right-2 z-10">
+                  <div className="absolute bottom-1.5 left-1.5 right-1.5 z-10">
                     <span
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold shadow-xs truncate max-w-full ${
+                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9.5px] font-bold shadow-xs truncate max-w-full ${
                         isKeynote
                           ? 'bg-gradient-to-r from-[#d81b60] to-[#c83271] text-white'
                           : 'bg-slate-900/90 text-white backdrop-blur-md'
                       }`}
                     >
                       {isKeynote ? (
-                        <Sparkles className="w-3 h-3 text-amber-300 shrink-0" />
+                        <Sparkles className="w-2.5 h-2.5 text-amber-300 shrink-0" />
                       ) : (
-                        <Award className="w-3 h-3 text-sky-400 shrink-0" />
+                        <Award className="w-2.5 h-2.5 text-sky-400 shrink-0" />
                       )}
                       <span className="truncate">{expert.roleTitle}</span>
                     </span>
@@ -124,41 +124,41 @@ export const KeyHighlights: React.FC<KeyHighlightsProps> = () => {
                 </div>
 
                 {/* Card Content Right Column */}
-                <div className="p-3.5 sm:p-5 flex flex-col justify-between flex-1 min-w-0 gap-2.5 sm:gap-3">
+                <div className="p-3 sm:p-4 flex flex-col justify-between flex-1 min-w-0 gap-1.5 sm:gap-2">
                   <div>
                     {/* Organization Pill */}
-                    <div className="flex items-center gap-1.5 mb-1.5">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold uppercase tracking-wide bg-[#eff4ff] text-[#174ea6] border border-[#d0e1fd] truncate max-w-full">
-                        <Building2 className="w-3 h-3 text-[#174ea6] shrink-0" />
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-[#eff4ff] text-[#174ea6] border border-[#d0e1fd] truncate max-w-full">
+                        <Building2 className="w-2.5 h-2.5 text-[#174ea6] shrink-0" />
                         <span className="truncate">{expert.badgeOrg}</span>
                       </span>
                     </div>
 
                     {/* Doctor Name */}
-                    <h3 className="text-[16px] sm:text-[19px] font-black text-slate-900 font-display group-hover:text-[#c83271] transition-colors leading-tight">
+                    <h3 className="text-[14.5px] sm:text-[17px] font-black text-slate-900 font-display group-hover:text-[#c83271] transition-colors leading-tight truncate">
                       {expert.name}
                     </h3>
                   </div>
 
                   {/* Key Credentials Preview (2 points) */}
-                  <div className="space-y-1.5 bg-[#f8faff] rounded-xl p-2.5 border border-slate-100 flex-1 flex flex-col justify-center">
+                  <div className="space-y-1 bg-[#f8faff] rounded-xl p-2 border border-slate-100 flex-1 flex flex-col justify-center overflow-hidden">
                     {expert.bioPoints.slice(0, 2).map((point, i) => (
-                      <div key={i} className="flex items-start gap-1.5 text-[11px] sm:text-[12px] text-slate-600 leading-snug">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-[#174ea6] shrink-0 mt-0.5" />
-                        <span className="line-clamp-2 font-medium">{point}</span>
+                      <div key={i} className="flex items-start gap-1 text-[11px] sm:text-[11.5px] text-slate-600 leading-snug">
+                        <CheckCircle2 className="w-3 h-3 text-[#174ea6] shrink-0 mt-0.5" />
+                        <span className="truncate font-medium">{point}</span>
                       </div>
                     ))}
                   </div>
 
                   {/* Action Footer */}
-                  <div className="border-t border-slate-100 pt-2 flex items-center justify-between text-[11.5px] font-bold">
-                    <span className="text-[10.5px] sm:text-[11px] text-slate-400 font-normal truncate">
-                      {expert.bioPoints.length} công trình khoa học
+                  <div className="border-t border-slate-100 pt-1.5 flex items-center justify-between text-[11px] font-bold">
+                    <span className="text-[10px] sm:text-[10.5px] text-slate-400 font-normal truncate">
+                      {expert.bioPoints.length} công trình
                     </span>
 
-                    <span className="inline-flex items-center gap-1 text-[#174ea6] group-hover:text-[#c83271] transition-colors font-bold text-[11px] sm:text-[12px] shrink-0">
+                    <span className="inline-flex items-center gap-1 text-[#174ea6] group-hover:text-[#c83271] transition-colors font-bold text-[11px] shrink-0">
                       <span>Xem lý lịch</span>
-                      <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 group-hover:translate-x-1 transition-transform" />
+                      <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
                     </span>
                   </div>
                 </div>

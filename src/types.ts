@@ -149,6 +149,12 @@ export interface FooterConfig {
   copyrightText: string;
 }
 
+export interface AdminAccountConfig {
+  username: string;
+  password: string;
+  lastUpdated?: string;
+}
+
 export interface CMSData {
   eventDetails: EventDetails;
   experts: ExpertSpeaker[];
@@ -158,4 +164,5 @@ export interface CMSData {
   registrations: AttendeeBadge[];
   mediaLibrary: string[];
   footerConfig?: FooterConfig;
+  adminAccount?: AdminAccountConfig;
 }

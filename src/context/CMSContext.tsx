@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { CMSData, EventDetails, ExpertSpeaker, AgendaItem, HighlightItem, Partner, AttendeeBadge, FooterConfig } from '../types';
+import { CMSData, EventDetails, ExpertSpeaker, AgendaItem, HighlightItem, Partner, AttendeeBadge, FooterConfig, AdminAccountConfig } from '../types';
 import {
   EVENT_DETAILS as DEFAULT_EVENT_DETAILS,
   LEADING_EXPERTS as DEFAULT_EXPERTS,
@@ -101,6 +101,12 @@ export const DEFAULT_FOOTER_CONFIG: FooterConfig = {
   copyrightText: '© 2026 Hội thảo Khoa học Thẩm mỹ Việt–Hàn 2026. Bản quyền thuộc về BV Quân Y 175 & Ban Tổ Chức Hội Thảo.',
 };
 
+export const DEFAULT_ADMIN_ACCOUNT: AdminAccountConfig = {
+  username: 'admin',
+  password: 'kbit@2026',
+  lastUpdated: new Date().toISOString(),
+};
+
 const INITIAL_CMS_DATA: CMSData = {
   eventDetails: DEFAULT_EVENT_DETAILS,
   experts: DEFAULT_EXPERTS,
@@ -110,6 +116,7 @@ const INITIAL_CMS_DATA: CMSData = {
   registrations: INITIAL_REGISTRATIONS,
   mediaLibrary: DEFAULT_MEDIA_LIBRARY,
   footerConfig: DEFAULT_FOOTER_CONFIG,
+  adminAccount: DEFAULT_ADMIN_ACCOUNT,
 };
 
 interface CMSContextType {
@@ -135,6 +142,7 @@ interface CMSContextType {
   updateRegistration: (id: string, updated: Partial<AttendeeBadge>) => void;
   deleteRegistration: (id: string) => void;
   updateFooterConfig: (updated: Partial<FooterConfig>) => void;
+  updateAdminAccount: (updated: Partial<AdminAccountConfig>) => void;
   resetToDefaults: () => void;
   exportDataToJson: () => void;
   importDataFromJson: (jsonStr: string) => boolean;
@@ -202,6 +210,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           registrations: parsed.registrations || INITIAL_REGISTRATIONS,
           mediaLibrary: parsed.mediaLibrary || DEFAULT_MEDIA_LIBRARY,
           footerConfig: { ...DEFAULT_FOOTER_CONFIG, ...(parsed.footerConfig || {}) },
+          adminAccount: { ...DEFAULT_ADMIN_ACCOUNT, ...(parsed.adminAccount || {}) },
         };
       }
     } catch (e) {
@@ -520,6 +529,17 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   };
 
+  const updateAdminAccount = (updated: Partial<AdminAccountConfig>) => {
+    setCmsData((prev) => ({
+      ...prev,
+      adminAccount: {
+        ...(prev.adminAccount || DEFAULT_ADMIN_ACCOUNT),
+        ...updated,
+        lastUpdated: new Date().toISOString(),
+      },
+    }));
+  };
+
   const addImageToLibrary = (imageUrl: string) => {
     if (!imageUrl) return;
     setCmsData((prev) => {
@@ -609,6 +629,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateRegistration,
         deleteRegistration,
         updateFooterConfig,
+        updateAdminAccount,
         resetToDefaults,
         exportDataToJson,
         importDataFromJson,

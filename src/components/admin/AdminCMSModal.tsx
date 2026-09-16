@@ -33,12 +33,20 @@ import {
   FileText,
   Database,
   Cloud,
+  LogOut,
+  KeyRound,
+  ShieldCheck,
+  EyeOff,
 } from 'lucide-react';
 import { useCMS } from '../../context/CMSContext';
 import { ExpertSpeaker, AgendaItem, Partner, HighlightItem, AttendeeBadge } from '../../types';
 import { PARTNER_LOGOS } from '../../data/partnerLogos';
 
-export const AdminCMSModal: React.FC = () => {
+interface AdminCMSModalProps {
+  onLogout?: () => void;
+}
+
+export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
   const {
     cmsData,
     isAdminOpen,
@@ -62,6 +70,7 @@ export const AdminCMSModal: React.FC = () => {
     updateRegistration,
     deleteRegistration,
     updateFooterConfig,
+    updateAdminAccount,
     resetToDefaults,
     exportDataToJson,
     importDataFromJson,
@@ -81,6 +90,10 @@ export const AdminCMSModal: React.FC = () => {
   const [eventFilter, setEventFilter] = useState<'all' | 'SYM' | 'KAT' | 'both'>('all');
   const [inspectingAttendee, setInspectingAttendee] = useState<AttendeeBadge | null>(null);
   const [editingAttendee, setEditingAttendee] = useState<AttendeeBadge | null>(null);
+  const [adminUsernameInput, setAdminUsernameInput] = useState(cmsData.adminAccount?.username || 'admin');
+  const [adminPasswordInput, setAdminPasswordInput] = useState(cmsData.adminAccount?.password || 'kbit@2026');
+  const [showAdminPassword, setShowAdminPassword] = useState(false);
+  const [accountUpdatedMsg, setAccountUpdatedMsg] = useState(false);
   const [editForm, setEditForm] = useState<{
     fullName: string;
     attendeeType: 'doctor' | 'business';
@@ -187,6 +200,28 @@ export const AdminCMSModal: React.FC = () => {
     });
     setEditingAttendee(null);
     showToast('Đã cập nhật chương trình tham dự & hồ sơ đại biểu thành công!');
+  };
+
+  React.useEffect(() => {
+    if (cmsData.adminAccount) {
+      setAdminUsernameInput(cmsData.adminAccount.username || 'admin');
+      setAdminPasswordInput(cmsData.adminAccount.password || 'kbit@2026');
+    }
+  }, [cmsData.adminAccount]);
+
+  const handleSaveAdminAccount = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adminUsernameInput.trim() || !adminPasswordInput.trim()) {
+      alert('Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!');
+      return;
+    }
+    updateAdminAccount({
+      username: adminUsernameInput.trim(),
+      password: adminPasswordInput.trim(),
+    });
+    setAccountUpdatedMsg(true);
+    setTimeout(() => setAccountUpdatedMsg(false), 4000);
+    showToast('Đã cập nhật thông tin tài khoản & mật khẩu quản trị thành công!');
   };
 
   if (!isAdminOpen) return null;
@@ -507,6 +542,19 @@ export const AdminCMSModal: React.FC = () => {
             <ExternalLink className="w-4 h-4 text-cyan-300" />
             <span>Xem Website</span>
           </button>
+
+          {/* Admin Logout Button */}
+          {onLogout && (
+            <button
+              type="button"
+              onClick={onLogout}
+              className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-800 text-xs sm:text-[13px] font-bold border border-rose-200/80 transition-all cursor-pointer shadow-2xs"
+              title="Đăng xuất khỏi tài khoản quản trị CMS"
+            >
+              <LogOut className="w-4 h-4 text-rose-600" />
+              <span className="hidden sm:inline">Đăng xuất</span>
+            </button>
+          )}
         </div>
       </header>
 
@@ -1230,6 +1278,96 @@ export const AdminCMSModal: React.FC = () => {
                       />
                     </div>
                   </div>
+                </div>
+
+                {/* Admin Account & Security Settings */}
+                <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/20 border border-blue-200/80 shadow-xs space-y-4">
+                  <div className="flex items-center justify-between flex-wrap gap-2 border-b border-blue-100/80 pb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#002045] to-[#174ea6] text-white flex items-center justify-center shadow-xs">
+                        <KeyRound className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-[15px] font-bold text-slate-900">
+                            Tài Khoản &amp; Mật Khẩu Đăng Nhập Quản Trị
+                          </h3>
+                          <span className="px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-blue-100 text-[#174ea6]">
+                            Bảo Mật CMS
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Tài khoản này dùng để đăng nhập vào trang CMS <code>/admin</code>. Bạn có thể đổi tài khoản và mật khẩu bất kỳ lúc nào.
+                        </p>
+                      </div>
+                    </div>
+                    {accountUpdatedMsg && (
+                      <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-100 text-emerald-800 text-xs font-bold animate-pulse">
+                        <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                        <span>Đã lưu thành công!</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <form onSubmit={handleSaveAdminAccount} className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                          Tên đăng nhập (Username):
+                        </label>
+                        <input
+                          type="text"
+                          value={adminUsernameInput}
+                          onChange={(e) => setAdminUsernameInput(e.target.value)}
+                          placeholder="admin"
+                          required
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:border-[#174ea6] focus:ring-1 focus:ring-[#174ea6] outline-none transition-all"
+                        />
+                        <p className="text-[11px] text-slate-400 mt-1">Mặc định ban đầu: <code>admin</code></p>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                          Mật khẩu đăng nhập (Password):
+                        </label>
+                        <div className="relative">
+                          <input
+                            type={showAdminPassword ? 'text' : 'password'}
+                            value={adminPasswordInput}
+                            onChange={(e) => setAdminPasswordInput(e.target.value)}
+                            placeholder="••••••••"
+                            required
+                            className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:border-[#174ea6] focus:ring-1 focus:ring-[#174ea6] outline-none transition-all"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowAdminPassword(!showAdminPassword)}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-1"
+                            title={showAdminPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                          >
+                            {showAdminPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                        <p className="text-[11px] text-slate-400 mt-1">Mặc định ban đầu: <code>kbit@2026</code></p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between flex-wrap gap-3 pt-2">
+                      <div className="text-[11px] text-slate-500">
+                        {cmsData.adminAccount?.lastUpdated && (
+                          <span>Cập nhật lần cuối: {new Date(cmsData.adminAccount.lastUpdated).toLocaleString('vi-VN')}</span>
+                        )}
+                      </div>
+
+                      <button
+                        type="submit"
+                        className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#002045] via-[#174ea6] to-[#c83271] text-white text-xs font-bold hover:shadow-md transition-all flex items-center gap-2 cursor-pointer ml-auto"
+                      >
+                        <Save className="w-4 h-4" />
+                        <span>Lưu Tài Khoản &amp; Mật Khẩu</span>
+                      </button>
+                    </div>
+                  </form>
                 </div>
               </div>
             )}
