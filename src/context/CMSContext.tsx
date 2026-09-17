@@ -8,7 +8,7 @@ import {
   PARTNERS as DEFAULT_PARTNERS,
 } from '../data/symposiumData';
 
-const STORAGE_KEY = 'viet_han_aesthetic_cms_data_v6';
+const STORAGE_KEY = 'viet_han_aesthetic_cms_data_v7';
 
 // Purge all old cache versions immediately to ensure 100% fresh data
 if (typeof window !== 'undefined') {
@@ -26,6 +26,17 @@ if (typeof window !== 'undefined') {
 
 const DEFAULT_MEDIA_LIBRARY: string[] = [
   '/BG.png',
+  '/images/experts/heo-chan-young.png',
+  '/images/experts/dong-woo-shin.png',
+  '/images/experts/young-jin-park.png',
+  '/images/experts/park-eun-soo.png',
+  '/images/experts/woo-sung-lee.png',
+  '/images/experts/park-bok-won.png',
+  '/images/experts/min-seok-choi.png',
+  '/images/experts/jin-mi-choi.png',
+  '/images/experts/jin-wook-jeong.png',
+  '/images/experts/jae-ik-choi.png',
+  '/images/experts/lee-kyung-eun.png',
   'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=500&auto=format&fit=crop&q=80',
   'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=500&auto=format&fit=crop&q=80',
   'https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=500&auto=format&fit=crop&q=80',

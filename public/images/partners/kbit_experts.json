@@ -1,0 +1,178 @@
+[
+  {
+    "id": "exp-prof-heo-chan-yeong",
+    "name": "Prof. Heo Chan Yeong",
+    "roleTitle": "SNUBH Plastic Surgery · KSAPS",
+    "bioPoints": [
+      "SNUBH Plastic Surgery · KSAPS",
+      "Báo cáo khoa học: Xu hướng mới nhất của phẫu thuật tạo hình thẩm mỹ Hàn Quốc và triển vọng thị trường y học thẩm mỹ Việt Nam"
+    ],
+    "country": "KR",
+    "countryName": "Hàn Quốc",
+    "avatarUrl": "/images/experts/heo-chan-young.png",
+    "badgeOrg": "SNUBH Plastic Surgery",
+    "badgeColor": "bg-[#174ea6] text-white",
+    "affiliation": "SNUBH Plastic Surgery · KSAPS",
+    "topic": "Xu hướng mới nhất của phẫu thuật tạo hình thẩm mỹ Hàn Quốc và triển vọng thị trường y học thẩm mỹ Việt Nam"
+  },
+  {
+    "id": "exp-dr-shin-dongwoo",
+    "name": "Dr. Shin DongWoo",
+    "roleTitle": "Navi Plastic Surgery",
+    "bioPoints": [
+      "Navi Plastic Surgery",
+      "Báo cáo khoa học: Nâng mũi chỉnh sửa: Chiến lược đảm bảo an toàn và nâng cao khả năng tiên lượng kết quả"
+    ],
+    "country": "KR",
+    "countryName": "Hàn Quốc",
+    "avatarUrl": "/images/experts/dong-woo-shin.png",
+    "badgeOrg": "Navi Plastic Surgery",
+    "badgeColor": "bg-[#174ea6] text-white",
+    "affiliation": "Navi Plastic Surgery",
+    "topic": "Nâng mũi chỉnh sửa: Chiến lược đảm bảo an toàn và nâng cao khả năng tiên lượng kết quả"
+  },
+  {
+    "id": "exp-dr-park-young-jin",
+    "name": "Dr. Park Young Jin",
+    "roleTitle": "Gangnam Samsung Plastic Surgery",
+    "bioPoints": [
+      "Gangnam Samsung Plastic Surgery",
+      "Báo cáo khoa học: JAMBER AI trong thực hành lâm sàng: Nâng đỡ động thích ứng với biểu cảm khuôn mặt"
+    ],
+    "country": "KR",
+    "countryName": "Hàn Quốc",
+    "avatarUrl": "/images/experts/young-jin-park.png",
+    "badgeOrg": "Gangnam Samsung Plastic Surgery",
+    "badgeColor": "bg-[#174ea6] text-white",
+    "affiliation": "Gangnam Samsung Plastic Surgery",
+    "topic": "JAMBER AI trong thực hành lâm sàng: Nâng đỡ động thích ứng với biểu cảm khuôn mặt"
+  },
+  {
+    "id": "exp-prof-park-eun-soo",
+    "name": "Prof. Park Eun Soo",
+    "roleTitle": "Bucheon Soonchunhyang University Hospital",
+    "bioPoints": [
+      "Bucheon Soonchunhyang University Hospital",
+      "Báo cáo khoa học: Tính hiệu quả và độ tin cậy của các liệu pháp tái tạo trong trẻ hóa khuôn mặt ít xâm lấn"
+    ],
+    "country": "KR",
+    "countryName": "Hàn Quốc",
+    "avatarUrl": "/images/experts/park-eun-soo.png",
+    "badgeOrg": "Bucheon Soonchunhyang University Hospital",
+    "badgeColor": "bg-[#174ea6] text-white",
+    "affiliation": "Bucheon Soonchunhyang University Hospital",
+    "topic": "Tính hiệu quả và độ tin cậy của các liệu pháp tái tạo trong trẻ hóa khuôn mặt ít xâm lấn"
+  },
+  {
+    "id": "exp-dr-lee-woo-sung",
+    "name": "Dr. Lee Woo Sung",
+    "roleTitle": "Rose Plastic Surgery · CEO, Rose Lab",
+    "bioPoints": [
+      "Rose Plastic Surgery · CEO, Rose Lab",
+      "Báo cáo khoa học: Chất kích thích sinh học PCL và Skin Booster mới trong trẻ hóa da"
+    ],
+    "country": "KR",
+    "countryName": "Hàn Quốc",
+    "avatarUrl": "/images/experts/woo-sung-lee.png",
+    "badgeOrg": "Rose Plastic Surgery",
+    "badgeColor": "bg-[#174ea6] text-white",
+    "affiliation": "Rose Plastic Surgery · CEO, Rose Lab",
+    "topic": "Chất kích thích sinh học PCL và Skin Booster mới trong trẻ hóa da"
+  },
+  {
+    "id": "exp-dr-park-bokwon",
+    "name": "Dr. Park BokWon",
+    "roleTitle": "Mellow Dermatology Clinic",
+    "bioPoints": [
+      "Mellow Dermatology Clinic",
+      "Báo cáo khoa học: Ứng dụng PDLLA đúng cách: Phác đồ lâm sàng Hàn Quốc và chiến lược tiêm thực hành với Juvelook"
+    ],
+    "country": "KR",
+    "countryName": "Hàn Quốc",
+    "avatarUrl": "/images/experts/park-bok-won.png",
+    "badgeOrg": "Mellow Dermatology Clinic",
+    "badgeColor": "bg-[#174ea6] text-white",
+    "affiliation": "Mellow Dermatology Clinic",
+    "topic": "Ứng dụng PDLLA đúng cách: Phác đồ lâm sàng Hàn Quốc và chiến lược tiêm thực hành với Juvelook"
+  },
+  {
+    "id": "exp-dr-choi-minsuk",
+    "name": "Dr. Choi MinSuk",
+    "roleTitle": "VC Plastic Surgery Clinic",
+    "bioPoints": [
+      "VC Plastic Surgery Clinic",
+      "Báo cáo khoa học: EBD trước hay liệu pháp tiêm trước?"
+    ],
+    "country": "KR",
+    "countryName": "Hàn Quốc",
+    "avatarUrl": "/images/experts/min-seok-choi.png",
+    "badgeOrg": "VC Plastic Surgery Clinic",
+    "badgeColor": "bg-[#174ea6] text-white",
+    "affiliation": "VC Plastic Surgery Clinic",
+    "topic": "EBD trước hay liệu pháp tiêm trước?"
+  },
+  {
+    "id": "exp-dr-choi-jinmi",
+    "name": "Dr. Choi JinMi",
+    "roleTitle": "Belif Plastic Surgery",
+    "bioPoints": [
+      "Belif Plastic Surgery",
+      "Báo cáo khoa học: Vượt ra ngoài Deep Plane Facelift: Xử lý mô dưới SMAS &amp; tái định hình đường nét khuôn mặt"
+    ],
+    "country": "KR",
+    "countryName": "Hàn Quốc",
+    "avatarUrl": "/images/experts/jin-mi-choi.png",
+    "badgeOrg": "Belif Plastic Surgery",
+    "badgeColor": "bg-[#174ea6] text-white",
+    "affiliation": "Belif Plastic Surgery",
+    "topic": "Vượt ra ngoài Deep Plane Facelift: Xử lý mô dưới SMAS &amp; tái định hình đường nét khuôn mặt"
+  },
+  {
+    "id": "exp-dr-jeong-jinwook",
+    "name": "Dr. Jeong JinWook",
+    "roleTitle": "DL Plastic Surgery",
+    "bioPoints": [
+      "DL Plastic Surgery",
+      "Báo cáo khoa học: Mô phỏng kỹ thuật số và implant in 3D tùy chỉnh trong nâng mũi người châu Á"
+    ],
+    "country": "KR",
+    "countryName": "Hàn Quốc",
+    "avatarUrl": "/images/experts/jin-wook-jeong.png",
+    "badgeOrg": "DL Plastic Surgery",
+    "badgeColor": "bg-[#174ea6] text-white",
+    "affiliation": "DL Plastic Surgery",
+    "topic": "Mô phỏng kỹ thuật số và implant in 3D tùy chỉnh trong nâng mũi người châu Á"
+  },
+  {
+    "id": "exp-dr-choi-jaeik",
+    "name": "Dr. Choi JaeIk",
+    "roleTitle": "AB Plastic Surgery Clinic",
+    "bioPoints": [
+      "AB Plastic Surgery Clinic",
+      "Báo cáo khoa học: Nâng cơ cổ ở bệnh nhân châu Á: Các lưu ý giải phẫu và chiến lược phẫu thuật"
+    ],
+    "country": "KR",
+    "countryName": "Hàn Quốc",
+    "avatarUrl": "/images/experts/jae-ik-choi.png",
+    "badgeOrg": "AB Plastic Surgery Clinic",
+    "badgeColor": "bg-[#174ea6] text-white",
+    "affiliation": "AB Plastic Surgery Clinic",
+    "topic": "Nâng cơ cổ ở bệnh nhân châu Á: Các lưu ý giải phẫu và chiến lược phẫu thuật"
+  },
+  {
+    "id": "exp-dr-lee-kyung-eun",
+    "name": "Dr. Lee Kyung Eun",
+    "roleTitle": "The-An Cheongdam Clinic",
+    "bioPoints": [
+      "The-An Cheongdam Clinic",
+      "Báo cáo khoa học: Quan điểm hiện đại về kích thích collagen dựa trên PCL"
+    ],
+    "country": "KR",
+    "countryName": "Hàn Quốc",
+    "avatarUrl": "/images/experts/lee-kyung-eun.png",
+    "badgeOrg": "The",
+    "badgeColor": "bg-[#174ea6] text-white",
+    "affiliation": "The-An Cheongdam Clinic",
+    "topic": "Quan điểm hiện đại về kích thích collagen dựa trên PCL"
+  }
+]
