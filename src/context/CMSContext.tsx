@@ -8,7 +8,7 @@ import {
   PARTNERS as DEFAULT_PARTNERS,
 } from '../data/symposiumData';
 
-const STORAGE_KEY = 'viet_han_aesthetic_cms_data_v9';
+export const STORAGE_KEY = 'viet_han_aesthetic_cms_data_v9';
 
 // Purge all old cache versions immediately to ensure 100% fresh data
 if (typeof window !== 'undefined') {
@@ -159,6 +159,8 @@ interface CMSContextType {
   updateAgendaItem: (id: string, updated: Partial<AgendaItem>) => void;
   addAgendaItem: (item: AgendaItem) => void;
   deleteAgendaItem: (id: string) => void;
+  setAgendaList: (agenda: AgendaItem[]) => void;
+  syncDefaultAgenda: () => void;
   updateHighlight: (id: string, updated: Partial<HighlightItem>) => void;
   updatePartner: (id: string, updated: Partial<Partner>) => void;
   addPartner: (partner: Partner) => void;
@@ -220,7 +222,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return {
           ...INITIAL_CMS_DATA,
           eventDetails: { ...DEFAULT_EVENT_DETAILS, ...(parsed.eventDetails || {}) },
-          agenda: parsed.agenda && parsed.agenda.length > 0 ? parsed.agenda : DEFAULT_AGENDA,
+          agenda: parsed.agenda && parsed.agenda.length >= DEFAULT_AGENDA.length ? parsed.agenda : DEFAULT_AGENDA,
           experts: parsed.experts && parsed.experts.length > 0
             ? parsed.experts.map((exp: any) => {
                 const def = DEFAULT_EXPERTS.find((de) => de.id === exp.id);
@@ -502,6 +504,20 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   };
 
+  const setAgendaList = (agenda: AgendaItem[]) => {
+    setCmsData((prev) => ({
+      ...prev,
+      agenda,
+    }));
+  };
+
+  const syncDefaultAgenda = () => {
+    setCmsData((prev) => ({
+      ...prev,
+      agenda: DEFAULT_AGENDA,
+    }));
+  };
+
   const updateHighlight = (id: string, updated: Partial<HighlightItem>) => {
     setCmsData((prev) => ({
       ...prev,
@@ -766,6 +782,8 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateAgendaItem,
         addAgendaItem,
         deleteAgendaItem,
+        setAgendaList,
+        syncDefaultAgenda,
         updateHighlight,
         updatePartner,
         addPartner,

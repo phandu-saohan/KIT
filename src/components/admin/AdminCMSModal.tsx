@@ -38,7 +38,7 @@ import {
   ShieldCheck,
   EyeOff,
 } from 'lucide-react';
-import { useCMS } from '../../context/CMSContext';
+import { useCMS, STORAGE_KEY } from '../../context/CMSContext';
 import { ExpertSpeaker, AgendaItem, Partner, HighlightItem, AttendeeBadge } from '../../types';
 import { PARTNER_LOGOS } from '../../data/partnerLogos';
 
@@ -62,6 +62,8 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
     updateAgendaItem,
     addAgendaItem,
     deleteAgendaItem,
+    setAgendaList,
+    syncDefaultAgenda,
     updateHighlight,
     updatePartner,
     addPartner,
@@ -251,7 +253,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
     try {
       // 1. Force save to localStorage
       try {
-        localStorage.setItem('viet_han_aesthetic_cms_data_v6', JSON.stringify(cmsData));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cmsData));
       } catch (e) {
         console.warn('LocalStorage manual save warning:', e);
       }
@@ -2543,27 +2545,55 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                     </p>
                   </div>
 
-                  <button
-                    onClick={() => {
-                      const newAgenda: AgendaItem = {
-                        id: `item-${Date.now()}`,
-                        time: '16:30 – 17:00',
-                        duration: "30'",
-                        title: 'PHIÊN BÁO CÁO MỚI',
-                        description: 'Nội dung tóm tắt chuyên đề khoa học.',
-                        session: 'session2',
-                        day: agendaDayFilter === 2 ? 2 : 1,
-                        hall: 'Hội trường 1',
-                      };
-                      addAgendaItem(newAgenda);
-                      setEditingAgendaId(newAgenda.id);
-                      showToast('Đã thêm phiên báo cáo mới!');
-                    }}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#174ea6] hover:bg-[#123e85] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Thêm mục lịch trình</span>
-                  </button>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={() => {
+                        if (window.confirm('Khôi phục và đồng bộ toàn bộ 39 mục chương trình chuẩn (2 ngày, 4 hội trường) từ hệ thống vào CMS?')) {
+                          syncDefaultAgenda();
+                          showToast('✅ Đã đồng bộ toàn bộ 39 mục chương trình khoa học chuẩn vào CMS!');
+                        }
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer"
+                      title="Đồng bộ toàn bộ lịch trình chuẩn từ bảng mẫu"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 text-[#174ea6]" />
+                      <span>Đồng bộ 39 mục chuẩn</span>
+                    </button>
+
+                    <button
+                      onClick={async () => {
+                        await handleManualSave(true);
+                        showToast('✅ Đã lưu toàn bộ lịch trình hội thảo vào CMS thành công!');
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                      title="Lưu toàn bộ lịch trình vào bộ nhớ CMS & Cloud"
+                    >
+                      <Save className="w-3.5 h-3.5" />
+                      <span>Lưu vào CMS</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        const newAgenda: AgendaItem = {
+                          id: `item-${Date.now()}`,
+                          time: '16:30 – 17:00',
+                          duration: "30'",
+                          title: 'PHIÊN BÁO CÁO MỚI',
+                          description: 'Nội dung tóm tắt chuyên đề khoa học.',
+                          session: 'session2',
+                          day: agendaDayFilter === 2 ? 2 : 1,
+                          hall: 'Hội trường 1',
+                        };
+                        addAgendaItem(newAgenda);
+                        setEditingAgendaId(newAgenda.id);
+                        showToast('Đã thêm phiên báo cáo mới!');
+                      }}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#174ea6] hover:bg-[#123e85] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Thêm mục lịch trình</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Day Filter & Search Controls */}
