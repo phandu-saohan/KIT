@@ -113,14 +113,14 @@ export const HeroBanner: React.FC = () => {
           <img
             src={vsapsLogo}
             alt="Hội Phẫu thuật Tạo hình Thẩm mỹ Việt Nam (VSAPS)"
-            className="w-14 h-14 xs:w-16 xs:h-16 sm:w-16 sm:h-16 lg:w-18 lg:h-18 object-contain drop-shadow-xs transition-transform hover:scale-105"
+            className="w-14 h-14 xs:w-16 xs:h-16 sm:w-16 sm:h-16 lg:w-18 lg:h-18 object-contain drop-shadow-xs transition-transform hover:scale-105 rounded-full mix-blend-multiply"
           />
 
           {/* Logo 2: KSAPS Circular Badge */}
           <img
             src={ksapsLogo}
             alt="Hội Phẫu thuật Tạo hình Thẩm mỹ Hàn Quốc (KSAPS)"
-            className="w-14 h-14 xs:w-16 xs:h-16 sm:w-16 sm:h-16 lg:w-18 lg:h-18 object-contain drop-shadow-xs transition-transform hover:scale-105"
+            className="w-14 h-14 xs:w-16 xs:h-16 sm:w-16 sm:h-16 lg:w-18 lg:h-18 object-contain drop-shadow-xs transition-transform hover:scale-105 rounded-full mix-blend-multiply"
           />
         </div>
 
