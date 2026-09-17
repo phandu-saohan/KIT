@@ -237,15 +237,15 @@ export const KeyHighlights: React.FC<KeyHighlightsProps> = () => {
                 />
 
                 {/* Speaker Photo Left Column */}
-                <div className="relative w-28 xs:w-32 sm:w-40 md:w-44 shrink-0 bg-gradient-to-b from-slate-100 to-slate-200 overflow-hidden h-full">
+                <div className="relative w-28 xs:w-32 sm:w-40 md:w-44 shrink-0 bg-gradient-to-b from-slate-50 via-slate-100 to-slate-200 overflow-hidden h-full flex items-end justify-center">
                   <img
                     src={expert.avatarUrl}
                     alt={expert.name}
-                    className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                    className="w-full h-full object-contain object-bottom transition-transform duration-500 group-hover:scale-105"
                     loading="lazy"
                     onError={(e) => {
                       (e.target as HTMLImageElement).src =
-                        'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=500&auto=format&fit=crop&q=80';
+                        'https://kbitassociation.com/wp-content/themes/amlab/assets/images/events/heo-chan-young.png';
                     }}
                   />
 
@@ -360,11 +360,11 @@ export const KeyHighlights: React.FC<KeyHighlightsProps> = () => {
                 {/* Doctor Profile Header */}
                 <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 border-b border-slate-100 pb-4 sm:pb-6 text-center sm:text-left">
                   <div className="relative shrink-0">
-                    <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-100 border-3 sm:border-4 border-white shadow-xl ring-2 ring-slate-100">
+                    <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-100 border-3 sm:border-4 border-white shadow-xl ring-2 ring-slate-100 flex items-end justify-center">
                       <img
                         src={selectedExpert.avatarUrl}
                         alt={selectedExpert.name}
-                        className="w-full h-full object-cover object-top"
+                        className="w-full h-full object-contain object-bottom"
                       />
                     </div>
                     <span className="absolute -bottom-1.5 -right-1.5 sm:-bottom-2 sm:-right-2 text-[16px] sm:text-[18px] bg-white rounded-full p-1 shadow-md border border-slate-200">

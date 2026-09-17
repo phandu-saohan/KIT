@@ -8,7 +8,7 @@ import {
   PARTNERS as DEFAULT_PARTNERS,
 } from '../data/symposiumData';
 
-const STORAGE_KEY = 'viet_han_aesthetic_cms_data_v3';
+const STORAGE_KEY = 'viet_han_aesthetic_cms_data_v4';
 
 const DEFAULT_MEDIA_LIBRARY: string[] = [
   '/BG.png',

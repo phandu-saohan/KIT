@@ -1,7 +1,15 @@
 // Default official vector logos encoded as SVG Data URIs for the 6 partner organizations
 
 export const PARTNER_LOGOS: Record<string, string> = {
-  bv108: `data:image/svg+xml;utf8,${encodeURIComponent(`
+  bv108: '/images/partners/bv108.png',
+  ksaps: '/images/partners/ksaps.png',
+  vsaps: '/images/partners/vsaps.png',
+  khidi: '/images/partners/khidi.png',
+  snubh: '/images/partners/snubh.png',
+  kbit: '/images/partners/kbit.png',
+  mohw: '/images/partners/mohw.png',
+  bv175: '/images/partners/bv108.png',
+  bv108_svg: `data:image/svg+xml;utf8,${encodeURIComponent(`
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
   <defs>
     <linearGradient id="shield108" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -30,7 +38,7 @@ export const PARTNER_LOGOS: Record<string, string> = {
 </svg>
 `)}`,
 
-  kbit: `data:image/svg+xml;utf8,${encodeURIComponent(`
+  kbit_svg: `data:image/svg+xml;utf8,${encodeURIComponent(`
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
   <defs>
     <linearGradient id="kbitNavy" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -53,7 +61,7 @@ export const PARTNER_LOGOS: Record<string, string> = {
 </svg>
 `)}`,
 
-  bv175: `data:image/svg+xml;utf8,${encodeURIComponent(`
+  bv175_svg: `data:image/svg+xml;utf8,${encodeURIComponent(`
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
   <defs>
     <linearGradient id="shield175" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -82,7 +90,7 @@ export const PARTNER_LOGOS: Record<string, string> = {
 </svg>
 `)}`,
 
-  ksaps: `data:image/svg+xml;utf8,${encodeURIComponent(`
+  ksaps_svg: `data:image/svg+xml;utf8,${encodeURIComponent(`
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
   <defs>
     <linearGradient id="ksapsBlue" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -111,7 +119,7 @@ export const PARTNER_LOGOS: Record<string, string> = {
 </svg>
 `)}`,
 
-  vsaps: `data:image/svg+xml;utf8,${encodeURIComponent(`
+  vsaps_svg: `data:image/svg+xml;utf8,${encodeURIComponent(`
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
   <defs>
     <linearGradient id="vsapsPink" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -135,7 +143,7 @@ export const PARTNER_LOGOS: Record<string, string> = {
 </svg>
 `)}`,
 
-  mohw: `data:image/svg+xml;utf8,${encodeURIComponent(`
+  mohw_svg: `data:image/svg+xml;utf8,${encodeURIComponent(`
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
   <defs>
     <linearGradient id="mohwBlue" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -158,7 +166,7 @@ export const PARTNER_LOGOS: Record<string, string> = {
 </svg>
 `)}`,
 
-  khidi: `data:image/svg+xml;utf8,${encodeURIComponent(`
+  khidi_svg: `data:image/svg+xml;utf8,${encodeURIComponent(`
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
   <defs>
     <linearGradient id="khidiTeal" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -184,7 +192,7 @@ export const PARTNER_LOGOS: Record<string, string> = {
 </svg>
 `)}`,
 
-  snubh: `data:image/svg+xml;utf8,${encodeURIComponent(`
+  snubh_svg: `data:image/svg+xml;utf8,${encodeURIComponent(`
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
   <defs>
     <linearGradient id="snuNavy" x1="0%" y1="0%" x2="100%" y2="100%">
