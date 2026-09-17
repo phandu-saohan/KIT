@@ -208,10 +208,19 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         // ensure missing fields get merged with defaults
         return {
           ...INITIAL_CMS_DATA,
-          ...parsed,
           eventDetails: { ...DEFAULT_EVENT_DETAILS, ...(parsed.eventDetails || {}) },
-          experts: parsed.experts && parsed.experts.length > 0 ? parsed.experts : DEFAULT_EXPERTS,
           agenda: parsed.agenda && parsed.agenda.length > 0 ? parsed.agenda : DEFAULT_AGENDA,
+          experts: parsed.experts && parsed.experts.length > 0
+            ? parsed.experts.map((exp: any) => {
+                const def = DEFAULT_EXPERTS.find((de) => de.id === exp.id);
+                return {
+                  ...(def || {}),
+                  ...exp,
+                  affiliation: exp.affiliation || def?.affiliation || '',
+                  topic: exp.topic || def?.topic || '',
+                };
+              })
+            : DEFAULT_EXPERTS,
           highlights: parsed.highlights || DEFAULT_HIGHLIGHTS,
           partners: parsed.partners && parsed.partners.length > 0
             ? parsed.partners.map((p: any) => {

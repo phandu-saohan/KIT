@@ -383,6 +383,7 @@ export const LEADING_EXPERTS: ExpertSpeaker[] = [
     avatarUrl: '/images/experts/heo-chan-young.png',
     badgeOrg: 'SNUBH · KSAPS',
     badgeColor: 'bg-[#174ea6] text-white',
+    affiliation: 'SNUBH Plastic Surgery - KSAPS',
     topic: 'Xu hướng mới nhất của phẫu thuật tạo hình thẩm mỹ Hàn Quốc và triển vọng thị trường y học thẩm mỹ Việt Nam',
   },
   {
@@ -400,6 +401,7 @@ export const LEADING_EXPERTS: ExpertSpeaker[] = [
     avatarUrl: '/images/experts/dong-woo-shin.png',
     badgeOrg: 'NAVI PLASTIC',
     badgeColor: 'bg-[#0f5132] text-white',
+    affiliation: 'Navi Plastic Surgery',
     topic: 'Nâng mũi chỉnh sửa: Chiến lược đảm bảo an toàn và nâng cao khả năng tiên lượng kết quả',
   },
   {
@@ -417,6 +419,7 @@ export const LEADING_EXPERTS: ExpertSpeaker[] = [
     avatarUrl: '/images/experts/young-jin-park.png',
     badgeOrg: 'GANGNAM SAMSUNG',
     badgeColor: 'bg-[#b4136d] text-white',
+    affiliation: 'Gangnam Samsung Plastic Surgery',
     topic: 'JAMBER AI trong thực hành lâm sàng: Nâng đỡ động thích ứng với biểu cảm khuôn mặt',
   },
   {
@@ -434,6 +437,7 @@ export const LEADING_EXPERTS: ExpertSpeaker[] = [
     avatarUrl: '/images/experts/park-eun-soo.png',
     badgeOrg: 'SOONCHUNHYANG',
     badgeColor: 'bg-[#002045] text-white',
+    affiliation: 'Bucheon Soonchunhyang University Hospital',
     topic: 'Tính hiệu quả và độ tin cậy của các liệu pháp tái tạo trong trẻ hóa khuôn mặt ít xâm lấn',
   },
   {
@@ -451,24 +455,8 @@ export const LEADING_EXPERTS: ExpertSpeaker[] = [
     avatarUrl: '/images/experts/woo-sung-lee.png',
     badgeOrg: 'ROSE PLASTIC · ROSE LAB',
     badgeColor: 'bg-[#c83271] text-white',
+    affiliation: 'Rose Plastic Surgery - CEO, Rose Lab',
     topic: 'Chất kích thích sinh học PCL và Skin Booster mới trong trẻ hóa da',
-  },
-  {
-    id: 'exp-park-bok-won',
-    name: 'Dr. Park BokWon',
-    roleTitle: 'Viện trưởng Mellow Dermatology Clinic',
-    bioPoints: [
-      'Viện trưởng Viện Da liễu Thẩm mỹ Mellow, Seoul, Hàn Quốc',
-      'Chuyên gia hàng đầu về phác đồ lâm sàng và kỹ thuật tiêm vi điểm chất kích sinh học PDLLA',
-      'Chuyên gia đào tạo kỹ thuật tiêm Juvelook chuẩn y khoa Hàn Quốc',
-      'Báo cáo: Ứng dụng PDLLA đúng cách: Phác đồ lâm sàng Hàn Quốc và chiến lược tiêm thực hành với Juvelook',
-    ],
-    country: 'KR',
-    countryName: 'Hàn Quốc',
-    avatarUrl: '/images/experts/park-bok-won.png',
-    badgeOrg: 'MELLOW DERMATOLOGY',
-    badgeColor: 'bg-[#d97706] text-white',
-    topic: 'Ứng dụng PDLLA đúng cách: Phác đồ lâm sàng Hàn Quốc và chiến lược tiêm thực hành với Juvelook',
   },
   {
     id: 'exp-choi-min-suk',
@@ -485,6 +473,7 @@ export const LEADING_EXPERTS: ExpertSpeaker[] = [
     avatarUrl: '/images/experts/min-seok-choi.png',
     badgeOrg: 'VC PLASTIC',
     badgeColor: 'bg-[#4338ca] text-white',
+    affiliation: 'VC Plastic Surgery Clinic',
     topic: 'EBD trước hay liệu pháp tiêm trước?',
   },
   {
@@ -502,6 +491,7 @@ export const LEADING_EXPERTS: ExpertSpeaker[] = [
     avatarUrl: '/images/experts/jin-mi-choi.png',
     badgeOrg: 'BELIF PLASTIC',
     badgeColor: 'bg-[#0f766e] text-white',
+    affiliation: 'Belif Plastic Surgery',
     topic: 'Vượt ra ngoài Deep Plane Facelift: Xử lý mô dưới SMAS & tái định hình đường nét khuôn mặt',
   },
   {
@@ -519,6 +509,7 @@ export const LEADING_EXPERTS: ExpertSpeaker[] = [
     avatarUrl: '/images/experts/jin-wook-jeong.png',
     badgeOrg: 'DL PLASTIC',
     badgeColor: 'bg-[#1e40af] text-white',
+    affiliation: 'DL Plastic Surgery',
     topic: 'Mô phỏng kỹ thuật số và implant in 3D tùy chỉnh trong nâng mũi người châu Á',
   },
   {
@@ -536,6 +527,7 @@ export const LEADING_EXPERTS: ExpertSpeaker[] = [
     avatarUrl: '/images/experts/jae-ik-choi.png',
     badgeOrg: 'AB PLASTIC',
     badgeColor: 'bg-[#b91c1c] text-white',
+    affiliation: 'AB Plastic Surgery Clinic',
     topic: 'Nâng cơ cổ ở bệnh nhân châu Á: Các lưu ý giải phẫu và chiến lược phẫu thuật',
   },
   {
@@ -552,8 +544,27 @@ export const LEADING_EXPERTS: ExpertSpeaker[] = [
     countryName: 'Hàn Quốc',
     avatarUrl: '/images/experts/lee-kyung-eun.png',
     badgeOrg: 'THE-AN CHEONGDAM',
-    badgeColor: 'bg-[#7c3aed] text-white',
+    badgeColor: 'bg-[#6b21a8] text-white',
+    affiliation: 'The-An Cheongdam Clinic',
     topic: 'Quan điểm hiện đại về kích thích collagen dựa trên PCL',
+  },
+  {
+    id: 'exp-park-bok-won',
+    name: 'Dr. Park BokWon',
+    roleTitle: 'Viện trưởng Mellow Dermatology Clinic',
+    bioPoints: [
+      'Viện trưởng Viện Da liễu Thẩm mỹ Mellow, Seoul, Hàn Quốc',
+      'Chuyên gia hàng đầu về phác đồ lâm sàng và kỹ thuật tiêm vi điểm chất kích sinh học PDLLA',
+      'Chuyên gia đào tạo kỹ thuật tiêm Juvelook chuẩn y khoa Hàn Quốc',
+      'Báo cáo: Ứng dụng PDLLA đúng cách: Phác đồ lâm sàng Hàn Quốc và chiến lược tiêm thực hành với Juvelook',
+    ],
+    country: 'KR',
+    countryName: 'Hàn Quốc',
+    avatarUrl: '/images/experts/park-bok-won.png',
+    badgeOrg: 'MELLOW DERMATOLOGY',
+    badgeColor: 'bg-[#d97706] text-white',
+    affiliation: 'Mellow Dermatology Clinic',
+    topic: 'Ứng dụng PDLLA đúng cách: Phác đồ lâm sàng Hàn Quốc và chiến lược tiêm thực hành với Juvelook',
   },
 ];
 

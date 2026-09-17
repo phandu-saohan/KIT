@@ -2418,6 +2418,32 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                           className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold uppercase focus:border-[#174ea6] outline-none"
                         />
                       </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          Đơn vị công tác / Bệnh viện (Hiển thị chân thẻ):
+                        </label>
+                        <input
+                          type="text"
+                          value={selectedExpert.affiliation || ''}
+                          onChange={(e) => updateExpert(selectedExpert.id, { affiliation: e.target.value })}
+                          placeholder="SNUBH Plastic Surgery - KSAPS / Navi Plastic Surgery..."
+                          className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:border-[#174ea6] outline-none"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          Đề tài báo cáo khoa học (Hiển thị trên thẻ):
+                        </label>
+                        <input
+                          type="text"
+                          value={selectedExpert.topic || ''}
+                          onChange={(e) => updateExpert(selectedExpert.id, { topic: e.target.value })}
+                          placeholder="Nhập tên đề tài báo cáo..."
+                          className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:border-[#174ea6] outline-none"
+                        />
+                      </div>
                     </div>
 
                     {/* Bio Points Manager */}
