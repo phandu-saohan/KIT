@@ -78,7 +78,7 @@ export const PARTNER_LOGOS: Record<string, string> = {
   <polygon points="60,20 63,28 71.5,28 64.5,33.5 67,41.5 60,36.5 53,41.5 55.5,33.5 48.5,28 57,28" fill="#eab308" stroke="#ca8a04" stroke-width="0.8"/>
   <!-- Banner Text -->
   <rect x="30" y="88" width="60" height="15" rx="7.5" fill="#ffffff" opacity="0.95"/>
-  <text x="60" y="99" font-family="'Montserrat', -apple-system, sans-serif" font-weight="900" font-size="9" fill="#991b1b" text-anchor="middle" letter-spacing="1">BV 175</text>
+  <text x="60" y="99" font-family="'Montserrat', -apple-system, sans-serif" font-weight="900" font-size="9" fill="#991b1b" text-anchor="middle" letter-spacing="1">BV 108</text>
 </svg>
 `)}`,
 

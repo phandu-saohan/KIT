@@ -281,7 +281,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
         updatePartner(partnerId, { logoUrl: url });
         if (partnerId === 'ksaps') updateEventDetails({ heroKsapsLogoUrl: url });
         if (partnerId === 'vsaps') updateEventDetails({ heroVsapsLogoUrl: url });
-        if (partnerId === 'bv175') updateEventDetails({ heroBv175LogoUrl: url });
+        if (partnerId === 'bv175' || partnerId === 'bv108') { updateEventDetails({ heroBv108LogoUrl: url, heroBv175LogoUrl: url }); }
         showToast('Đã tải lên và cập nhật logo đối tác thành công!');
       } catch (err: any) {
         alert(err.message || 'Lỗi tải ảnh logo');
@@ -289,7 +289,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
     }
   };
 
-  const handleHeroHostLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>, hostId: 'ksaps' | 'vsaps' | 'bv175') => {
+  const handleHeroHostLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>, hostId: 'ksaps' | 'vsaps' | 'bv175' | 'bv108') => {
     if (e.target.files && e.target.files[0]) {
       try {
         const url = await uploadImageFile(e.target.files[0]);
@@ -366,8 +366,8 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
       'Nhóm Đại Biểu',
       'Họ Và Tên',
       'Chương Trình Tham Dự (Chi Tiết)',
-      'Tham Dự SYM (03/10 BV 175)',
-      'Tham Dự KAT (04/10 ĐH Hồng Bàng)',
+      'Tham Dự Hội nghị BV 108 (17–18/10)',
+      'Tham Dự Live Surgery & B2B (18/10)',
       'Đơn Vị Công Tác / Doanh Nghiệp',
       'Chức Vụ / Học Vị',
       'Chuyên Khoa / Lĩnh Vực',
@@ -376,7 +376,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
       'Email',
       'Tỉnh / Thành Phố',
       'Quốc Gia',
-      'Cấp CME BV 175 (3h tín chỉ - Phí thu tại HT)',
+      'Cấp CME BV 108 (Đào tạo liên tục)',
       'Chủ Đề Quan Tâm',
       'Mục Tiêu Tham Dự',
       'Ghi Chú',
@@ -385,7 +385,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
     const rows = cmsData.registrations.map((r) => {
       const ev = r.selectedEvents && r.selectedEvents.length > 0 ? r.selectedEvents : ['SYM'];
       const detailedEvents = ev
-        .map((c) => (c === 'SYM' ? 'SYM (03/10/2026 - Bệnh viện Quân Y 175)' : c === 'KAT' ? 'KAT (04/10/2026 - ĐH Quốc tế Hồng Bàng)' : c))
+        .map((c) => (c === 'CONGRESS' || c === 'SYM' ? 'Hội nghị (17–18/10/2026 - Bệnh viện Trung ương Quân đội 108, Hà Nội)' : c))
         .join('; ');
       const hasSym = ev.includes('SYM') ? 'Có' : 'Không';
       const hasKat = ev.includes('KAT') ? 'Có' : 'Không';
@@ -992,11 +992,11 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                       </div>
                     </div>
 
-                    {/* Host 3: BV Quân Y 175 */}
+                    {/* Host 3: Bệnh viện Trung ương Quân đội 108 */}
                     <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-3 flex flex-col justify-between">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-black text-[#b91c1c] font-display flex items-center gap-1.5">
-                          <span>Bệnh Viện Quân Y 175</span>
+                          <span>Bệnh viện Trung ương Quân đội 108</span>
                           <span className="text-[10px] text-slate-400">🏥</span>
                         </span>
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-red-100 text-[#b91c1c]">
@@ -1010,7 +1010,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                           {cmsData.eventDetails.heroBv175LogoUrl || cmsData.partners.find(p => p.id === 'bv175')?.logoUrl ? (
                             <img
                               src={cmsData.eventDetails.heroBv175LogoUrl || cmsData.partners.find(p => p.id === 'bv175')?.logoUrl}
-                              alt="BV 175 Logo"
+                              alt="BV 108 Logo"
                               className="w-full h-full object-contain"
                             />
                           ) : (
@@ -1039,9 +1039,9 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                             <button
                               type="button"
                               onClick={() => {
-                                updateEventDetails({ heroBv175LogoUrl: PARTNER_LOGOS.bv175 });
-                                updatePartner('bv175', { logoUrl: PARTNER_LOGOS.bv175 });
-                                showToast('Đã khôi phục logo BV 175 chuẩn!');
+                                updateEventDetails({ heroBv108LogoUrl: PARTNER_LOGOS.bv108, heroBv175LogoUrl: PARTNER_LOGOS.bv108 });
+                                updatePartner('bv108', { logoUrl: PARTNER_LOGOS.bv108 }); updatePartner('bv175', { logoUrl: PARTNER_LOGOS.bv108 });
+                                showToast('Đã khôi phục logo BV 108 chuẩn!');
                               }}
                               className="w-full text-center text-[10.5px] font-bold text-slate-500 hover:text-[#b91c1c] transition-colors cursor-pointer"
                             >
@@ -2368,7 +2368,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
 
                   <div className="p-3.5 rounded-2xl bg-blue-50/80 border border-blue-200 shadow-2xs">
                     <span className="text-[11px] font-bold text-[#174ea6] uppercase tracking-wider block mb-1">
-                      Hội thảo BV 175 (SYM)
+                      Hội nghị BV 108 (Congress)
                     </span>
                     <span className="text-[22px] font-black text-[#174ea6]">
                       {cmsData.registrations.filter((r) => (r.selectedEvents || ['SYM']).includes('SYM')).length}
@@ -2386,7 +2386,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
 
                   <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 shadow-2xs">
                     <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider block mb-1">
-                      Cần cấp CME BV 175
+                      Cần cấp CME BV 108
                     </span>
                     <span className="text-[22px] font-black text-emerald-800">
                       {cmsData.registrations.filter((r) => r.wantsCme || r.cmeNeed === 'yes').length}
@@ -2591,7 +2591,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                                     {events.includes('SYM') && (
                                       <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[#eff4ff] text-[#174ea6] border border-[#d0e1fd] font-bold text-[10.5px] whitespace-nowrap">
                                         <span className="w-1.5 h-1.5 rounded-full bg-[#174ea6] shrink-0"></span>
-                                        <span>SYM: Hội thảo (03/10 BV175)</span>
+                                        <span>Hội nghị BV 108 (17–18/10)</span>
                                       </span>
                                     )}
                                     {events.includes('KAT') && (
@@ -2789,7 +2789,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                               </span>
                             </div>
                             <div>
-                              <span className="text-[10.5px] text-slate-400 block">Chứng nhận CME BV 175</span>
+                              <span className="text-[10.5px] text-slate-400 block">Chứng nhận CME BV 108</span>
                               <span className={`font-bold ${inspectingAttendee.wantsCme || inspectingAttendee.cmeNeed === 'yes' ? 'text-[#c83271]' : 'text-slate-500'}`}>
                                 {inspectingAttendee.wantsCme || inspectingAttendee.cmeNeed === 'yes' ? 'Có yêu cầu cấp' : 'Không'}
                               </span>
@@ -2945,13 +2945,13 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                                     <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-100 text-[#174ea6]">
                                       SYM
                                     </span>
-                                    <span className="text-[11px] font-bold text-[#174ea6]">03/10/2026</span>
+                                    <span className="text-[11px] font-bold text-[#174ea6]">17/10/2026</span>
                                   </div>
                                   <h4 className="text-[12.5px] font-black text-[#002045] leading-snug">
                                     Hội thảo Khoa học Thẩm mỹ Việt–Hàn 2026
                                   </h4>
                                   <p className="text-[10.5px] text-slate-500 mt-1">
-                                    Bệnh viện Quân Y 175 • CME: 3h tín chỉ (Phí thu tại Hội Thảo)
+                                    Bệnh viện Trung ương Quân đội 108, Hà Nội • CME Đào tạo Y khoa liên tục
                                   </p>
                                 </div>
                                 <div
@@ -2981,13 +2981,13 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                                     <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-pink-100 text-[#c83271]">
                                       KAT
                                     </span>
-                                    <span className="text-[11px] font-bold text-[#c83271]">04/10/2026</span>
+                                    <span className="text-[11px] font-bold text-[#c83271]">18/10/2026</span>
                                   </div>
                                   <h4 className="text-[12.5px] font-black text-[#002045] leading-snug">
                                     Hội thảo Kỹ năng Nâng cao K-Beauty
                                   </h4>
                                   <p className="text-[10.5px] text-slate-500 mt-1">
-                                    ĐH Quốc tế Hồng Bàng (HIU) • Kỹ thuật cao
+                                    Bệnh viện TWQĐ 108 • Phẫu thuật thị phạm & B2B
                                   </p>
                                 </div>
                                 <div
@@ -3012,7 +3012,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                               className="w-4 h-4 rounded text-[#174ea6] focus:ring-[#174ea6]"
                             />
                             <span className="text-[12px] font-bold text-slate-800">
-                              Yêu cầu cấp Chứng chỉ Đào tạo Y khoa liên tục (CME: 3h tín chỉ BV 175 - Phí thu tại Hội Thảo)
+                              Yêu cầu cấp Chứng chỉ Đào tạo Y khoa liên tục (CME Bệnh viện Trung ương Quân đội 108, Hà Nội)
                             </span>
                           </label>
                         </div>

@@ -220,7 +220,7 @@ export const MobileQuickNav: React.FC = () => {
             <div className="space-y-2.5">
               {/* Option 1: Hotline Direct Call */}
               <a
-                href="tel:0903000175"
+                href="tel:+821041598777"
                 className="flex items-center justify-between p-3.5 rounded-2xl bg-gradient-to-r from-[#002045] to-[#174ea6] text-white shadow-sm active:scale-[0.98] transition-transform"
               >
                 <div className="flex items-center gap-3">
@@ -232,7 +232,7 @@ export const MobileQuickNav: React.FC = () => {
                       Hotline Trực Tiếp (24/7)
                     </span>
                     <span className="text-[15px] font-black tracking-wide block">
-                      0903 000 175
+                      +82-10-4159-8777
                     </span>
                   </div>
                 </div>
@@ -243,7 +243,7 @@ export const MobileQuickNav: React.FC = () => {
 
               {/* Option 2: Zalo Chat */}
               <a
-                href="https://zalo.me/0903000175"
+                href="https://zalo.me/0903000108"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-between p-3.5 rounded-2xl bg-[#0068ff]/10 border border-[#0068ff]/25 text-[#0052cc] hover:bg-[#0068ff]/15 active:scale-[0.98] transition-all"
@@ -300,7 +300,7 @@ export const MobileQuickNav: React.FC = () => {
                       Địa điểm tổ chức
                     </span>
                     <span className="text-[13px] font-bold text-[#002045] block">
-                      Bệnh viện Quân Y 175, TP.HCM
+                      Bệnh viện Trung ương Quân đội 108, Hà Nội
                     </span>
                   </div>
                 </div>

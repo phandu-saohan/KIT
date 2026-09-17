@@ -95,7 +95,7 @@ export const DEFAULT_FOOTER_CONFIG: FooterConfig = {
   partner2Name: 'Bệnh viện Đại học Quốc gia Seoul (SNUBH)',
   partner2Sub: 'Hợp tác chuyển giao kỹ thuật y khoa',
   contactTitle: 'THÔNG TIN LIÊN HỆ & BAN THƯ KÝ',
-  hotline: '+82-10-4159-8777 / 0903 000 175',
+  hotline: '+82-10-4159-8777',
   email: 'secretary@kbitassociation.com',
   venueName: 'Bệnh viện Trung ương Quân đội 108, Hà Nội',
   copyrightText: '© 2026 KBIT Association & Bệnh viện Trung ương Quân đội 108. Bảo lưu mọi quyền.',

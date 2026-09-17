@@ -647,7 +647,7 @@ export const RegistrationSection: React.FC = () => {
                               CME: 3h tín chỉ (Phí CME sẽ được thu tại Hội Thảo)
                             </span>
                             <span className="text-[11.5px] text-slate-500 mt-0.5 leading-relaxed">
-                              Chứng nhận đào tạo y khoa liên tục do Bệnh viện Quân Y 175 cấp. Đại biểu xuất trình CCHN hoặc văn bằng chuyên môn và hoàn tất lệ phí tại bàn đón tiếp.
+                              Chứng nhận đào tạo y khoa liên tục do Bệnh viện Trung ương Quân đội 108 cấp. Đại biểu xuất trình CCHN hoặc văn bằng chuyên môn theo quy chế tại bàn đón tiếp.
                             </span>
                           </div>
                         </label>
