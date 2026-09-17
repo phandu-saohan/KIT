@@ -329,29 +329,6 @@ export const RegistrationSection: React.FC = () => {
           </p>
         </div>
 
-        {/* Progress Steps Indicator */}
-        <div className="bg-white rounded-2xl border border-[#e2eaf8] p-3.5 sm:p-4 shadow-xs mb-7 max-w-2xl mx-auto">
-          <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
-            <div className="flex items-center gap-2 sm:gap-2.5">
-              <span className="flex size-7 sm:size-8 items-center justify-center rounded-full text-xs font-bold bg-[#002045] text-white shrink-0">
-                1
-              </span>
-              <span className="text-[11.5px] sm:text-[12.5px] font-semibold text-[#002045]">Nhóm tham dự</span>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-2.5">
-              <span className="flex size-7 sm:size-8 items-center justify-center rounded-full text-xs font-bold bg-[#002045] text-white shrink-0">
-                2
-              </span>
-              <span className="text-[11.5px] sm:text-[12.5px] font-semibold text-[#002045]">Thông tin đại biểu</span>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-2.5">
-              <span className="flex size-7 sm:size-8 items-center justify-center rounded-full text-xs font-bold bg-[#c83271] text-white shrink-0">
-                3
-              </span>
-              <span className="text-[11.5px] sm:text-[12.5px] font-semibold text-[#002045]">Xác nhận &amp; Thẻ</span>
-            </div>
-          </div>
-        </div>
 
         {!registeredBadge ? (
           /* FORM + SUMMARY GRID */
