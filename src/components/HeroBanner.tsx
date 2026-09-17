@@ -8,11 +8,11 @@ export const HeroBanner: React.FC = () => {
 
   const ksapsPartner = cmsData.partners.find((p) => p.id === 'ksaps');
   const vsapsPartner = cmsData.partners.find((p) => p.id === 'vsaps');
-  const bv175Partner = cmsData.partners.find((p) => p.id === 'bv175');
+  const bv108Partner = cmsData.partners.find((p) => p.id === 'bv108') || cmsData.partners.find((p) => p.id === 'bv175');
 
   const ksapsLogo = cmsData.eventDetails.heroKsapsLogoUrl || ksapsPartner?.logoUrl;
   const vsapsLogo = cmsData.eventDetails.heroVsapsLogoUrl || vsapsPartner?.logoUrl;
-  const bv175Logo = cmsData.eventDetails.heroBv175LogoUrl || bv175Partner?.logoUrl;
+  const bv108Logo = cmsData.eventDetails.heroBv108LogoUrl || bv108Partner?.logoUrl || cmsData.eventDetails.heroBv175LogoUrl;
 
   return (
     <section
@@ -42,15 +42,15 @@ export const HeroBanner: React.FC = () => {
             <span className="tracking-wider text-[#5f6d82]">ĐỒNG TỔ CHỨC | CO-ORGANIZERS</span>
             <div className="flex items-center gap-2.5 h-7">
               <span className="text-[13px] font-extrabold text-[#2b3a4a] px-3 py-1 rounded-lg bg-white/90 backdrop-blur-md shadow-xs border border-white/80">
-                {cmsData.eventDetails.coOrganizersText || 'KHIDI • KBIT • SNUH'}
+                {cmsData.eventDetails.coOrganizersText || 'BV 108 • KHIDI • SNUBH • KBIT'}
               </span>
             </div>
           </div>
 
-          {/* Center Host Group (KSAPS, VSAPS, BV 175 - Connected to CMS) */}
+          {/* Center Host Group (KSAPS, VSAPS, BV 108 - Connected to CMS) */}
           <div className="flex flex-col gap-1.5 sm:gap-2.5 items-center text-center w-full md:w-auto">
             <span className="tracking-wider text-[#5f6d82] text-[10px] sm:text-[11px] font-bold">
-              CHỦ TRÌ HỘI THẢO | HOST ORGANIZATIONS
+              CHỦ TRÌ &amp; ĐĂNG CAI | HOST ORGANIZATIONS
             </span>
             <div className="flex items-center justify-center gap-2 sm:gap-3 w-full overflow-x-auto no-scrollbar py-0.5">
               {/* Logo 1: KSAPS */}
@@ -65,12 +65,7 @@ export const HeroBanner: React.FC = () => {
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center p-1">
-                    <svg viewBox="0 0 24 24" className="w-6 h-6 sm:w-7 sm:h-7" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" fill="#f0f4ff" />
-                      <path d="M12 4a8 8 0 0 1 8 8c0 4.42-3.58 8-8 8" stroke="#174ea6" strokeWidth="2.2" strokeLinecap="round" />
-                      <path d="M12 6a6 6 0 0 0-6 6c0 3.31 2.69 6 6 6" stroke="#c83271" strokeWidth="2.2" strokeLinecap="round" />
-                      <circle cx="12" cy="12" r="2.5" fill="#174ea6" />
-                    </svg>
+                    <span className="text-xs sm:text-sm font-black text-[#174ea6] tracking-tight">KSAPS</span>
                   </div>
                 )}
               </div>
@@ -92,23 +87,19 @@ export const HeroBanner: React.FC = () => {
                 )}
               </div>
 
-              {/* Logo 3: BV 175 */}
+              {/* Logo 3: BV 108 */}
               <div
                 className="h-11 sm:h-13 w-20 sm:w-26 rounded-xl sm:rounded-2xl bg-white/95 backdrop-blur-md shadow-xs border border-slate-200/90 flex items-center justify-center p-0.5 sm:p-1 overflow-hidden"
               >
-                {bv175Logo ? (
+                {bv108Logo ? (
                   <img
-                    src={bv175Logo}
-                    alt="BV 175 Logo"
+                    src={bv108Logo}
+                    alt="BV 108 Logo"
                     className="w-full h-full object-contain max-h-full"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center p-1">
-                    <svg viewBox="0 0 24 24" className="w-6 h-6 sm:w-7 sm:h-7" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 2l7 3v6c0 5.25-3.5 10.15-7 11-3.5-.85-7-5.75-7-11V5l7-3z" fill="#fef2f2" stroke="#dc2626" strokeWidth="1.6" />
-                      <path d="M12 6v8M8 10h8" stroke="#dc2626" strokeWidth="2.2" strokeLinecap="round" />
-                      <path d="M12 7.5l.6 1.8h1.9l-1.5 1.1.6 1.8-1.6-1.1-1.6 1.1.6-1.8-1.5-1.1h1.9l.6-1.8z" fill="#eab308" />
-                    </svg>
+                    <span className="text-xs sm:text-sm font-black text-[#991b1b] tracking-tight">BV 108</span>
                   </div>
                 )}
               </div>

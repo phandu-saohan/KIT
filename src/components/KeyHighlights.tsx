@@ -7,9 +7,13 @@ import {
   ArrowRight,
   GraduationCap,
   Building2,
-  CheckCircle2,
   X,
   Calendar,
+  Layers,
+  FileText,
+  Activity,
+  Users,
+  Store,
 } from 'lucide-react';
 
 interface KeyHighlightsProps {
@@ -29,32 +33,181 @@ export const KeyHighlights: React.FC<KeyHighlightsProps> = () => {
     >
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* =========================================================================
-            HEADER SECTION (STYLIZED ACCORDING TO OFFICIAL POSTERS)
+            HEADER SECTION (STYLIZED ACCORDING TO OFFICIAL CONGRESS)
            ========================================================================= */}
-        <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14">
+        <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-12">
           {/* Official Organizing Entities Pill */}
           <div className="inline-flex flex-wrap items-center justify-center gap-2 px-4 py-1.5 rounded-full bg-white/95 border border-slate-200/80 shadow-xs text-[11.5px] font-bold text-slate-600 mb-3.5">
             <span className="text-[#174ea6] flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-[#174ea6]" />
-              CHỦ TRÌ: {cmsData.eventDetails.hostsText || 'KSAPS • VSAPS • BV QUÂN Y 175'}
+              CHỦ TRÌ: {cmsData.eventDetails.hostsText || 'KSAPS • VSAPS'}
             </span>
             <span className="text-slate-300">|</span>
             <span className="text-[#c83271] flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-[#c83271]" />
-              ĐỒNG TỔ CHỨC: {cmsData.eventDetails.coOrganizersText || 'KHIDI • KBIT • SNUH'}
+              ĐỒNG TỔ CHỨC: {cmsData.eventDetails.coOrganizersText || 'BV 108 • KHIDI • SNUBH • KBIT'}
             </span>
           </div>
 
           <p className="text-[12px] sm:text-[13px] uppercase font-bold tracking-widest text-slate-500 font-display">
-            HỘI THẢO KHOA HỌC THẨM MỸ VIỆT - HÀN 2026
+            K-BEAUTY MEETS 2026 · HỘI NGHỊ TRỌNG ĐIỂM
           </p>
 
-          <h2 className="text-[32px] sm:text-[44px] font-black text-transparent bg-clip-text bg-gradient-to-r from-[#d81b60] via-[#c83271] to-[#174ea6] mt-1.5 font-display tracking-tight uppercase leading-tight">
-            Gặp Gỡ Chuyên Gia Đầu Ngành
+          <h2 className="text-[30px] sm:text-[42px] font-black text-transparent bg-clip-text bg-gradient-to-r from-[#d81b60] via-[#c83271] to-[#174ea6] mt-1.5 font-display tracking-tight uppercase leading-tight">
+            Hội Nghị Khoa Học Thẩm Mỹ Việt – Hàn 2026
           </h2>
 
           <p className="text-[14px] sm:text-[15.5px] text-slate-600 mt-3 leading-relaxed max-w-2xl mx-auto font-medium">
-            Quy tụ {expertsList.length} Giáo sư, Tiến sĩ, Bác sĩ chuyên khoa đầu ngành phẫu thuật tạo hình và thẩm mỹ từ Hàn Quốc trực tiếp chủ trì, phát biểu và báo cáo các chuyên đề khoa học đột phá.
+            Sự kiện khoa học thẩm mỹ quy mô lớn tại Bệnh viện Trung ương Quân đội 108, quy tụ các chuyên gia và bác sĩ hàng đầu đến từ Việt Nam và Hàn Quốc.
+          </p>
+        </div>
+
+        {/* =========================================================================
+            CONGRESS OVERVIEW STATS (6 METRIC CARDS)
+           ========================================================================= */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-12 sm:mb-16">
+          <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-xs flex flex-col items-center text-center hover:shadow-md hover:border-[#174ea6]/40 transition-all">
+            <span className="text-[26px] sm:text-[30px] font-black text-[#174ea6] font-display">02</span>
+            <span className="text-[11px] font-bold text-slate-600 uppercase mt-0.5">Ngày tổ chức</span>
+            <span className="text-[10px] text-[#c83271] font-bold mt-1">17–18/10/2026</span>
+          </div>
+          <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-xs flex flex-col items-center text-center hover:shadow-md hover:border-[#c83271]/40 transition-all">
+            <span className="text-[26px] sm:text-[30px] font-black text-[#c83271] font-display">≈1.000</span>
+            <span className="text-[11px] font-bold text-slate-600 uppercase mt-0.5">Đại biểu dự kiến</span>
+            <span className="text-[10px] text-slate-500 font-medium mt-1">Bác sĩ & Viện trưởng</span>
+          </div>
+          <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-xs flex flex-col items-center text-center hover:shadow-md hover:border-[#174ea6]/40 transition-all">
+            <span className="text-[26px] sm:text-[30px] font-black text-[#174ea6] font-display">36</span>
+            <span className="text-[11px] font-bold text-slate-600 uppercase mt-0.5">Báo cáo khoa học</span>
+            <span className="text-[10px] text-slate-500 font-medium mt-1">Ngày 1 (Thứ Bảy)</span>
+          </div>
+          <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-xs flex flex-col items-center text-center hover:shadow-md hover:border-[#c83271]/40 transition-all">
+            <span className="text-[26px] sm:text-[30px] font-black text-[#c83271] font-display">15</span>
+            <span className="text-[11px] font-bold text-slate-600 uppercase mt-0.5">Phiên thị phạm</span>
+            <span className="text-[10px] text-slate-500 font-medium mt-1">Phòng mổ & Lâm sàng</span>
+          </div>
+          <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-xs flex flex-col items-center text-center hover:shadow-md hover:border-[#174ea6]/40 transition-all">
+            <span className="text-[26px] sm:text-[30px] font-black text-[#174ea6] font-display">04</span>
+            <span className="text-[11px] font-bold text-slate-600 uppercase mt-0.5">Hội trường song song</span>
+            <span className="text-[10px] text-slate-500 font-medium mt-1">Đa tầng chuyên đề</span>
+          </div>
+          <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-xs flex flex-col items-center text-center hover:shadow-md hover:border-[#c83271]/40 transition-all">
+            <span className="text-[26px] sm:text-[30px] font-black text-[#c83271] font-display">22+</span>
+            <span className="text-[11px] font-bold text-slate-600 uppercase mt-0.5">Doanh nghiệp HQ</span>
+            <span className="text-[10px] text-slate-500 font-medium mt-1">Triển lãm & Giao thương</span>
+          </div>
+        </div>
+
+        {/* =========================================================================
+            4 HALLS OVERVIEW
+           ========================================================================= */}
+        <div className="mb-14 sm:mb-18">
+          <div className="text-center max-w-2xl mx-auto mb-7 sm:mb-9">
+            <span className="text-[11px] uppercase font-bold tracking-widest text-[#c83271] font-display">
+              CẤU TRÚC KHÔNG GIAN HỘI NGHỊ
+            </span>
+            <h3 className="text-[22px] sm:text-[28px] font-black text-[#002045] font-display mt-1">
+              Khám Phá 4 Hội Trường Chuyên Đề Trong Cùng Một Sự Kiện
+            </h3>
+            <p className="text-[12.5px] sm:text-[13.5px] text-slate-600 mt-1.5 leading-relaxed">
+              Sau phiên khai mạc toàn thể, hội nghị được triển khai đồng thời tại 4 hội trường chuyên đề, giúp đại biểu chủ động lựa chọn nội dung phù hợp với lĩnh vực quan tâm.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Hall 1 */}
+            <div className="p-5 rounded-2xl bg-white border border-slate-200/90 hover:border-[#174ea6]/60 shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between group">
+              <div>
+                <span className="inline-block px-2.5 py-0.5 rounded-md bg-[#eff4ff] text-[#174ea6] font-mono text-[11px] font-extrabold uppercase mb-2.5">
+                  Hội trường 1 · Khoa học
+                </span>
+                <h4 className="text-[16px] font-extrabold text-slate-900 font-display mb-2 group-hover:text-[#174ea6] transition-colors">
+                  Phẫu Thuật Thẩm Mỹ
+                </h4>
+                <div className="text-[12px] text-slate-600 leading-relaxed space-y-1.5">
+                  <p><strong className="text-slate-800">Ngày 1:</strong> Báo cáo khoa học Nâng mũi, tạo hình mí mắt, Deep Plane Facelift, phẫu thuật ngực.</p>
+                  <p><strong className="text-slate-800">Ngày 2:</strong> Phẫu thuật trực tiếp từ phòng mổ BV 108 (Nâng mũi & Căng da cổ).</p>
+                </div>
+              </div>
+              <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] font-bold text-[#174ea6] flex items-center gap-1">
+                <span>Lễ khai mạc và bế mạc toàn thể</span>
+              </div>
+            </div>
+
+            {/* Hall 2 */}
+            <div className="p-5 rounded-2xl bg-white border border-slate-200/90 hover:border-[#c83271]/60 shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between group">
+              <div>
+                <span className="inline-block px-2.5 py-0.5 rounded-md bg-[#fff1f5] text-[#c83271] font-mono text-[11px] font-extrabold uppercase mb-2.5">
+                  Hội trường 2 · Khoa học
+                </span>
+                <h4 className="text-[16px] font-extrabold text-slate-900 font-display mb-2 group-hover:text-[#c83271] transition-colors">
+                  Thẩm Mỹ Nội Khoa
+                </h4>
+                <div className="text-[12px] text-slate-600 leading-relaxed space-y-1.5">
+                  <p><strong className="text-slate-800">Ngày 1:</strong> Báo cáo khoa học Filler, PCL collagen, Botulinum Toxin, Căng chỉ vector, Skin Booster Exosome & PDLLA Juvelook.</p>
+                  <p><strong className="text-slate-800">Ngày 2:</strong> Trình diễn lâm sàng trực tiếp kỹ thuật tiêm và chỉ thẩm mỹ.</p>
+                </div>
+              </div>
+              <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] font-bold text-[#c83271] flex items-center gap-1">
+                <span>Trình diễn lâm sàng trực tiếp</span>
+              </div>
+            </div>
+
+            {/* Hall 3 */}
+            <div className="p-5 rounded-2xl bg-white border border-slate-200/90 hover:border-emerald-500/60 shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between group">
+              <div>
+                <span className="inline-block px-2.5 py-0.5 rounded-md bg-[#f0fdf4] text-[#15803d] font-mono text-[11px] font-extrabold uppercase mb-2.5">
+                  Hội trường 3 · Khoa học
+                </span>
+                <h4 className="text-[16px] font-extrabold text-slate-900 font-display mb-2 group-hover:text-[#15803d] transition-colors">
+                  Công Nghệ &amp; Thiết Bị EBD
+                </h4>
+                <div className="text-[12px] text-slate-600 leading-relaxed space-y-1.5">
+                  <p><strong className="text-slate-800">Ngày 1:</strong> Báo cáo khoa học Laser & Pico, RF vi kim, HIFU đa tầng, công nghệ đông huỷ mỡ và tạo hình cơ thể.</p>
+                  <p><strong className="text-slate-800">Ngày 2:</strong> Thị phạm trực tiếp trên hệ thống máy móc thiết bị tiên tiến.</p>
+                </div>
+              </div>
+              <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] font-bold text-[#15803d] flex items-center gap-1">
+                <span>Khu trưng bày thiết bị mở cho đại biểu</span>
+              </div>
+            </div>
+
+            {/* Hall 4 */}
+            <div className="p-5 rounded-2xl bg-white border border-slate-200/90 hover:border-amber-500/60 shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between group">
+              <div>
+                <span className="inline-block px-2.5 py-0.5 rounded-md bg-amber-50 text-amber-800 font-mono text-[11px] font-extrabold uppercase mb-2.5">
+                  Hội trường 4 · Doanh nghiệp
+                </span>
+                <h4 className="text-[16px] font-extrabold text-slate-900 font-display mb-2 group-hover:text-amber-800 transition-colors">
+                  Giới Thiệu Doanh Nghiệp &amp; B2B
+                </h4>
+                <div className="text-[12px] text-slate-600 leading-relaxed space-y-1.5">
+                  <p><strong className="text-slate-800">Xuyên suốt 2 ngày:</strong> Giới thiệu sản phẩm, công nghệ và giải pháp mới (20 phút / doanh nghiệp).</p>
+                  <p><strong className="text-slate-800">Kết nối B2B:</strong> Giao lưu chuyên môn, tìm đối tác phân phối và ký kết thoả thuận hợp tác.</p>
+                </div>
+              </div>
+              <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] font-bold text-amber-700 flex items-center gap-1">
+                <span>Triển lãm diễn ra xuyên suốt 2 ngày</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* =========================================================================
+            SPEAKERS HEADER
+           ========================================================================= */}
+        <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-12">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#eff4ff] text-[#174ea6] text-[11px] uppercase font-bold tracking-wider mb-2">
+            <Sparkles className="w-3.5 h-3.5 text-[#174ea6]" />
+            <span>ĐỘI NGŨ BÁO CÁO VIÊN &amp; CHUYÊN GIA HÀN QUỐC</span>
+          </div>
+
+          <h3 className="text-[26px] sm:text-[36px] font-black text-slate-900 font-display tracking-tight">
+            Gặp Gỡ Các Chuyên Gia Thẩm Mỹ Hàng Đầu
+          </h3>
+
+          <p className="text-[13.5px] sm:text-[15px] text-slate-600 mt-2 leading-relaxed max-w-2xl mx-auto">
+            Hội nghị quy tụ các giáo sư, bác sĩ giàu kinh nghiệm đến từ Hàn Quốc trực tiếp chia sẻ nghiên cứu mới, thị phạm lâm sàng và chuyển giao kỹ thuật chuyên sâu.
           </p>
         </div>
 
@@ -63,13 +216,16 @@ export const KeyHighlights: React.FC<KeyHighlightsProps> = () => {
            ========================================================================= */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {expertsList.map((expert) => {
-            const isKeynote = expert.roleTitle.toLowerCase().includes('mở màn');
+            const isKeynote =
+              expert.roleTitle.toLowerCase().includes('mở màn') ||
+              expert.roleTitle.toLowerCase().includes('chính') ||
+              expert.roleTitle.toLowerCase().includes('ksaps');
 
             return (
               <div
                 key={expert.id}
                 onClick={() => setSelectedExpert(expert)}
-                className="group relative bg-white rounded-2xl sm:rounded-3xl border border-slate-200/90 hover:border-[#c83271]/50 shadow-xs hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-row overflow-hidden cursor-pointer h-[165px] sm:h-[185px]"
+                className="group relative bg-white rounded-2xl sm:rounded-3xl border border-slate-200/90 hover:border-[#c83271]/50 shadow-xs hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-row overflow-hidden cursor-pointer min-h-[175px] sm:min-h-[195px]"
               >
                 {/* Left Vertical Accent Line */}
                 <div
@@ -80,7 +236,7 @@ export const KeyHighlights: React.FC<KeyHighlightsProps> = () => {
                   }`}
                 />
 
-                {/* Speaker Photo Left Column - Reduced height & proportional width */}
+                {/* Speaker Photo Left Column */}
                 <div className="relative w-28 xs:w-32 sm:w-40 md:w-44 shrink-0 bg-gradient-to-b from-slate-100 to-slate-200 overflow-hidden h-full">
                   <img
                     src={expert.avatarUrl}
@@ -100,7 +256,7 @@ export const KeyHighlights: React.FC<KeyHighlightsProps> = () => {
                   <div className="absolute top-2 left-2 z-10">
                     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-white/95 backdrop-blur-md text-slate-800 shadow-xs border border-white/80">
                       <span>🇰🇷</span>
-                      <span className="text-[9px] text-slate-500 font-semibold">HQ</span>
+                      <span className="text-[9px] text-slate-500 font-semibold">KR</span>
                     </span>
                   </div>
 
@@ -140,24 +296,32 @@ export const KeyHighlights: React.FC<KeyHighlightsProps> = () => {
                     </h3>
                   </div>
 
-                  {/* Key Credentials Preview (2 points) */}
-                  <div className="space-y-1 bg-[#f8faff] rounded-xl p-2 border border-slate-100 flex-1 flex flex-col justify-center overflow-hidden">
-                    {expert.bioPoints.slice(0, 2).map((point, i) => (
-                      <div key={i} className="flex items-start gap-1 text-[11px] sm:text-[11.5px] text-slate-600 leading-snug">
-                        <CheckCircle2 className="w-3 h-3 text-[#174ea6] shrink-0 mt-0.5" />
-                        <span className="truncate font-medium">{point}</span>
+                  {/* Key Topic / Bio Preview */}
+                  <div className="bg-[#f8faff] rounded-xl p-2 border border-slate-100 flex-1 flex flex-col justify-center overflow-hidden">
+                    {expert.topic ? (
+                      <p className="text-[11.5px] sm:text-[12px] text-slate-700 font-semibold line-clamp-2 leading-snug">
+                        <span className="text-[#c83271] font-bold">Đề tài: </span>
+                        {expert.topic}
+                      </p>
+                    ) : (
+                      <div className="space-y-1">
+                        {expert.bioPoints.slice(0, 2).map((point, i) => (
+                          <p key={i} className="text-[11px] text-slate-600 truncate">
+                            • {point}
+                          </p>
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </div>
 
                   {/* Action Footer */}
                   <div className="border-t border-slate-100 pt-1.5 flex items-center justify-between text-[11px] font-bold">
                     <span className="text-[10px] sm:text-[10.5px] text-slate-400 font-normal truncate">
-                      {expert.bioPoints.length} công trình
+                      {expert.bioPoints.length} thông tin chuyên môn
                     </span>
 
                     <span className="inline-flex items-center gap-1 text-[#174ea6] group-hover:text-[#c83271] transition-colors font-bold text-[11px] shrink-0">
-                      <span>Xem lý lịch</span>
+                      <span>Chi tiết đề tài</span>
                       <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
                     </span>
                   </div>
@@ -168,7 +332,7 @@ export const KeyHighlights: React.FC<KeyHighlightsProps> = () => {
         </div>
 
         {/* =========================================================================
-            DETAILED BIOGRAPHY POPUP MODAL (HIGH-END SCIENTIFIC DOSSIER)
+            DETAILED BIOGRAPHY POPUP MODAL
            ========================================================================= */}
         {selectedExpert && (
           <div
@@ -232,6 +396,18 @@ export const KeyHighlights: React.FC<KeyHighlightsProps> = () => {
                   </div>
                 </div>
 
+                {/* Topic Banner if available */}
+                {selectedExpert.topic && (
+                  <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-[#eff4ff] to-[#fff5f8] border border-[#d0e1fd]">
+                    <span className="text-[10.5px] font-extrabold text-[#c83271] uppercase tracking-wider block mb-1">
+                      Đề tài báo cáo / Thị phạm tại Hội nghị:
+                    </span>
+                    <p className="text-[13.5px] sm:text-[14.5px] font-bold text-[#002045] leading-snug">
+                      "{selectedExpert.topic}"
+                    </p>
+                  </div>
+                )}
+
                 {/* Biography Section */}
                 <div>
                   <div className="flex items-center justify-between mb-3 sm:mb-4">
@@ -248,9 +424,9 @@ export const KeyHighlights: React.FC<KeyHighlightsProps> = () => {
                         key={index}
                         className="flex items-start gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-slate-50 border border-slate-100 hover:border-slate-200 transition-colors"
                       >
-                        <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                        </div>
+                        <span className="w-5 h-5 rounded-full bg-blue-100 text-[#174ea6] flex items-center justify-center shrink-0 text-[11px] font-bold mt-0.5">
+                          {index + 1}
+                        </span>
                         <span className="text-[12.5px] sm:text-[13.5px] text-slate-700 leading-relaxed font-medium">
                           {point}
                         </span>
@@ -261,9 +437,9 @@ export const KeyHighlights: React.FC<KeyHighlightsProps> = () => {
               </div>
 
               {/* Modal Footer */}
-              <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="border-t border-slate-100 pt-3 sm:pt-4 mt-4 flex items-center justify-between">
                 <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">
-                  Hội Thảo Khoa Học Thẩm Mỹ Việt – Hàn 2026
+                  Hội Nghị Khoa Học Thẩm Mỹ Việt – Hàn 2026 · BV 108
                 </span>
 
                 <div className="flex items-center gap-2 w-full sm:w-auto">

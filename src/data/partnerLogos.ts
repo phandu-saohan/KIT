@@ -1,6 +1,58 @@
 // Default official vector logos encoded as SVG Data URIs for the 6 partner organizations
 
 export const PARTNER_LOGOS: Record<string, string> = {
+  bv108: `data:image/svg+xml;utf8,${encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <defs>
+    <linearGradient id="shield108" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b91c1c"/>
+      <stop offset="60%" stop-color="#dc2626"/>
+      <stop offset="100%" stop-color="#991b1b"/>
+    </linearGradient>
+    <filter id="shadow108" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+  <!-- Outer Shield -->
+  <path d="M60 8 L104 22 C104 68 80 98 60 112 C40 98 16 68 16 22 Z" fill="url(#shield108)" filter="url(#shadow108)" stroke="#ef4444" stroke-width="2"/>
+  <!-- Gold Laurel / Edge highlight -->
+  <path d="M60 14 L98 26 C98 65 76 92 60 104 C44 92 22 65 22 26 Z" fill="none" stroke="#fef08a" stroke-width="1.5" stroke-dasharray="3 2"/>
+  <!-- Medical Red Cross with White Border -->
+  <rect x="52" y="38" width="16" height="42" rx="3" fill="#ffffff"/>
+  <rect x="39" y="51" width="42" height="16" rx="3" fill="#ffffff"/>
+  <rect x="54.5" y="40.5" width="11" height="37" rx="2" fill="#dc2626"/>
+  <rect x="41.5" y="53.5" width="37" height="11" rx="2" fill="#dc2626"/>
+  <!-- Gold National Star -->
+  <polygon points="60,20 63,28 71.5,28 64.5,33.5 67,41.5 60,36.5 53,41.5 55.5,33.5 48.5,28 57,28" fill="#eab308" stroke="#ca8a04" stroke-width="0.8"/>
+  <!-- Banner Text -->
+  <rect x="28" y="88" width="64" height="15" rx="7.5" fill="#ffffff" opacity="0.95"/>
+  <text x="60" y="99" font-family="'Montserrat', -apple-system, sans-serif" font-weight="900" font-size="9" fill="#991b1b" text-anchor="middle" letter-spacing="1">BV 108</text>
+</svg>
+`)}`,
+
+  kbit: `data:image/svg+xml;utf8,${encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <defs>
+    <linearGradient id="kbitNavy" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b1c30"/>
+      <stop offset="100%" stop-color="#152e4d"/>
+    </linearGradient>
+    <linearGradient id="kbitGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+  </defs>
+  <circle cx="60" cy="60" r="54" fill="url(#kbitNavy)" stroke="#e2e8f0" stroke-width="2"/>
+  <!-- Stylized K Wings in Gold -->
+  <path d="M42 34 L42 86 M42 60 L78 34 M55 52 L80 86" fill="none" stroke="url(#kbitGold)" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Small Star Badge -->
+  <circle cx="82" cy="38" r="3.5" fill="#f59e0b"/>
+  <!-- Text Label -->
+  <rect x="30" y="92" width="60" height="13" rx="6.5" fill="#ffffff"/>
+  <text x="60" y="102" font-family="'Montserrat', sans-serif" font-weight="900" font-size="8.5" fill="#0b1c30" text-anchor="middle" letter-spacing="1.5">KBIT</text>
+</svg>
+`)}`,
+
   bv175: `data:image/svg+xml;utf8,${encodeURIComponent(`
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
   <defs>

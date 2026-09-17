@@ -59,10 +59,12 @@ export interface AgendaItem {
   duration: string;
   title: string;
   description: string;
-  session?: 'plenary' | 'session1' | 'session2' | 'break';
+  session?: 'plenary' | 'session1' | 'session2' | 'break' | string;
   isKeynote?: boolean;
   isQA?: boolean;
   speakers?: string[];
+  day?: 1 | 2;
+  hall?: string;
 }
 
 export interface Partner {
@@ -125,6 +127,7 @@ export interface EventDetails {
   heroKsapsLogoUrl?: string;
   heroVsapsLogoUrl?: string;
   heroBv175LogoUrl?: string;
+  heroBv108LogoUrl?: string;
 }
 
 export interface FooterConfig {

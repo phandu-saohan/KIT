@@ -94,6 +94,8 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
   const [adminPasswordInput, setAdminPasswordInput] = useState(cmsData.adminAccount?.password || 'kbit@2026');
   const [showAdminPassword, setShowAdminPassword] = useState(false);
   const [accountUpdatedMsg, setAccountUpdatedMsg] = useState(false);
+  const [showMediaPickerForExpert, setShowMediaPickerForExpert] = useState(false);
+  const [isDraggingPhoto, setIsDraggingPhoto] = useState(false);
   const [editForm, setEditForm] = useState<{
     fullName: string;
     attendeeType: 'doctor' | 'business';
@@ -246,9 +248,26 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
   const handleSpeakerAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>, expertId: string) => {
     if (e.target.files && e.target.files[0]) {
       try {
-        const url = await uploadImageFile(e.target.files[0]);
+        const file = e.target.files[0];
+        const url = await uploadImageFile(file);
         updateExpert(expertId, { avatarUrl: url });
-        showToast('Đã cập nhật ảnh chân dung chuyên gia!');
+        showToast('Đã tải lên và cập nhật ảnh chân dung chuyên gia thành công!');
+      } catch (err: any) {
+        alert(err.message || 'Lỗi tải ảnh');
+      } finally {
+        e.target.value = '';
+      }
+    }
+  };
+
+  const handleSpeakerAvatarDrop = async (e: React.DragEvent<HTMLDivElement>, expertId: string) => {
+    e.preventDefault();
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      try {
+        const file = e.dataTransfer.files[0];
+        const url = await uploadImageFile(file);
+        updateExpert(expertId, { avatarUrl: url });
+        showToast('Đã thả ảnh và cập nhật chân dung chuyên gia thành công!');
       } catch (err: any) {
         alert(err.message || 'Lỗi tải ảnh');
       }
@@ -1437,62 +1456,167 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                 {/* Selected Expert Form */}
                 {selectedExpert && (
                   <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-xs space-y-6">
-                    {/* Top Identity Block with Avatar Uploader */}
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 pb-6 border-b border-slate-100">
-                      <div className="relative group shrink-0">
-                        <img
-                          src={selectedExpert.avatarUrl}
-                          alt={selectedExpert.name}
-                          className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover border-2 border-pink-200 shadow-md"
-                        />
-                        <button
-                          onClick={() => speakerPhotoRef.current?.click()}
-                          className="absolute inset-0 bg-slate-900/60 rounded-2xl text-white opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1 text-[11px] font-bold cursor-pointer"
-                        >
-                          <Upload className="w-4 h-4" />
-                          <span>Đổi ảnh</span>
-                        </button>
-                        <input
-                          type="file"
-                          ref={speakerPhotoRef}
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => handleSpeakerAvatarUpload(e, selectedExpert.id)}
-                        />
-                      </div>
-
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                    {/* Top Identity & Photo Uploader Section */}
+                    <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-slate-50 via-white to-blue-50/30 border border-slate-200/80 space-y-4">
+                      <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-100 pb-3">
+                        <div className="flex items-center gap-2">
+                          <ImageIcon className="w-4 h-4 text-[#c83271]" />
+                          <h4 className="text-[14px] font-bold text-slate-900">
+                            Ảnh Chân Dung Đại Diện — {selectedExpert.name}
+                          </h4>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-pink-100 text-[#c83271]">
                             Chuyên gia #{cmsData.experts.findIndex((e) => e.id === selectedExpert.id) + 1}
                           </span>
-                          {cmsData.experts.length > 1 && (
-                            <button
-                              onClick={() => {
-                                if (window.confirm(`Bạn có chắc chắn muốn xóa chuyên gia ${selectedExpert.name}?`)) {
-                                  deleteExpert(selectedExpert.id);
-                                  setSelectedExpertId(cmsData.experts[0]?.id || null);
-                                  showToast('Đã xóa chuyên gia');
-                                }
-                              }}
-                              className="inline-flex items-center gap-1 text-xs text-rose-600 hover:text-rose-800 font-bold cursor-pointer"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                              <span>Xóa chuyên gia này</span>
-                            </button>
-                          )}
                         </div>
 
-                        <div>
-                          <label className="block text-xs font-bold text-slate-700 mb-1">
-                            URL ảnh đại diện (hoặc bấm vào ảnh để tải file):
-                          </label>
-                          <input
-                            type="text"
-                            value={selectedExpert.avatarUrl}
-                            onChange={(e) => updateExpert(selectedExpert.id, { avatarUrl: e.target.value })}
-                            className="w-full px-3.5 py-1.5 rounded-xl border border-slate-200 text-xs font-mono focus:border-[#174ea6] outline-none"
-                          />
+                        {cmsData.experts.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (window.confirm(`Bạn có chắc chắn muốn xóa chuyên gia ${selectedExpert.name}?`)) {
+                                deleteExpert(selectedExpert.id);
+                                setSelectedExpertId(cmsData.experts[0]?.id || null);
+                                showToast('Đã xóa chuyên gia');
+                              }
+                            }}
+                            className="inline-flex items-center gap-1 text-xs text-rose-600 hover:text-rose-800 font-bold cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Xóa chuyên gia này</span>
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-12 gap-5 items-start">
+                        {/* Photo Preview & Drop Area */}
+                        <div className="sm:col-span-4 lg:col-span-3 flex flex-col items-center gap-2">
+                          <div
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              setIsDraggingPhoto(true);
+                            }}
+                            onDragLeave={() => setIsDraggingPhoto(false)}
+                            onDrop={(e) => {
+                              setIsDraggingPhoto(false);
+                              handleSpeakerAvatarDrop(e, selectedExpert.id);
+                            }}
+                            className={`relative group w-32 h-40 sm:w-36 sm:h-44 rounded-2xl overflow-hidden border-2 transition-all flex flex-col items-center justify-center text-center shadow-md bg-white ${
+                              isDraggingPhoto
+                                ? 'border-[#c83271] scale-105 shadow-xl bg-pink-50/50'
+                                : 'border-slate-200 hover:border-[#174ea6]'
+                            }`}
+                          >
+                            <img
+                              src={selectedExpert.avatarUrl}
+                              alt={selectedExpert.name}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=500&auto=format&fit=crop&q=80';
+                              }}
+                            />
+
+                            {/* Quick overlay click */}
+                            <div
+                              onClick={() => speakerPhotoRef.current?.click()}
+                              className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 text-white p-2 cursor-pointer"
+                            >
+                              <Upload className="w-5 h-5 text-pink-400" />
+                              <span className="text-[11px] font-bold">Bấm để đổi ảnh</span>
+                              <span className="text-[9.5px] text-slate-300">hoặc kéo thả file vào</span>
+                            </div>
+                          </div>
+
+                          <span className="text-[11px] text-slate-400 text-center">
+                            Tỉ lệ 3:4 hoặc 1:1
+                          </span>
+                        </div>
+
+                        {/* Controls & Options */}
+                        <div className="sm:col-span-8 lg:col-span-9 space-y-3">
+                          {/* Main Action Buttons */}
+                          <div className="flex flex-wrap items-center gap-2.5">
+                            {/* Hidden file input with ref */}
+                            <input
+                              type="file"
+                              ref={speakerPhotoRef}
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => handleSpeakerAvatarUpload(e, selectedExpert.id)}
+                            />
+
+                            {/* Prominent Upload Button */}
+                            <button
+                              type="button"
+                              onClick={() => speakerPhotoRef.current?.click()}
+                              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#c83271] to-[#e11d48] hover:from-[#b0225d] hover:to-[#be123c] text-white text-xs font-bold flex items-center gap-2 shadow-sm hover:shadow-md transition-all cursor-pointer"
+                            >
+                              <Upload className="w-4 h-4" />
+                              <span>Tải ảnh từ máy tính (PNG, JPG, WebP)</span>
+                            </button>
+
+                            {/* Choose from Media Library Button */}
+                            <button
+                              type="button"
+                              onClick={() => setShowMediaPickerForExpert(!showMediaPickerForExpert)}
+                              className="px-3.5 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-[#174ea6] border border-slate-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+                            >
+                              <ImageIcon className="w-4 h-4 text-[#174ea6]" />
+                              <span>{showMediaPickerForExpert ? 'Đóng thư viện' : 'Chọn từ thư viện ảnh'}</span>
+                            </button>
+                          </div>
+
+                          {/* URL Input */}
+                          <div>
+                            <label className="block text-[11.5px] font-bold text-slate-700 mb-1">
+                              Đường dẫn URL ảnh hoặc mã Base64:
+                            </label>
+                            <input
+                              type="text"
+                              value={selectedExpert.avatarUrl}
+                              onChange={(e) => updateExpert(selectedExpert.id, { avatarUrl: e.target.value })}
+                              placeholder="https://... hoặc /assets/..."
+                              className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-mono focus:border-[#174ea6] focus:ring-1 focus:ring-[#174ea6] outline-none transition-all"
+                            />
+                          </div>
+
+                          {/* Quick Media Library Picker Grid (Collapsible) */}
+                          {showMediaPickerForExpert && (
+                            <div className="p-3.5 rounded-2xl bg-white border border-blue-200 space-y-2 animate-in fade-in duration-150 shadow-sm">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[11.5px] font-bold text-[#174ea6]">
+                                  Bấm vào ảnh bất kỳ để áp dụng ngay:
+                                </span>
+                                <span className="text-[10.5px] text-slate-400">
+                                  {cmsData.mediaLibrary.length} ảnh trong kho
+                                </span>
+                              </div>
+
+                              <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 max-h-48 overflow-y-auto p-1">
+                                {cmsData.mediaLibrary.map((imgUrl, i) => (
+                                  <button
+                                    key={i}
+                                    type="button"
+                                    onClick={() => {
+                                      updateExpert(selectedExpert.id, { avatarUrl: imgUrl });
+                                      showToast('Đã áp dụng ảnh từ thư viện!');
+                                    }}
+                                    className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all cursor-pointer group ${
+                                      selectedExpert.avatarUrl === imgUrl
+                                        ? 'border-[#c83271] ring-2 ring-[#c83271]/20 scale-95'
+                                        : 'border-slate-200 hover:border-[#174ea6]'
+                                    }`}
+                                  >
+                                    <img src={imgUrl} alt={`media-${i}`} className="w-full h-full object-cover" />
+                                    {selectedExpert.avatarUrl === imgUrl && (
+                                      <div className="absolute inset-0 bg-[#c83271]/40 flex items-center justify-center text-white">
+                                        <Check className="w-4 h-4 stroke-[3]" />
+                                      </div>
+                                    )}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

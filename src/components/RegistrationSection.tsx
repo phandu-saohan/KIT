@@ -31,26 +31,16 @@ interface EventOption {
   iconBg: string;
 }
 
-const EVENT_OPTIONS: EventOption[] = [
+const EVENT_OPTIONS = [
   {
-    id: 'SYM',
-    code: 'SYM',
-    title: 'Hội thảo Khoa học Thẩm mỹ Việt–Hàn 2026',
-    subtitle: 'Trao đổi khoa học · Giải pháp tương lai',
-    date: '03/10/2026',
-    venue: 'Bệnh viện Quân Y 175, TP. Hồ Chí Minh',
-    accentColor: 'border-t-primary',
-    iconBg: 'bg-primary text-white',
-  },
-  {
-    id: 'KAT',
-    code: 'KAT',
-    title: 'Hội thảo Đào tạo Kỹ năng Nâng cao K-Beauty Hàn–Việt 2026',
-    subtitle: 'Nâng cao kỹ thuật · Chuẩn hóa thực hành',
-    date: '04/10/2026',
-    venue: 'Trường Đại học Quốc tế Hồng Bàng, TP. Hồ Chí Minh',
-    accentColor: 'border-t-amber-500',
-    iconBg: 'bg-amber-500 text-slate-900',
+    id: 'CONGRESS',
+    code: 'CONGRESS' as const,
+    title: 'Hội nghị Khoa học Thẩm mỹ Việt – Hàn 2026',
+    subtitle: 'Đại hội Thường niên 2 Ngày • 4 Hội trường Song song',
+    date: '17–18/10/2026',
+    venue: 'Bệnh viện Trung ương Quân đội 108, Hà Nội',
+    accentColor: 'border-t-[#c83271]',
+    iconBg: 'bg-[#c83271] text-white',
   },
 ];
 
@@ -88,14 +78,14 @@ const BUSINESS_GOALS = [
 
 export const RegistrationSection: React.FC = () => {
   const { cmsData, addRegistration } = useCMS();
-  const totalSeats = cmsData.eventDetails.totalSeats || 250;
-  const currentRegistered = (cmsData.eventDetails.initialRegistered || 208) + cmsData.registrations.length - 2;
+  const totalSeats = cmsData.eventDetails.totalSeats || 1000;
+  const currentRegistered = (cmsData.eventDetails.initialRegistered || 820) + cmsData.registrations.length - 2;
   const remainingSeats = Math.max(0, totalSeats - Math.min(totalSeats, currentRegistered));
   const capacityPct = Math.min(100, Math.round(((totalSeats - remainingSeats) / totalSeats) * 100));
 
   const [formData, setFormData] = useState<RegistrationFormData>({
     attendeeType: 'doctor',
-    selectedEvents: ['SYM'],
+    selectedEvents: ['CONGRESS'],
     fullName: '',
     phone: '',
     email: '',
@@ -335,7 +325,7 @@ export const RegistrationSection: React.FC = () => {
             Đăng Ký Tham Dự Hội Thảo 2026
           </h2>
           <p className="mt-2 text-[13px] sm:text-[14.5px] text-slate-600 leading-relaxed">
-            Hội thảo Khoa học Thẩm mỹ Việt – Hàn và chuỗi chương trình liên kết. Vui lòng điền thông tin để nhận thẻ đại biểu và mã QR check-in hội trường.
+            Hội thảo Khoa học Thẩm mỹ Việt – Hàn và chuỗi chương trình liên kết. Vui lòng điền thông tin để nhận thẻ đại biểu tham dự hội thảo.
           </p>
         </div>
 
@@ -984,7 +974,7 @@ export const RegistrationSection: React.FC = () => {
                   ) : (
                     <>
                       <ShieldCheck className="w-5 h-5" />
-                      <span>Xác Nhận &amp; Nhận Mã Vé QR Check-In</span>
+                      <span>Xác Nhận &amp; Nhận Thẻ Đại Biểu</span>
                     </>
                   )}
                 </button>
@@ -1009,15 +999,15 @@ export const RegistrationSection: React.FC = () => {
                     </span>
                     <div className="p-2.5 rounded-xl bg-[#f0f6ff] border border-[#d0e1fd] text-[#002045]">
                       <p className="font-bold text-[12.5px] leading-tight text-[#002045]">
-                        Hội thảo Khoa học Thẩm mỹ Việt–Hàn 2026
+                        Hội nghị Khoa học Thẩm mỹ Việt – Hàn 2026
                       </p>
                       <p className="text-[#c83271] font-semibold text-[11px] mt-1 flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5 shrink-0" />
-                        <span>03/10/2026 • 08:00 – 17:30</span>
+                        <span>17–18/10/2026 • 2 Ngày Toàn Thể</span>
                       </p>
                       <p className="text-slate-500 text-[11px] mt-0.5 flex items-center gap-1.5">
                         <MapPin className="w-3.5 h-3.5 shrink-0" />
-                        <span>Viện CTCH, Bệnh viện Quân Y 175, TP.HCM</span>
+                        <span>Bệnh viện Trung ương Quân đội 108, Hà Nội</span>
                       </p>
                     </div>
                   </div>
@@ -1056,7 +1046,7 @@ export const RegistrationSection: React.FC = () => {
                   <span>Ban Thư Ký Hỗ Trợ</span>
                 </h4>
                 <p className="text-slate-600 text-[11.5px] leading-relaxed">
-                  Hotline / Zalo: <span className="font-bold text-[#002045]">0903 000 175</span><br />
+                  Hotline / Zalo: <span className="font-bold text-[#002045]">+82-10-4159-8777</span><br />
                   Email: <span className="font-semibold text-[#c83271]">secretary@kbitassociation.com</span>
                 </p>
               </div>
@@ -1069,7 +1059,7 @@ export const RegistrationSection: React.FC = () => {
               <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
               <div>
                 <p className="font-bold text-[14px]">Đăng ký tham dự thành công!</p>
-                <p className="text-[12px] text-emerald-800 mt-0.5">Mã vé QR check-in đã được tạo thành công bên dưới.</p>
+                <p className="text-[12px] text-emerald-800 mt-0.5">Thẻ đại biểu của quý khách đã được tạo thành công bên dưới.</p>
               </div>
             </div>
 
@@ -1081,7 +1071,7 @@ export const RegistrationSection: React.FC = () => {
                     VIỆT – HÀN 2026 • THẺ ĐẠI BIỂU
                   </span>
                   <h3 className="text-[17px] sm:text-[19px] font-extrabold font-display text-white mt-0.5">
-                    Hội Thảo Khoa Học Thẩm Mỹ Quốc Tế
+                    Hội Nghị Khoa Học Thẩm Mỹ Việt – Hàn 2026
                   </h3>
                 </div>
                 <span className="px-2.5 py-1 rounded-lg bg-white/15 backdrop-blur-md text-[11px] font-bold text-white font-mono">
@@ -1089,10 +1079,10 @@ export const RegistrationSection: React.FC = () => {
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 py-5 items-center">
-                <div className="sm:col-span-8 flex flex-col gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-5 py-5 items-center">
+                <div className="sm:col-span-8 flex flex-col gap-2.5">
                   <div>
-                    <span className="text-[10px] uppercase text-white/60">Đại biểu:</span>
+                    <span className="text-[10px] uppercase text-white/60 font-medium">Đại biểu:</span>
                     <h2 className="text-[19px] sm:text-[22px] font-bold text-white font-display">
                       {registeredBadge.fullName}
                     </h2>
@@ -1103,8 +1093,8 @@ export const RegistrationSection: React.FC = () => {
                       <span className="font-semibold text-white/95">{registeredBadge.degree}</span>
                     </div>
                     <div>
-                      <span className="text-white/60 block text-[10px] uppercase">Mã đăng ký</span>
-                      <span className="font-mono font-bold text-[#ffb0cd]">{registeredBadge.registrationCode}</span>
+                      <span className="text-white/60 block text-[10px] uppercase">Số điện thoại</span>
+                      <span className="font-mono font-bold text-[#ffb0cd]">{registeredBadge.phone}</span>
                     </div>
                   </div>
                   <div className="text-[12px]">
@@ -1113,25 +1103,28 @@ export const RegistrationSection: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="sm:col-span-4 flex flex-col items-center justify-center bg-white p-3.5 rounded-2xl text-center shadow-inner">
-                  <img src={registeredBadge.qrCodeUrl} alt="QR Code" className="w-24 h-24 object-contain" />
-                  <span className="text-[10px] text-[#002045] font-mono font-bold mt-1">
+                <div className="sm:col-span-4 flex flex-col items-center justify-center bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl text-center shadow-inner">
+                  <div className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center mb-2 text-[#ffb0cd]">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <span className="text-[10px] text-white/70 uppercase tracking-wider font-medium">Mã Đại Biểu</span>
+                  <span className="text-[18px] sm:text-[20px] text-white font-mono font-bold mt-0.5 tracking-wide">
                     {registeredBadge.registrationCode}
                   </span>
-                  <span className="text-[9px] text-gray-500 uppercase">Check-in Cửa Hội Trường</span>
+                  <span className="text-[9px] text-emerald-300 font-medium uppercase mt-1">Đã Xác Nhận Hợp Lệ</span>
                 </div>
               </div>
 
               {registeredBadge.wantsCme && (
                 <div className="mb-3 p-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-[11px] text-pink-100 flex items-center gap-2">
                   <span className="font-bold">CME: 3h tín chỉ:</span>
-                  <span>Phí CME sẽ được thu tại Hội Thảo (Bàn đón tiếp BV Quân Y 175).</span>
+                  <span>Chứng chỉ CME sẽ được cấp theo quy định tại Bệnh viện TWQĐ 108.</span>
                 </div>
               )}
 
               <div className="pt-3 border-t border-white/15 flex items-center justify-between text-[11px] text-white/70">
                 <span>Cấp lúc: {registeredBadge.registeredAt}</span>
-                <span>BV Quân Y 175, TP.HCM</span>
+                <span>BV Trung ương Quân đội 108, Hà Nội</span>
               </div>
             </div>
 
@@ -1147,10 +1140,10 @@ export const RegistrationSection: React.FC = () => {
 
               <a
                 href={`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
-                  'Hội Thảo Khoa Học Thẩm Mỹ Việt – Hàn 2026'
-                )}&dates=20261003T060000Z/20261003T100000Z&details=${encodeURIComponent(
-                  `Mã thẻ đại biểu: ${registeredBadge.registrationCode} - Chương trình: ${registeredBadge.selectedEvents?.join(', ')}`
-                )}&location=${encodeURIComponent('BV Quân y 175, 786 Nguyễn Kiệm, Gò Vấp, TP.HCM')}`}
+                  'Hội Nghị Khoa Học Thẩm Mỹ Việt – Hàn 2026'
+                )}&dates=20261017T010000Z/20261018T100000Z&details=${encodeURIComponent(
+                  `Mã thẻ đại biểu: ${registeredBadge.registrationCode} - Địa điểm: Bệnh viện Trung ương Quân đội 108, Hà Nội`
+                )}&location=${encodeURIComponent('Bệnh viện Trung ương Quân đội 108, Số 1 Trần Hưng Đạo, P. Bạch Đằng, Q. Hai Bà Trưng, Hà Nội')}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-4 py-2.5 rounded-xl bg-[#f0f6ff] text-[#174ea6] border border-[#d0e1fd] text-[12.5px] font-bold hover:bg-[#e4eeff] transition-all flex items-center gap-1.5 cursor-pointer active:scale-[0.98]"

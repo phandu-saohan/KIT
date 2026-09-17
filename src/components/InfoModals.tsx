@@ -43,14 +43,14 @@ export const InfoModals: React.FC<InfoModalsProps> = ({ modalType, onClose }) =>
 
             <div className="p-4 rounded-2xl bg-[#eff4ff] border border-[#dce9ff] text-[13px] text-primary space-y-2.5">
               <p className="font-semibold">
-                Đơn vị cấp: Trung tâm Đào tạo &amp; Chỉ đạo tuyến — Bệnh viện Quân y 175 (Bộ Quốc phòng)
+                Đơn vị cấp: Trung tâm Đào tạo &amp; Chỉ đạo tuyến — Bệnh viện Trung ương Quân đội 108 (Bộ Quốc phòng)
               </p>
               <p className="text-on-surface-variant">
                 Chương trình đào tạo cập nhật kiến thức y khoa liên tục trong phẫu thuật tạo hình và da liễu thẩm mỹ kỹ thuật cao song phương Việt Nam – Hàn Quốc (<strong>CME: 3h tín chỉ</strong>).
               </p>
               <div className="p-3 rounded-xl bg-amber-50 border border-amber-200/80 text-amber-900 text-[12.5px] font-medium flex items-center gap-2">
                 <span className="font-bold text-amber-800 shrink-0">Lệ phí CME:</span>
-                <span><strong>Phí CME sẽ được thu tại Hội Thảo</strong> (thu trực tiếp tại bàn đón tiếp của Bệnh viện Quân Y 175).</span>
+                <span><strong>Phí CME sẽ được thu tại Hội Thảo</strong> (thu trực tiếp tại bàn đón tiếp của Bệnh viện Trung ương Quân đội 108).</span>
               </div>
             </div>
 
@@ -107,7 +107,7 @@ export const InfoModals: React.FC<InfoModalsProps> = ({ modalType, onClose }) =>
             </div>
 
             <p className="text-[13px] text-on-surface-variant">
-              Tầng 2, Viện Chấn thương Chỉnh hình (CTCH) — Bệnh viện Quân y 175. Bố trí tối ưu cho đại biểu trải nghiệm thực tế công nghệ trước hội thảo và trong giờ giải lao Teabreak.
+              Trung tâm Hội nghị — Bệnh viện Trung ương Quân đội 108 (Số 1 Trần Hưng Đạo, Hà Nội). Bố trí 4 Hội trường chuyên đề song song, khu vực kết nối B2B và gian hàng trưng bày công nghệ Hàn Quốc.
             </p>
 
             {/* Visual floor map mock representation */}
@@ -117,7 +117,7 @@ export const InfoModals: React.FC<InfoModalsProps> = ({ modalType, onClose }) =>
               </div>
 
               <div className="p-4 bg-white rounded-xl border border-[#e5eeff] text-center text-xs text-primary font-semibold">
-                KHU VỰC 250 CHỖ NGỒI ĐẠI BIỂU (BÁC SĨ &amp; CHUYÊN GIA)
+                KHU VỰC 1.000 CHỖ NGỒI ĐẠI BIỂU (BÁC SĨ &amp; CHUYÊN GIA)
                 <br />
                 <span className="text-secondary font-normal">
                   (Mỗi ghế trang bị tai nghe phiên dịch AI thời gian thực song song)
@@ -185,7 +185,7 @@ export const InfoModals: React.FC<InfoModalsProps> = ({ modalType, onClose }) =>
               </p>
               <ul className="space-y-2 list-disc pl-5">
                 <li>
-                  Thông tin học vị và đơn vị công tác chỉ sử dụng duy nhất cho mục đích thẩm định đủ điều kiện tham dự hội nghị khoa học và cấp chứng chỉ CME theo quy chế của Bệnh viện Quân y 175.
+                  Thông tin học vị và đơn vị công tác chỉ sử dụng duy nhất cho mục đích thẩm định đủ điều kiện tham dự hội nghị khoa học và cấp chứng chỉ CME theo quy chế của Bệnh viện Trung ương Quân đội 108.
                 </li>
                 <li>
                   Mã số định danh QR Code của từng đại biểu là duy nhất, không chia sẻ cho bên thứ ba cho mục đích thương mại ngoài khuôn khổ hội thảo.

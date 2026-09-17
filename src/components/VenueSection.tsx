@@ -11,13 +11,13 @@ export const VenueSection: React.FC = () => {
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-10">
           <span className="text-[12px] uppercase text-secondary font-bold tracking-widest font-display">
-            ĐỊA ĐIỂM TỔ CHỨC
+            ĐỊA ĐIỂM TỔ CHỨC CHÍNH THỨC
           </span>
-          <h2 className="text-[28px] sm:text-[34px] text-primary font-extrabold mt-1 font-display tracking-tight">
-            Hướng Dẫn Đến Hội Trường BV Quân Y 175
+          <h2 className="text-[26px] sm:text-[34px] text-primary font-extrabold mt-1 font-display tracking-tight">
+            Hướng Dẫn Đến Bệnh Viện TWQĐ 108, Hà Nội
           </h2>
-          <p className="text-[14px] text-on-surface-variant mt-2 leading-relaxed">
-            Trung tâm Hội nghị {eventDetails.venueName} — Cơ sở y tế hiện đại bậc nhất khu vực phía Nam.
+          <p className="text-[13.5px] text-on-surface-variant mt-2 leading-relaxed">
+            Hội nghị diễn ra tại {eventDetails.venueName} — Cơ sở y tế tuyến cuối đặc biệt hàng đầu cả nước với cơ sở vật chất hiện đại bậc nhất.
           </p>
         </div>
 
@@ -51,10 +51,10 @@ export const VenueSection: React.FC = () => {
                 </div>
                 <div>
                   <h4 className="text-[15px] text-primary font-bold font-display">
-                    Bãi đỗ xe ô tô &amp; xe máy:
+                    Bãi đỗ xe ô tô &amp; đón tiếp đại biểu:
                   </h4>
                   <p className="text-[13px] text-on-surface-variant mt-1 leading-relaxed">
-                    Cổng số 1 (786 Nguyễn Kiệm) có khu vực đậu xe ô tô ưu tiên dành riêng cho Đại biểu Hội thảo Thẩm mỹ Việt - Hàn 2026.
+                    Khuôn viên Bệnh viện Trung ương Quân đội 108 (Số 1 Trần Hưng Đạo) có khu vực đón tiếp và bãi đỗ xe ưu tiên dành riêng cho Đại biểu Hội nghị Thẩm mỹ Việt – Hàn 2026.
                   </p>
                 </div>
               </div>
@@ -66,10 +66,10 @@ export const VenueSection: React.FC = () => {
                 </div>
                 <div>
                   <h4 className="text-[15px] text-primary font-bold font-display">
-                    Từ Sân bay Quốc tế Tân Sơn Nhất:
+                    Từ Sân bay Quốc tế Nội Bài:
                   </h4>
                   <p className="text-[13px] text-on-surface-variant mt-1 leading-relaxed">
-                    Chỉ cách sân bay 3.5 km (khoảng 8-10 phút di chuyển bằng taxi), thuận tiện cho các chuyên gia và đại biểu bay từ Hà Nội, Đà Nẵng và Hàn Quốc.
+                    Cách sân bay Nội Bài khoảng 30–35 km (khoảng 35–45 phút di chuyển taxi/ô tô qua cầu Nhật Tân), thuận tiện cho các đoàn chuyên gia Hàn Quốc và đại biểu bay từ TP.HCM, Đà Nẵng.
                   </p>
                 </div>
               </div>
@@ -83,10 +83,10 @@ export const VenueSection: React.FC = () => {
                 </div>
                 <div className="min-w-0">
                   <p className="text-[12.5px] sm:text-[13px] text-primary font-bold font-display truncate">
-                    Hotline Lễ Tân Hội Thảo
+                    Ban Thư Ký KBIT Hỗ Trợ
                   </p>
                   <p className="text-[11.5px] sm:text-[12px] text-on-surface-variant font-medium truncate">
-                    {eventDetails.hotline}
+                    {eventDetails.hotline} • {eventDetails.email}
                   </p>
                 </div>
               </div>
@@ -95,7 +95,7 @@ export const VenueSection: React.FC = () => {
                 href={`tel:${eventDetails.hotline.replace(/\s+/g, '')}`}
                 className="px-3.5 py-2 sm:px-4 sm:py-2 rounded-xl bg-primary text-white text-[12px] font-bold hover:bg-primary-container transition-colors shadow-xs shrink-0 active:scale-95"
               >
-                Gọi Ngay
+                Liên Hệ
               </a>
             </div>
           </div>
