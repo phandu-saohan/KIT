@@ -17,6 +17,36 @@ export const ScientificAgenda: React.FC = () => {
   const [activeDay, setActiveDay] = useState<1 | 2>(1);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedHallFilter, setSelectedHallFilter] = useState<string>('all');
+  const [mobileLayoutMode, setMobileLayoutMode] = useState<'cards' | 'table'>('cards');
+  const [mobileHallFilter, setMobileHallFilter] = useState<'all' | '1' | '2' | '3' | '4'>('all');
+
+  const parseTitle = (rawTitle: string) => {
+    let category = '';
+    let topic = rawTitle;
+    if (rawTitle.includes(':')) {
+      const parts = rawTitle.split(':');
+      category = parts[0].trim();
+      topic = parts.slice(1).join(':').trim();
+    }
+    return { category, topic };
+  };
+
+  const parseBullets = (desc?: string) => {
+    if (!desc) return [];
+    return desc
+      .split(/[•\n]/)
+      .map((b) => b.trim().replace(/^[·•-]\s*/, ''))
+      .filter(Boolean);
+  };
+
+  const getItemForHall = (slotItems: AgendaItem[], hallNum: number): AgendaItem | undefined => {
+    return (
+      slotItems.find((item) => {
+        const h = (item.hall || '').toLowerCase();
+        return h.includes(`hội trường ${hallNum}`) || h.includes(`hall ${hallNum}`);
+      }) || slotItems[hallNum - 1]
+    );
+  };
 
   const handlePrint = () => {
     window.print();
@@ -236,185 +266,423 @@ export const ScientificAgenda: React.FC = () => {
         </div>
 
         {/* =========================================================================
-            VIEW MODE 1: EXACT 100% REPLICA OF THE IMAGE LAYOUT
+            VIEW MODE 1: EXACT 100% REPLICA OF THE IMAGE LAYOUT + MOBILE CARDS
            ========================================================================= */}
         {viewMode === 'grid' && (
-          <div className="rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg bg-white border border-[#e2d5df]">
-            {/* Top Dark Navy Banner matching screenshot */}
-            <div className="bg-[#232a55] text-white py-5 px-4 sm:py-7 text-center">
-              <h3 className="text-[19px] sm:text-[23px] md:text-[25px] font-black uppercase tracking-wider font-display text-white">
-                {activeDay === 1 ? 'NGÀY 1 · THỨ 7, 17.10.2026' : 'NGÀY 2 · CHỦ NHẬT, 18.10.2026'}
-              </h3>
-              <p className="text-[10.5px] sm:text-[12px] font-semibold tracking-[0.22em] text-[#b8c4f5] uppercase mt-1.5">
-                {activeDay === 1 ? 'PHIÊN BÁO CÁO KHOA HỌC' : 'PHIÊN THỊ PHẠM & MỔ TRỰC TIẾP'}
-              </p>
-            </div>
+          <div className="space-y-4">
+            {/* Mobile Controls: Layout Switcher & Hall Filter Bar */}
+            <div className="md:hidden space-y-2.5">
+              {/* 1. Layout Mode Switcher (Cards vs Horizontal Table) */}
+              <div className="flex items-center justify-between gap-1.5 p-1 bg-white rounded-2xl border border-slate-200/90 shadow-2xs">
+                <button
+                  type="button"
+                  onClick={() => setMobileLayoutMode('cards')}
+                  className={`flex-1 py-2 px-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    mobileLayoutMode === 'cards'
+                      ? 'bg-[#174ea6] text-white shadow-xs font-extrabold'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  }`}
+                >
+                  <List className="w-3.5 h-3.5" />
+                  <span>Thẻ theo giờ (Dễ đọc)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMobileLayoutMode('table')}
+                  className={`flex-1 py-2 px-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    mobileLayoutMode === 'table'
+                      ? 'bg-[#174ea6] text-white shadow-xs font-extrabold'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  }`}
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span>Bảng cuộn ngang 4 phòng</span>
+                </button>
+              </div>
 
-            {/* Mobile swipe helper */}
-            <div className="lg:hidden text-center text-[11px] text-slate-500 py-1.5 bg-slate-50 border-b border-[#ebd9e4]">
-              👉 Vuốt ngang để xem chi tiết đầy đủ 4 hội trường
-            </div>
-
-            {/* Master Table with Horizontal Scrolling */}
-            <div className="overflow-x-auto w-full">
-              <table className="w-full min-w-[780px] sm:min-w-[860px] lg:min-w-full border-collapse">
-                {/* Table 5-Column Colored Headers */}
-                <thead>
-                  <tr className="text-white text-center select-none font-display">
-                    {/* Time Header */}
-                    <th className="w-[14%] min-w-[100px] sm:min-w-[110px] bg-[#546197] py-3.5 px-2 text-[12px] sm:text-[13px] font-bold border-r border-white/20 align-middle">
-                      Thời gian
-                    </th>
-
-                    {/* 4 Hall Headers */}
-                    {hallHeaders.map((hall, idx) => (
-                      <th
-                        key={hall.num}
-                        className={`w-[21.5%] min-w-[165px] py-3 px-2 align-middle ${
-                          idx < 3 ? 'border-r border-white/20' : ''
+              {/* 2. Quick Hall Filter Chips on Mobile (active in cards mode) */}
+              {mobileLayoutMode === 'cards' && (
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar pt-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setMobileHallFilter('all')}
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
+                      mobileHallFilter === 'all'
+                        ? 'bg-[#232a55] text-white shadow-xs'
+                        : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    Tất cả 4 phòng
+                  </button>
+                  {hallHeaders.map((h) => {
+                    const numStr = String(h.num) as '1' | '2' | '3' | '4';
+                    const isSelected = mobileHallFilter === numStr;
+                    return (
+                      <button
+                        key={h.num}
+                        type="button"
+                        onClick={() => setMobileHallFilter(numStr)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap shrink-0 transition-all flex items-center gap-1.5 cursor-pointer ${
+                          isSelected
+                            ? 'text-white shadow-xs ring-2 ring-offset-1 ring-slate-400'
+                            : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
                         }`}
-                        style={{ backgroundColor: hall.bg }}
+                        style={{
+                          backgroundColor: isSelected ? h.bg : undefined,
+                        }}
                       >
-                        <div className="text-[12px] sm:text-[13px] font-bold tracking-wide leading-tight">
-                          {hall.title}
+                        <span
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{ backgroundColor: isSelected ? '#ffffff' : h.bg }}
+                        />
+                        <span>HT {h.num}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* MOBILE CARDS VIEW (Displayed on mobile when mobileLayoutMode === 'cards') */}
+            {mobileLayoutMode === 'cards' && (
+              <div className="md:hidden space-y-4">
+                {/* Mobile Top Header Banner */}
+                <div className="bg-[#232a55] text-white py-4 px-4 rounded-2xl text-center shadow-xs">
+                  <h3 className="text-[17px] font-black uppercase tracking-wider font-display text-white">
+                    {activeDay === 1 ? 'NGÀY 1 · THỨ 7, 17.10.2026' : 'NGÀY 2 · CHỦ NHẬT, 18.10.2026'}
+                  </h3>
+                  <p className="text-[10px] font-semibold tracking-[0.2em] text-[#b8c4f5] uppercase mt-1">
+                    {activeDay === 1 ? 'PHIÊN BÁO CÁO KHOA HỌC' : 'PHIÊN THỊ PHẠM & MỔ TRỰC TIẾP'}
+                  </p>
+                </div>
+
+                {timeSlots.map((slot, sIdx) => {
+                  const isSinglePlenary = slot.items.length === 1 && slot.isPlenary;
+                  const singleItem = slot.items[0];
+
+                  if (isSinglePlenary) {
+                    const lowerTitle = singleItem.title.toLowerCase();
+                    const isPinkHighlighted =
+                      lowerTitle.includes('khai mạc') ||
+                      lowerTitle.includes('bài phát biểu chính') ||
+                      lowerTitle.includes('tổng kết') ||
+                      lowerTitle.includes('gala') ||
+                      lowerTitle.includes('bế mạc');
+
+                    return (
+                      <div key={`mob-plenary-${sIdx}`} className="space-y-2">
+                        {/* Time Badge */}
+                        <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-slate-100/90 border border-slate-200 text-slate-800">
+                          <div className="flex items-center gap-1.5 font-mono text-xs font-black text-[#002045]">
+                            <Clock className="w-3.5 h-3.5 text-[#174ea6]" />
+                            <span>{slot.time}</span>
+                          </div>
+                          <span className="text-[10.5px] font-semibold text-slate-500">
+                            {slot.duration}
+                          </span>
                         </div>
-                        <div className="text-[9.5px] sm:text-[10.5px] font-normal uppercase text-white/90 leading-tight mt-0.5">
-                          {hall.sub}
+
+                        {/* Plenary Session Card */}
+                        <div
+                          className={`p-4 rounded-2xl border transition-all ${
+                            isPinkHighlighted
+                              ? 'bg-gradient-to-br from-[#fdf2f7] to-[#fae5ef] border-[#f0c2db] text-slate-900 shadow-xs'
+                              : 'bg-gradient-to-br from-[#f0f4ff] to-[#e5edff] border-[#c2d4f5] text-slate-900 shadow-xs'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2 mb-1.5">
+                            <span
+                              className={`text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                                isPinkHighlighted
+                                  ? 'bg-[#d52b66]/15 text-[#b81d51]'
+                                  : 'bg-blue-100 text-[#174ea6]'
+                              }`}
+                            >
+                              {isPinkHighlighted ? '★ Phiên Toàn Thể Đặc Biệt' : 'Phiên Toàn Thể · Cả 4 Phòng'}
+                            </span>
+                            <span className="text-[10px] font-bold text-slate-500">
+                              Tất cả đại biểu
+                            </span>
+                          </div>
+                          <h4 className="text-[15px] font-black text-slate-900 leading-snug">
+                            {singleItem.title}
+                          </h4>
+                          {singleItem.description && (
+                            <p className="text-[12px] text-slate-600 mt-1.5 leading-relaxed whitespace-pre-line font-normal">
+                              {singleItem.description}
+                            </p>
+                          )}
                         </div>
+                      </div>
+                    );
+                  }
+
+                  // Parallel Sessions
+                  const hallsToRender = [1, 2, 3, 4].filter((num) => {
+                    if (mobileHallFilter === 'all') return true;
+                    return mobileHallFilter === String(num);
+                  });
+
+                  const matchingItems = hallsToRender
+                    .map((num) => ({
+                      hallNum: num,
+                      item: getItemForHall(slot.items, num),
+                      meta: hallHeaders[num - 1],
+                    }))
+                    .filter((entry) => entry.item !== undefined);
+
+                  if (matchingItems.length === 0) return null;
+
+                  return (
+                    <div key={`mob-slot-${sIdx}`} className="space-y-2">
+                      {/* Time Badge */}
+                      <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-slate-100/90 border border-slate-200 text-slate-800">
+                        <div className="flex items-center gap-1.5 font-mono text-xs font-black text-[#002045]">
+                          <Clock className="w-3.5 h-3.5 text-[#174ea6]" />
+                          <span>{slot.time}</span>
+                        </div>
+                        <span className="text-[10.5px] font-semibold text-slate-500">
+                          {slot.duration}
+                        </span>
+                      </div>
+
+                      {/* Cards for Halls in this slot */}
+                      <div className="space-y-2.5">
+                        {matchingItems.map(({ hallNum, item, meta }) => {
+                          if (!item) return null;
+                          const { category, topic } = parseTitle(item.title);
+                          const bullets = parseBullets(item.description);
+
+                          return (
+                            <div
+                              key={`mob-item-${sIdx}-${hallNum}`}
+                              className="rounded-2xl border border-slate-200/90 bg-white overflow-hidden shadow-xs"
+                            >
+                              <div
+                                className="px-3.5 py-2 text-white flex items-center justify-between text-xs"
+                                style={{ backgroundColor: meta.bg }}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span className="font-extrabold uppercase tracking-wider text-[11px]">
+                                    {meta.title}
+                                  </span>
+                                  <span className="opacity-80 text-[10px] font-medium hidden xs:inline">
+                                    • {meta.sub}
+                                  </span>
+                                </div>
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/20">
+                                  HT {hallNum}
+                                </span>
+                              </div>
+
+                              <div className="p-3.5 space-y-2">
+                                <div className="text-[10.5px] font-semibold text-slate-500 xs:hidden">
+                                  {meta.sub}
+                                </div>
+
+                                {category && (
+                                  <div>
+                                    <span className="inline-block text-[10.5px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">
+                                      {category}
+                                    </span>
+                                  </div>
+                                )}
+
+                                <h4 className="text-[14px] font-black text-slate-900 leading-snug">
+                                  {topic}
+                                </h4>
+
+                                {bullets.length > 0 && (
+                                  <div className="space-y-1.5 pt-1.5 border-t border-slate-100">
+                                    {bullets.map((b, bIdx) => (
+                                      <div
+                                        key={bIdx}
+                                        className="text-[12px] text-slate-600 flex items-start gap-2 leading-relaxed"
+                                      >
+                                        <span className="text-[#174ea6] font-bold shrink-0 mt-0.5">▪</span>
+                                        <span>{b}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* MASTER 4-HALL TABLE (Always visible on desktop, or on mobile when 'table' is active) */}
+            <div
+              className={`rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg bg-white border border-[#e2d5df] ${
+                mobileLayoutMode === 'cards' ? 'hidden md:block' : 'block'
+              }`}
+            >
+              {/* Top Dark Navy Banner matching screenshot */}
+              <div className="bg-[#232a55] text-white py-5 px-4 sm:py-7 text-center">
+                <h3 className="text-[19px] sm:text-[23px] md:text-[25px] font-black uppercase tracking-wider font-display text-white">
+                  {activeDay === 1 ? 'NGÀY 1 · THỨ 7, 17.10.2026' : 'NGÀY 2 · CHỦ NHẬT, 18.10.2026'}
+                </h3>
+                <p className="text-[10.5px] sm:text-[12px] font-semibold tracking-[0.22em] text-[#b8c4f5] uppercase mt-1.5">
+                  {activeDay === 1 ? 'PHIÊN BÁO CÁO KHOA HỌC' : 'PHIÊN THỊ PHẠM & MỔ TRỰC TIẾP'}
+                </p>
+              </div>
+
+              {/* Mobile swipe helper */}
+              <div className="lg:hidden text-center text-[11px] text-slate-500 py-1.5 bg-slate-50 border-b border-[#ebd9e4]">
+                👉 Vuốt ngang để xem chi tiết đầy đủ 4 hội trường (Cột thời gian được cố định bên trái)
+              </div>
+
+              {/* Master Table with Horizontal Scrolling */}
+              <div className="overflow-x-auto w-full">
+                <table className="w-full min-w-[780px] sm:min-w-[860px] lg:min-w-full border-collapse">
+                  {/* Table 5-Column Colored Headers */}
+                  <thead>
+                    <tr className="text-white text-center select-none font-display">
+                      {/* Time Header with Sticky Left */}
+                      <th className="w-[14%] min-w-[95px] sm:min-w-[110px] bg-[#546197] py-3.5 px-2 text-[12px] sm:text-[13px] font-bold border-r border-white/20 align-middle sticky left-0 z-20 shadow-[2px_0_6px_-2px_rgba(0,0,0,0.2)]">
+                        Thời gian
                       </th>
-                    ))}
-                  </tr>
-                </thead>
 
-                {/* Table Body */}
-                <tbody className="divide-y divide-[#ebd9e4]">
-                  {timeSlots.map((slot, sIdx) => {
-                    const isSinglePlenary = slot.items.length === 1 && slot.isPlenary;
-                    const singleItem = slot.items[0];
+                      {/* 4 Hall Headers */}
+                      {hallHeaders.map((hall, idx) => (
+                        <th
+                          key={hall.num}
+                          className={`w-[21.5%] min-w-[165px] py-3 px-2 align-middle ${
+                            idx < 3 ? 'border-r border-white/20' : ''
+                          }`}
+                          style={{ backgroundColor: hall.bg }}
+                        >
+                          <div className="text-[12px] sm:text-[13px] font-bold tracking-wide leading-tight">
+                            {hall.title}
+                          </div>
+                          <div className="text-[9.5px] sm:text-[10.5px] font-normal uppercase text-white/90 leading-tight mt-0.5">
+                            {hall.sub}
+                          </div>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
 
-                    if (isSinglePlenary) {
-                      const lowerTitle = singleItem.title.toLowerCase();
-                      // Check for soft pink highlighted plenary rows (Lễ khai mạc, Bài phát biểu chính, Tổng kết, Tiệc Gala, Bế mạc)
-                      const isPinkHighlighted =
-                        lowerTitle.includes('khai mạc') ||
-                        lowerTitle.includes('bài phát biểu chính') ||
-                        lowerTitle.includes('tổng kết') ||
-                        lowerTitle.includes('gala') ||
-                        lowerTitle.includes('bế mạc');
+                  {/* Table Body */}
+                  <tbody className="divide-y divide-[#ebd9e4]">
+                    {timeSlots.map((slot, sIdx) => {
+                      const isSinglePlenary = slot.items.length === 1 && slot.isPlenary;
+                      const singleItem = slot.items[0];
 
-                      const rowBgClass = isPinkHighlighted ? 'bg-[#fcf2f7]' : 'bg-white';
-                      const rowHoverClass = isPinkHighlighted ? 'hover:bg-[#fae8f1]' : 'hover:bg-slate-50/70';
+                      if (isSinglePlenary) {
+                        const lowerTitle = singleItem.title.toLowerCase();
+                        const isPinkHighlighted =
+                          lowerTitle.includes('khai mạc') ||
+                          lowerTitle.includes('bài phát biểu chính') ||
+                          lowerTitle.includes('tổng kết') ||
+                          lowerTitle.includes('gala') ||
+                          lowerTitle.includes('bế mạc');
 
+                        const rowBgClass = isPinkHighlighted ? 'bg-[#fcf2f7]' : 'bg-white';
+                        const rowHoverClass = isPinkHighlighted ? 'hover:bg-[#fae8f1]' : 'hover:bg-slate-50/70';
+
+                        return (
+                          <tr
+                            key={`slot-${sIdx}`}
+                            className={`${rowBgClass} ${rowHoverClass} border-b border-[#ebd9e4] transition-colors`}
+                          >
+                            {/* Time cell with sticky left */}
+                            <td
+                              className={`py-3 sm:py-3.5 px-2 text-center border-r border-[#ebd9e4] align-middle sticky left-0 z-10 shadow-[2px_0_6px_-2px_rgba(0,0,0,0.1)] ${
+                                isPinkHighlighted ? 'bg-[#fcf2f7]' : 'bg-white'
+                              }`}
+                            >
+                              <span className="font-bold text-[11px] sm:text-[12px] text-slate-800 font-mono">
+                                {slot.time}
+                              </span>
+                            </td>
+
+                            {/* Merged 4-Hall Content Cell */}
+                            <td colSpan={4} className="py-3 sm:py-3.5 px-4 text-center align-middle">
+                              <div className="font-bold text-[13px] sm:text-[14px] text-slate-900 leading-tight">
+                                {singleItem.title}
+                              </div>
+                              {singleItem.description && (
+                                <div className="text-[11px] sm:text-[12px] text-slate-600 mt-1 leading-snug font-normal">
+                                  {singleItem.description}
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      }
+
+                      // Parallel 4-Hall Session Row
                       return (
                         <tr
                           key={`slot-${sIdx}`}
-                          className={`${rowBgClass} ${rowHoverClass} border-b border-[#ebd9e4] transition-colors`}
+                          className="bg-white hover:bg-slate-50/60 border-b border-[#ebd9e4] transition-colors"
                         >
-                          {/* Time cell */}
-                          <td className="py-3 sm:py-3.5 px-2 text-center border-r border-[#ebd9e4] align-middle">
+                          {/* Time cell with sticky left */}
+                          <td className="py-4 px-2 text-center border-r border-[#ebd9e4] align-middle sticky left-0 z-10 bg-white shadow-[2px_0_6px_-2px_rgba(0,0,0,0.1)]">
                             <span className="font-bold text-[11px] sm:text-[12px] text-slate-800 font-mono">
                               {slot.time}
                             </span>
                           </td>
 
-                          {/* Merged 4-Hall Content Cell */}
-                          <td colSpan={4} className="py-3 sm:py-3.5 px-4 text-center align-middle">
-                            <div className="font-bold text-[13px] sm:text-[14px] text-slate-900 leading-tight">
-                              {singleItem.title}
-                            </div>
-                            {singleItem.description && (
-                              <div className="text-[11px] sm:text-[12px] text-slate-600 mt-1 leading-snug font-normal">
-                                {singleItem.description}
-                              </div>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    }
+                          {/* 4 Hall Columns */}
+                          {[1, 2, 3, 4].map((hallNum) => {
+                            const cellItem = getItemForHall(slot.items, hallNum);
 
-                    // Parallel 4-Hall Session Row
-                    return (
-                      <tr
-                        key={`slot-${sIdx}`}
-                        className="bg-white hover:bg-slate-50/60 border-b border-[#ebd9e4] transition-colors"
-                      >
-                        {/* Time cell */}
-                        <td className="py-4 px-2 text-center border-r border-[#ebd9e4] align-middle">
-                          <span className="font-bold text-[11px] sm:text-[12px] text-slate-800 font-mono">
-                            {slot.time}
-                          </span>
-                        </td>
+                            if (!cellItem) {
+                              return (
+                                <td
+                                  key={hallNum}
+                                  className={`py-3.5 px-3 text-center align-middle ${
+                                    hallNum < 4 ? 'border-r border-[#ebd9e4]' : ''
+                                  }`}
+                                >
+                                  <span className="text-slate-400 text-xs italic">Nghỉ tự do</span>
+                                </td>
+                              );
+                            }
 
-                        {/* 4 Hall Columns */}
-                        {[1, 2, 3, 4].map((hallNum) => {
-                          const cellItem =
-                            slot.items.find((item) => {
-                              const h = (item.hall || '').toLowerCase();
-                              return h.includes(`hội trường ${hallNum}`) || h.includes(`hall ${hallNum}`);
-                            }) || slot.items[hallNum - 1];
+                            const { category, topic } = parseTitle(cellItem.title);
+                            const bullets = parseBullets(cellItem.description);
 
-                          if (!cellItem) {
                             return (
                               <td
                                 key={hallNum}
-                                className={`py-3.5 px-3 text-center align-middle ${
+                                className={`py-3.5 px-2.5 sm:px-3.5 text-center align-middle ${
                                   hallNum < 4 ? 'border-r border-[#ebd9e4]' : ''
                                 }`}
                               >
-                                <span className="text-slate-400 text-xs italic">Nghỉ tự do</span>
+                                {category && (
+                                  <div className="text-[11px] sm:text-[11.5px] font-medium text-[#5c6d88] mb-0.5">
+                                    {category}
+                                  </div>
+                                )}
+                                <div className="text-[13px] sm:text-[13.5px] font-black text-slate-900 leading-tight mb-1">
+                                  {topic}
+                                </div>
+                                {bullets.length > 0 && (
+                                  <div className="text-[11px] sm:text-[11.5px] text-slate-600 leading-relaxed font-normal space-y-0.5">
+                                    {bullets.map((b, bIdx) => (
+                                      <div key={bIdx}>
+                                        {b.startsWith('·') ? b : `· ${b}`}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
                               </td>
                             );
-                          }
-
-                          // Parse Category (e.g. 'Chuyên đề 1.1') and Topic (e.g. 'Nâng mũi')
-                          let category = '';
-                          let topic = cellItem.title;
-                          if (cellItem.title.includes(':')) {
-                            const parts = cellItem.title.split(':');
-                            category = parts[0].trim();
-                            topic = parts.slice(1).join(':').trim();
-                          }
-
-                          // Parse bullet points
-                          const bullets = cellItem.description
-                            ? cellItem.description
-                                .split(/[•\n]/)
-                                .map((b) => b.trim().replace(/^·\s*/, ''))
-                                .filter(Boolean)
-                            : [];
-
-                          return (
-                            <td
-                              key={hallNum}
-                              className={`py-3.5 px-2.5 sm:px-3.5 text-center align-middle ${
-                                hallNum < 4 ? 'border-r border-[#ebd9e4]' : ''
-                              }`}
-                            >
-                              {category && (
-                                <div className="text-[11px] sm:text-[11.5px] font-medium text-[#5c6d88] mb-0.5">
-                                  {category}
-                                </div>
-                              )}
-                              <div className="text-[13px] sm:text-[13.5px] font-black text-slate-900 leading-tight mb-1">
-                                {topic}
-                              </div>
-                              {bullets.length > 0 && (
-                                <div className="text-[11px] sm:text-[11.5px] text-slate-600 leading-relaxed font-normal space-y-0.5">
-                                  {bullets.map((b, bIdx) => (
-                                    <div key={bIdx}>
-                                      {b.startsWith('·') ? b : `· ${b}`}
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                          })}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
