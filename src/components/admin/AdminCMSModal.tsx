@@ -86,6 +86,8 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
   const [saveToast, setSaveToast] = useState<string | null>(null);
   const [selectedExpertId, setSelectedExpertId] = useState<string | null>(cmsData.experts[0]?.id || null);
   const [editingAgendaId, setEditingAgendaId] = useState<string | null>(null);
+  const [agendaDayFilter, setAgendaDayFilter] = useState<'all' | 1 | 2>('all');
+  const [agendaSearch, setAgendaSearch] = useState('');
   const [registrationSearch, setRegistrationSearch] = useState('');
   const [registrationFilter, setRegistrationFilter] = useState<'all' | 'doctor' | 'business' | 'cme'>('all');
   const [eventFilter, setEventFilter] = useState<'all' | 'SYM' | 'KAT' | 'both'>('all');
@@ -2537,7 +2539,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                       Quản Lý Lịch Trình Hội Thảo Khoa Học
                     </h2>
                     <p className="text-[13px] text-slate-500">
-                      Điều chỉnh các phiên báo cáo, thời gian bắt đầu, thời lượng và tóm tắt học thuật.
+                      Điều chỉnh các phiên báo cáo, thời gian bắt đầu, thời lượng, hội trường và tóm tắt học thuật theo chuẩn KBIT.
                     </p>
                   </div>
 
@@ -2545,11 +2547,13 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                     onClick={() => {
                       const newAgenda: AgendaItem = {
                         id: `item-${Date.now()}`,
-                        time: '16:50 – 17:00',
-                        duration: "10'",
+                        time: '16:30 – 17:00',
+                        duration: "30'",
                         title: 'PHIÊN BÁO CÁO MỚI',
                         description: 'Nội dung tóm tắt chuyên đề khoa học.',
                         session: 'session2',
+                        day: agendaDayFilter === 2 ? 2 : 1,
+                        hall: 'Hội trường 1',
                       };
                       addAgendaItem(newAgenda);
                       setEditingAgendaId(newAgenda.id);
@@ -2562,9 +2566,68 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                   </button>
                 </div>
 
+                {/* Day Filter & Search Controls */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-200/90">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={() => setAgendaDayFilter('all')}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        agendaDayFilter === 'all'
+                          ? 'bg-[#002045] text-white shadow-xs'
+                          : 'bg-white hover:bg-slate-200/80 text-slate-700 border border-slate-200'
+                      }`}
+                    >
+                      Tất cả ({cmsData.agenda.length})
+                    </button>
+                    <button
+                      onClick={() => setAgendaDayFilter(1)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        agendaDayFilter === 1
+                          ? 'bg-[#174ea6] text-white shadow-xs'
+                          : 'bg-white hover:bg-blue-50 text-[#174ea6] border border-slate-200'
+                      }`}
+                    >
+                      Ngày 1 · 17/10 ({cmsData.agenda.filter((a) => a.day === 1).length})
+                    </button>
+                    <button
+                      onClick={() => setAgendaDayFilter(2)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        agendaDayFilter === 2
+                          ? 'bg-[#c83271] text-white shadow-xs'
+                          : 'bg-white hover:bg-pink-50 text-[#c83271] border border-slate-200'
+                      }`}
+                    >
+                      Ngày 2 · 18/10 ({cmsData.agenda.filter((a) => a.day === 2).length})
+                    </button>
+                  </div>
+
+                  <div className="relative">
+                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      placeholder="Tìm theo tên phiên, hội trường..."
+                      value={agendaSearch}
+                      onChange={(e) => setAgendaSearch(e.target.value)}
+                      className="pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 text-xs bg-white w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-[#174ea6]/20"
+                    />
+                  </div>
+                </div>
+
                 {/* Agenda List */}
                 <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xs divide-y divide-slate-100 overflow-hidden">
-                  {cmsData.agenda.map((item, index) => (
+                  {cmsData.agenda
+                    .filter((item) => {
+                      if (agendaDayFilter !== 'all' && item.day !== agendaDayFilter) return false;
+                      if (!agendaSearch.trim()) return true;
+                      const q = agendaSearch.toLowerCase();
+                      return (
+                        item.title.toLowerCase().includes(q) ||
+                        (item.description && item.description.toLowerCase().includes(q)) ||
+                        (item.hall && item.hall.toLowerCase().includes(q)) ||
+                        item.time.toLowerCase().includes(q)
+                      );
+                    })
+                    .map((item, index) => (
                     <div
                       key={item.id}
                       className="p-4 sm:p-5 hover:bg-slate-50/80 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4"
@@ -2576,17 +2639,27 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
 
                         <div className="space-y-1 flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold text-[11px]">
+                            <span className={`px-2 py-0.5 rounded-md font-bold text-[10.5px] ${
+                              item.day === 2
+                                ? 'bg-pink-100 text-[#c83271]'
+                                : 'bg-blue-100 text-[#174ea6]'
+                            }`}>
+                              {item.day === 2 ? 'Ngày 2' : 'Ngày 1'}
+                            </span>
+
+                            <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold text-[11px] font-mono">
                               {item.time} ({item.duration})
                             </span>
-                            {item.isKeynote && (
-                              <span className="px-2 py-0.5 rounded-md bg-pink-100 text-[#c83271] font-bold text-[10.5px]">
-                                ⭐ BÁO CÁO ĐỀ DẪN
+
+                            {item.hall && (
+                              <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold text-[10.5px] border border-slate-200">
+                                {item.hall}
                               </span>
                             )}
-                            {item.isQA && (
-                              <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 font-bold text-[10.5px]">
-                                💬 HỎI ĐÁP Q&amp;A
+
+                            {item.isKeynote && (
+                              <span className="px-2 py-0.5 rounded-md bg-pink-100 text-[#c83271] font-bold text-[10.5px]">
+                                ⭐ KEYNOTE
                               </span>
                             )}
                           </div>
@@ -2594,9 +2667,11 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                           <h3 className="text-[14.5px] font-bold text-slate-900 leading-snug">
                             {item.title}
                           </h3>
-                          <p className="text-xs text-slate-500 line-clamp-2">
-                            {item.description}
-                          </p>
+                          {item.description && (
+                            <p className="text-xs text-slate-500 line-clamp-2">
+                              {item.description}
+                            </p>
+                          )}
                         </div>
                       </div>
 
@@ -2626,7 +2701,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                       {/* Expanded Edit Form */}
                       {editingAgendaId === item.id && (
                         <div className="w-full mt-4 pt-4 border-t border-slate-200/80 bg-slate-50 p-4 rounded-2xl space-y-3">
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                             <div>
                               <label className="block text-[11px] font-bold text-slate-700 mb-1">
                                 Khung giờ:
@@ -2653,6 +2728,20 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
 
                             <div>
                               <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                                Ngày tổ chức:
+                              </label>
+                              <select
+                                value={item.day || 1}
+                                onChange={(e) => updateAgendaItem(item.id, { day: Number(e.target.value) as 1 | 2 })}
+                                className="w-full px-3 py-1.5 rounded-xl border border-slate-200 text-xs bg-white font-bold"
+                              >
+                                <option value={1}>Ngày 1 (17/10/2026)</option>
+                                <option value={2}>Ngày 2 (18/10/2026)</option>
+                              </select>
+                            </div>
+
+                            <div>
+                              <label className="block text-[11px] font-bold text-slate-700 mb-1">
                                 Phân loại phiên:
                               </label>
                               <select
@@ -2661,10 +2750,37 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                                 className="w-full px-3 py-1.5 rounded-xl border border-slate-200 text-xs bg-white"
                               >
                                 <option value="plenary">Khai mạc / Toàn thể</option>
-                                <option value="session1">Phiên 1: Phẫu thuật thẩm mỹ</option>
-                                <option value="break">Nghỉ giải lao / Tea break</option>
-                                <option value="session2">Phiên 2: Thẩm mỹ nội khoa</option>
+                                <option value="session1">Phiên sáng (Khoa học / Thị phạm)</option>
+                                <option value="break">Nghỉ giải lao / Trà / Ăn trưa</option>
+                                <option value="session2">Phiên chiều (Khoa học / Thị phạm)</option>
                               </select>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+                            <div className="sm:col-span-2">
+                              <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                                Hội trường / Địa điểm:
+                              </label>
+                              <input
+                                type="text"
+                                value={item.hall || ''}
+                                onChange={(e) => updateAgendaItem(item.id, { hall: e.target.value })}
+                                placeholder="Hội trường 1, Hội trường 2, Sảnh chính..."
+                                className="w-full px-3 py-1.5 rounded-xl border border-slate-200 text-xs bg-white"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="inline-flex items-center gap-2 cursor-pointer pb-2">
+                                <input
+                                  type="checkbox"
+                                  checked={Boolean(item.isKeynote)}
+                                  onChange={(e) => updateAgendaItem(item.id, { isKeynote: e.target.checked })}
+                                  className="w-4 h-4 rounded text-[#d52b66] border-slate-300"
+                                />
+                                <span className="text-xs font-bold text-slate-800">⭐ Đề dẫn Keynote</span>
+                              </label>
                             </div>
                           </div>
 
@@ -2682,7 +2798,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
 
                           <div>
                             <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                              Tóm tắt nội dung khoa học:
+                              Tóm tắt nội dung khoa học (dùng • để ngắt dòng gạch đầu dòng):
                             </label>
                             <textarea
                               rows={2}

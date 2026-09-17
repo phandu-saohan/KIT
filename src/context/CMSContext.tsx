@@ -8,7 +8,7 @@ import {
   PARTNERS as DEFAULT_PARTNERS,
 } from '../data/symposiumData';
 
-const STORAGE_KEY = 'viet_han_aesthetic_cms_data_v7';
+const STORAGE_KEY = 'viet_han_aesthetic_cms_data_v8';
 
 // Purge all old cache versions immediately to ensure 100% fresh data
 if (typeof window !== 'undefined') {
