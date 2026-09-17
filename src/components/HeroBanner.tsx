@@ -4,16 +4,42 @@ import { useCMS } from '../context/CMSContext';
 
 export const HeroBanner: React.FC = () => {
   const { cmsData } = useCMS();
+  const event = cmsData.eventDetails;
+
+  const heading1 = event.heroHeadingLine1 || 'HỘI NGHỊ';
+  const heading2 = event.heroHeadingLine2 || 'KHOA HỌC THẨM MỸ';
+  const heading3 = event.heroHeadingLine3 || 'VIỆT - HÀN';
+  const headingYear = event.heroHeadingYear || '2026';
+  const venueText = event.heroVenueText || event.venueName || 'Bệnh viện Trung ương Quân đội 108, Hà Nội';
+  const ctaTag = event.heroCtaTag || 'Miễn phí';
+  const ctaText = event.heroCtaText || 'Đăng ký tham dự';
+  const ctaLink = event.heroCtaLink || '#dang-ky-tham-du';
+  const dateText = event.heroDateText || event.dateString || '17-18/10/2026';
+
+  const vsapsLogo = event.heroVsapsLogoUrl || '/images/partners/vsaps-circle.png';
+  const ksapsLogo = event.heroKsapsLogoUrl || '/images/partners/ksaps-circle.png';
+
+  const patronLabel = event.heroPatronLabel || 'Bảo trợ';
+  const patronLogo = event.heroPatronLogoUrl || '/images/partners/mohw.png';
+
+  const orgLabel = event.heroOrgLabel || 'Đơn vị tổ chức';
+  const khidiLogo = event.heroKhidiLogoUrl || '/images/partners/khidi.png';
+  const bv108Logo = event.heroBv108LogoUrl || '/images/partners/bv108.png';
+  const snubhLogo = event.heroSnubhLogoUrl || '/images/partners/snubh.png';
+  const kbitLogo = event.heroKbitLogoUrl || '/images/partners/kbit.png';
+
+  const bannerHeight = event.heroBannerHeight || 500;
+  const bgRightImage = event.bannerImageUrl || '/images/hero-building-right.png';
 
   return (
     <section
       id="hero-banner"
-      className="relative w-full h-[500px] min-h-[500px] max-h-[500px] flex items-center bg-white bg-no-repeat overflow-hidden border-b border-slate-200/60"
+      className="relative w-full flex items-center bg-white bg-no-repeat overflow-hidden border-b border-slate-200/60"
       style={{
-        height: '500px',
-        minHeight: '500px',
-        maxHeight: '500px',
-        backgroundImage: "url('/images/hero-building-right.png'), url('/images/hero-hospital.jpg')",
+        height: `${bannerHeight}px`,
+        minHeight: `${bannerHeight}px`,
+        maxHeight: `${bannerHeight}px`,
+        backgroundImage: `url('${bgRightImage}'), url('/images/hero-hospital.jpg')`,
         backgroundPosition: 'right center, right center',
         backgroundSize: 'contain, cover',
         fontFamily: "'Montserrat', 'Plus Jakarta Sans', sans-serif",
@@ -28,20 +54,23 @@ export const HeroBanner: React.FC = () => {
         }}
       />
 
-      {/* Main Content Container constrained to 500px height */}
-      <div className="relative z-10 w-full max-w-[1360px] mx-auto px-4 sm:px-8 lg:px-14 py-4 sm:py-5 flex flex-col justify-between h-[500px]">
+      {/* Main Content Container constrained to banner height */}
+      <div 
+        className="relative z-10 w-full max-w-[1360px] mx-auto px-4 sm:px-8 lg:px-14 py-4 sm:py-5 flex flex-col justify-between"
+        style={{ height: `${bannerHeight}px` }}
+      >
         {/* TOP: Two Host Logos (VSAPS & KSAPS) - Enlarged & Zero Padding */}
         <div className="flex items-center gap-3.5 sm:gap-4 p-0">
           {/* Logo 1: VSAPS Circular Badge */}
           <img
-            src="/images/partners/vsaps-circle.png"
+            src={vsapsLogo}
             alt="Hội Phẫu thuật Tạo hình Thẩm mỹ Việt Nam (VSAPS)"
             className="w-14 h-14 sm:w-16 sm:h-16 lg:w-18 lg:h-18 object-contain drop-shadow-xs transition-transform hover:scale-105"
           />
 
           {/* Logo 2: KSAPS Circular Badge */}
           <img
-            src="/images/partners/ksaps-circle.png"
+            src={ksapsLogo}
             alt="Hội Phẫu thuật Tạo hình Thẩm mỹ Hàn Quốc (KSAPS)"
             className="w-14 h-14 sm:w-16 sm:h-16 lg:w-18 lg:h-18 object-contain drop-shadow-xs transition-transform hover:scale-105"
           />
@@ -50,30 +79,30 @@ export const HeroBanner: React.FC = () => {
         {/* CENTER: Typography Matching 100% of User Banner */}
         <div className="max-w-2xl lg:max-w-3xl my-auto">
           <h1 className="text-[28px] xs:text-[34px] sm:text-[42px] md:text-[46px] lg:text-[50px] font-black uppercase tracking-tight leading-[1.08] font-display">
-            <span className="block text-[#d7417b]">HỘI NGHỊ</span>
-            <span className="block text-[#d7417b]">KHOA HỌC THẨM MỸ</span>
+            <span className="block text-[#d7417b]">{heading1}</span>
+            <span className="block text-[#d7417b]">{heading2}</span>
             <span className="block text-[#d7417b]">
-              VIỆT - HÀN <span className="text-[#8b46c2]">2026</span>
+              {heading3} <span className="text-[#8b46c2]">{headingYear}</span>
             </span>
           </h1>
 
           <p className="text-[14px] sm:text-[16px] text-slate-600 font-semibold mt-1.5 sm:mt-2 mb-4 sm:mb-5">
-            Bệnh viện Trung ương Quân đội 108, Hà Nội
+            {venueText}
           </p>
 
           {/* ACTION BUTTONS: Register & Date Pill */}
           <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-            {/* CTA 1: Đăng ký tham dự (Crimson/Pink Pill with 'Miễn phí' badge) */}
+            {/* CTA 1: Đăng ký tham dự */}
             <a
-              href="#dang-ky-tham-du"
+              href={ctaLink}
               className="inline-flex items-center gap-3 px-6 sm:px-7 py-2 sm:py-2.5 rounded-full bg-[#d53774] hover:bg-[#c02663] text-white shadow-md hover:shadow-lg transition-all active:scale-[0.98] cursor-pointer group"
             >
               <div className="flex flex-col text-left leading-none">
                 <span className="text-[9px] sm:text-[9.5px] font-semibold text-pink-100 uppercase tracking-wider">
-                  Miễn phí
+                  {ctaTag}
                 </span>
                 <span className="text-[13.5px] sm:text-[15px] font-black text-white mt-0.5 tracking-tight">
-                  Đăng ký tham dự
+                  {ctaText}
                 </span>
               </div>
               <ArrowRight className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-white group-hover:translate-x-1 transition-transform stroke-[2.5]" />
@@ -83,7 +112,7 @@ export const HeroBanner: React.FC = () => {
             <div className="inline-flex items-center gap-2 px-5 sm:px-6 py-2 sm:py-2.5 rounded-full bg-white border-2 border-[#d53774] text-[#d53774] shadow-xs">
               <Calendar className="w-4 h-4 text-[#d53774] shrink-0" />
               <span className="text-[13.5px] sm:text-[15px] font-black tracking-tight">
-                17-18/10/2026
+                {dateText}
               </span>
             </div>
           </div>
@@ -94,11 +123,11 @@ export const HeroBanner: React.FC = () => {
           {/* Column 1: Bảo trợ (MOHW Korea) */}
           <div className="flex flex-col gap-1">
             <span className="text-[10.5px] sm:text-[11px] font-medium text-slate-500">
-              Bảo trợ
+              {patronLabel}
             </span>
             <div className="flex items-center h-6 sm:h-7">
               <img
-                src="/images/partners/mohw.png"
+                src={patronLogo}
                 alt="Bộ Y tế & Phúc lợi Hàn Quốc (보건복지부)"
                 className="h-full object-contain"
               />
@@ -108,33 +137,33 @@ export const HeroBanner: React.FC = () => {
           {/* Column 2: Đơn vị tổ chức (KHIDI, BV 108, SNUBH, KBIT) */}
           <div className="flex flex-col gap-1">
             <span className="text-[10.5px] sm:text-[11px] font-medium text-slate-500">
-              Đơn vị tổ chức
+              {orgLabel}
             </span>
             <div className="flex items-center gap-3 sm:gap-4 md:gap-5 h-6 sm:h-7">
               {/* KHIDI */}
               <img
-                src="/images/partners/khidi.png"
+                src={khidiLogo}
                 alt="Viện KHIDI Hàn Quốc"
                 className="h-full object-contain max-w-[65px] sm:max-w-[75px]"
               />
 
               {/* BV 108 */}
               <img
-                src="/images/partners/bv108.png"
+                src={bv108Logo}
                 alt="Bệnh viện Trung ương Quân đội 108"
                 className="h-full object-contain max-w-[28px] sm:max-w-[32px]"
               />
 
               {/* SNUBH */}
               <img
-                src="/images/partners/snubh.png"
+                src={snubhLogo}
                 alt="Bệnh viện Bundang ĐHQG Seoul (SNUBH)"
                 className="h-full object-contain max-w-[70px] sm:max-w-[80px]"
               />
 
               {/* KBIT */}
               <img
-                src="/images/partners/kbit.png"
+                src={kbitLogo}
                 alt="Hiệp hội KBIT"
                 className="h-full object-contain max-w-[60px] sm:max-w-[70px]"
               />

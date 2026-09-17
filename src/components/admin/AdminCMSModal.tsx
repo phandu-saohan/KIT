@@ -135,6 +135,10 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
   const ksapsHeroFileRef = useRef<HTMLInputElement>(null);
   const vsapsHeroFileRef = useRef<HTMLInputElement>(null);
   const bv175HeroFileRef = useRef<HTMLInputElement>(null);
+  const mohwPatronFileRef = useRef<HTMLInputElement>(null);
+  const khidiHeroFileRef = useRef<HTMLInputElement>(null);
+  const snubhHeroFileRef = useRef<HTMLInputElement>(null);
+  const kbitHeroFileRef = useRef<HTMLInputElement>(null);
 
   const handleStartEditAttendee = (attendee: AttendeeBadge) => {
     setEditingAttendee(attendee);
@@ -285,6 +289,20 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
         showToast('Đã tải lên và cập nhật logo đối tác thành công!');
       } catch (err: any) {
         alert(err.message || 'Lỗi tải ảnh logo');
+      }
+    }
+  };
+
+  const handleHeroSponsorUpload = async (e: React.ChangeEvent<HTMLInputElement>, fieldKey: keyof typeof cmsData.eventDetails) => {
+    if (e.target.files && e.target.files[0]) {
+      try {
+        const url = await uploadImageFile(e.target.files[0]);
+        updateEventDetails({ [fieldKey]: url });
+        showToast('Đã tải lên & áp dụng logo mới cho Hero Banner!');
+      } catch (err: any) {
+        alert(err.message || 'Lỗi tải ảnh logo');
+      } finally {
+        e.target.value = '';
       }
     }
   };
@@ -719,25 +737,257 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                ========================================================================= */}
             {activeAdminTab === 'general' && (
               <div className="max-w-4xl space-y-6">
-                <div>
-                  <h2 className="text-[20px] font-black text-slate-900">
-                    Cài Đặt Chung &amp; Hình Nền Hero
-                  </h2>
-                  <p className="text-[13px] text-slate-500">
-                    Quản lý toàn bộ thông điệp chính, thời gian, địa điểm và hình ảnh nhận diện của sự kiện.
-                  </p>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div>
+                    <h2 className="text-[20px] font-black text-slate-900 flex items-center gap-2">
+                      <Sparkles className="w-5 h-5 text-[#d53774]" />
+                      <span>Cài Đặt Toàn Diện Hero Banner &amp; Nhận Diện Sự Kiện</span>
+                    </h2>
+                    <p className="text-[13px] text-slate-500">
+                      Tùy chỉnh toàn bộ nội dung, chiều cao, hình ảnh, các logo và nút bấm của Hero Banner ngay tại đây với xem trước trực quan.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-600">Chiều cao Banner:</span>
+                    <div className="flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
+                      <input
+                        type="number"
+                        min="380"
+                        max="800"
+                        step="10"
+                        value={cmsData.eventDetails.heroBannerHeight || 500}
+                        onChange={(e) => updateEventDetails({ heroBannerHeight: Number(e.target.value) || 500 })}
+                        className="w-16 text-center font-bold text-[#d53774] text-xs bg-transparent outline-none"
+                      />
+                      <span className="text-[11px] font-bold text-slate-400">px</span>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Banner Hero Image Section */}
+                {/* 1. INTERACTIVE LIVE PREVIEW BOX */}
+                <div className="p-4 sm:p-5 rounded-3xl bg-slate-900 text-white shadow-md border border-slate-800 space-y-3">
+                  <div className="flex items-center justify-between text-xs border-b border-slate-800 pb-2">
+                    <span className="font-bold text-pink-400 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                      Xem trước trực tiếp (Live Preview Hero Banner)
+                    </span>
+                    <span className="text-slate-400 text-[11px]">
+                      Chiều cao: {cmsData.eventDetails.heroBannerHeight || 500}px (Tỉ lệ co giãn thông minh)
+                    </span>
+                  </div>
+
+                  {/* Mini Canvas Simulation */}
+                  <div 
+                    className="relative w-full rounded-2xl overflow-hidden bg-white text-slate-900 border border-slate-700/60 flex flex-col justify-between p-4 sm:p-6"
+                    style={{
+                      minHeight: '260px',
+                      backgroundImage: `url('${cmsData.eventDetails.bannerImageUrl || '/images/hero-building-right.png'}'), url('/images/hero-hospital.jpg')`,
+                      backgroundPosition: 'right center, right center',
+                      backgroundSize: 'contain, cover',
+                      backgroundRepeat: 'no-repeat',
+                    }}
+                  >
+                    <div
+                      className="absolute inset-0 pointer-events-none"
+                      style={{
+                        background: 'linear-gradient(90deg, #ffffff 0%, #ffffff 42%, rgba(255,255,255,0.95) 54%, rgba(255,255,255,0.35) 75%, rgba(255,255,255,0) 100%)',
+                      }}
+                    />
+
+                    {/* Top Logos Preview */}
+                    <div className="relative z-10 flex items-center gap-2.5">
+                      <img
+                        src={cmsData.eventDetails.heroVsapsLogoUrl || '/images/partners/vsaps-circle.png'}
+                        alt="VSAPS"
+                        className="w-10 h-10 object-contain drop-shadow-xs"
+                      />
+                      <img
+                        src={cmsData.eventDetails.heroKsapsLogoUrl || '/images/partners/ksaps-circle.png'}
+                        alt="KSAPS"
+                        className="w-10 h-10 object-contain drop-shadow-xs"
+                      />
+                    </div>
+
+                    {/* Center Typography Preview */}
+                    <div className="relative z-10 max-w-md my-2">
+                      <h4 className="text-base sm:text-xl font-black uppercase leading-tight text-[#d7417b]">
+                        <span>{cmsData.eventDetails.heroHeadingLine1 || 'HỘI NGHỊ'} </span>
+                        <span>{cmsData.eventDetails.heroHeadingLine2 || 'KHOA HỌC THẨM MỸ'} </span>
+                        <span>{cmsData.eventDetails.heroHeadingLine3 || 'VIỆT - HÀN'} </span>
+                        <span className="text-[#8b46c2]">{cmsData.eventDetails.heroHeadingYear || '2026'}</span>
+                      </h4>
+                      <p className="text-[11px] text-slate-600 font-semibold mt-1">
+                        {cmsData.eventDetails.heroVenueText || cmsData.eventDetails.venueName || 'Bệnh viện Trung ương Quân đội 108, Hà Nội'}
+                      </p>
+
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#d53774] text-white text-[10px] font-black shadow-xs">
+                          {cmsData.eventDetails.heroCtaTag || 'Miễn phí'} • {cmsData.eventDetails.heroCtaText || 'Đăng ký tham dự'}
+                        </span>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full border border-[#d53774] text-[#d53774] text-[10px] font-bold">
+                          {cmsData.eventDetails.heroDateText || cmsData.eventDetails.dateString || '17-18/10/2026'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Bottom Logos Preview */}
+                    <div className="relative z-10 flex items-center gap-4 pt-2 border-t border-slate-200/80">
+                      <div className="flex flex-col">
+                        <span className="text-[8px] text-slate-400 font-medium">{cmsData.eventDetails.heroPatronLabel || 'Bảo trợ'}</span>
+                        <img
+                          src={cmsData.eventDetails.heroPatronLogoUrl || '/images/partners/mohw.png'}
+                          alt="Patron"
+                          className="h-4 object-contain mt-0.5"
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[8px] text-slate-400 font-medium">{cmsData.eventDetails.heroOrgLabel || 'Đơn vị tổ chức'}</span>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <img src={cmsData.eventDetails.heroKhidiLogoUrl || '/images/partners/khidi.png'} alt="KHIDI" className="h-4 object-contain" />
+                          <img src={cmsData.eventDetails.heroBv108LogoUrl || '/images/partners/bv108.png'} alt="BV 108" className="h-4 object-contain" />
+                          <img src={cmsData.eventDetails.heroSnubhLogoUrl || '/images/partners/snubh.png'} alt="SNUBH" className="h-4 object-contain" />
+                          <img src={cmsData.eventDetails.heroKbitLogoUrl || '/images/partners/kbit.png'} alt="KBIT" className="h-4 object-contain" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. CHỈNH SỬA TIÊU ĐỀ, SLOGAN & NÚT BẤM (TYPOGRAPHY & CTAS) */}
+                <div className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/90 shadow-xs space-y-4">
+                  <h3 className="text-[15px] font-bold text-slate-900 border-b border-slate-100 pb-2 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-[#d53774]" />
+                    <span>Nội Dung Tiêu Đề 3 Dòng, Năm &amp; Nút Hành Động Hero</span>
+                  </h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Dòng 1 (HỒNG ĐẬM):
+                      </label>
+                      <input
+                        type="text"
+                        value={cmsData.eventDetails.heroHeadingLine1 || ''}
+                        onChange={(e) => updateEventDetails({ heroHeadingLine1: e.target.value })}
+                        placeholder="HỘI NGHỊ"
+                        className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold text-[#d53774] focus:border-[#d53774] outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Dòng 2 (HỒNG ĐẬM):
+                      </label>
+                      <input
+                        type="text"
+                        value={cmsData.eventDetails.heroHeadingLine2 || ''}
+                        onChange={(e) => updateEventDetails({ heroHeadingLine2: e.target.value })}
+                        placeholder="KHOA HỌC THẨM MỸ"
+                        className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold text-[#d53774] focus:border-[#d53774] outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Dòng 3 (HỒNG) &amp; Năm (TÍM):
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="text"
+                          value={cmsData.eventDetails.heroHeadingLine3 || ''}
+                          onChange={(e) => updateEventDetails({ heroHeadingLine3: e.target.value })}
+                          placeholder="VIỆT - HÀN"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-[#d53774] focus:border-[#d53774] outline-none"
+                        />
+                        <input
+                          type="text"
+                          value={cmsData.eventDetails.heroHeadingYear || ''}
+                          onChange={(e) => updateEventDetails({ heroHeadingYear: e.target.value })}
+                          placeholder="2026"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-[#8b46c2] focus:border-[#8b46c2] outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="sm:col-span-3">
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Dòng địa điểm / Bệnh viện dưới tiêu đề:
+                      </label>
+                      <input
+                        type="text"
+                        value={cmsData.eventDetails.heroVenueText || ''}
+                        onChange={(e) => updateEventDetails({ heroVenueText: e.target.value })}
+                        placeholder="Bệnh viện Trung ương Quân đội 108, Hà Nội"
+                        className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:border-[#174ea6] outline-none"
+                      />
+                    </div>
+
+                    {/* Action buttons controls */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Thẻ nhỏ trên nút CTA (VD: Miễn phí):
+                      </label>
+                      <input
+                        type="text"
+                        value={cmsData.eventDetails.heroCtaTag || ''}
+                        onChange={(e) => updateEventDetails({ heroCtaTag: e.target.value })}
+                        placeholder="Miễn phí"
+                        className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:border-[#174ea6] outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Chữ nút Đăng ký tham dự:
+                      </label>
+                      <input
+                        type="text"
+                        value={cmsData.eventDetails.heroCtaText || ''}
+                        onChange={(e) => updateEventDetails({ heroCtaText: e.target.value })}
+                        placeholder="Đăng ký tham dự"
+                        className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:border-[#174ea6] outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Liên kết nút CTA (Anchor / URL):
+                      </label>
+                      <input
+                        type="text"
+                        value={cmsData.eventDetails.heroCtaLink || ''}
+                        onChange={(e) => updateEventDetails({ heroCtaLink: e.target.value })}
+                        placeholder="#dang-ky-tham-du"
+                        className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-mono focus:border-[#174ea6] outline-none"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-3">
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Chữ hiển thị ô Ngày tháng (Pill Date):
+                      </label>
+                      <input
+                        type="text"
+                        value={cmsData.eventDetails.heroDateText || ''}
+                        onChange={(e) => updateEventDetails({ heroDateText: e.target.value })}
+                        placeholder="17-18/10/2026"
+                        className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold text-[#d53774] focus:border-[#d53774] outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. HÌNH NỀN HERO BANNER PHẢI (BUILDING & HOSPITAL) */}
                 <div className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/90 shadow-xs space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-[15px] font-bold text-slate-900 flex items-center gap-2">
                         <ImageIcon className="w-4 h-4 text-[#c83271]" />
-                        <span>Hình nền Hero Banner chính (BG.png)</span>
+                        <span>Hình Nền Tòa Nhà Hero Banner (Bên Phải)</span>
                       </h3>
                       <p className="text-xs text-slate-500 mt-0.5">
-                        Hình nền phía trên cùng website (hiển thị bệnh viện, skyline và gương mặt thẩm mỹ).
+                        Tải ảnh tòa nhà / bệnh viện mới (PNG trong suốt hoặc JPG sắc nét) để hiển thị bên phải banner.
                       </p>
                     </div>
 
@@ -759,21 +1009,13 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                     </div>
                   </div>
 
-                  {/* Banner Preview & URL Input */}
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center pt-2">
-                    <div className="md:col-span-4 aspect-video rounded-2xl border border-slate-200 overflow-hidden bg-slate-100 relative group shadow-2xs">
+                    <div className="md:col-span-4 aspect-video rounded-2xl border border-slate-200 overflow-hidden bg-slate-100 relative group shadow-2xs flex items-center justify-center p-2">
                       <img
-                        src={cmsData.eventDetails.bannerImageUrl}
-                        alt="Hero Banner Preview"
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          // fallback preview if path is local
-                          (e.target as HTMLImageElement).src = '/BG.png';
-                        }}
+                        src={cmsData.eventDetails.bannerImageUrl || '/images/hero-building-right.png'}
+                        alt="Hero Banner Building Preview"
+                        className="w-full h-full object-contain"
                       />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold">
-                        Đang sử dụng
-                      </div>
                     </div>
 
                     <div className="md:col-span-8 space-y-3">
@@ -785,20 +1027,20 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                           type="text"
                           value={cmsData.eventDetails.bannerImageUrl}
                           onChange={(e) => updateEventDetails({ bannerImageUrl: e.target.value })}
-                          placeholder="/BG.png hoặc https://..."
-                          className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-mono focus:border-[#174ea6] focus:ring-1 focus:ring-[#174ea6] outline-none"
+                          placeholder="/images/hero-building-right.png hoặc https://..."
+                          className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-mono focus:border-[#174ea6] outline-none"
                         />
                       </div>
 
-                      {/* Quick preset selector */}
                       <div>
                         <label className="block text-[11px] font-bold text-slate-500 mb-1.5">
-                          Hoặc chọn nhanh từ các preset có sẵn:
+                          Preset nhanh:
                         </label>
                         <div className="flex flex-wrap gap-2">
-                          {['/BG.png', '/assets/BG.png'].map((preset) => (
+                          {['/images/hero-building-right.png', '/BG.png', '/images/hero-hospital.jpg'].map((preset) => (
                             <button
                               key={preset}
+                              type="button"
                               onClick={() => {
                                 updateEventDetails({ bannerImageUrl: preset });
                                 showToast(`Đã áp dụng ${preset}`);
@@ -814,131 +1056,37 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                   </div>
                 </div>
 
-                {/* 3 Host Organizations Logos on Hero Banner */}
+                {/* 4. LOGO 2 ĐƠN VỊ TRÒN PHÍA TRÊN (VSAPS & KSAPS) */}
                 <div className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/90 shadow-xs space-y-5">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-2">
-                    <div>
-                      <h3 className="text-[15px] font-bold text-slate-900 flex items-center gap-2">
-                        <Building className="w-4 h-4 text-[#174ea6]" />
-                        <span>Logo 3 Đơn Vị Chủ Trì (Hiển Thị Trên Hero Banner &amp; Mục Đơn Vị)</span>
-                      </h3>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        Tải ảnh logo từ máy tính (PNG trong suốt, SVG, WebP, JPG) hoặc dán link ảnh. Tự động đồng bộ lên thanh Header Hero Banner và mục Đơn vị đối tác.
-                      </p>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setActiveAdminTab('partners')}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-[#174ea6] text-xs font-bold transition-all cursor-pointer w-fit"
-                    >
-                      <ArrowRight className="w-3.5 h-3.5" />
-                      <span>Xem toàn bộ đối tác ({cmsData.partners.length})</span>
-                    </button>
+                  <div>
+                    <h3 className="text-[15px] font-bold text-slate-900 flex items-center gap-2">
+                      <Building className="w-4 h-4 text-[#174ea6]" />
+                      <span>Logo Tròn Phía Trên (VSAPS &amp; KSAPS) - Lớn &amp; Sát Viền</span>
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Hai huy hiệu tròn đặt phía trên cùng bên trái của Hero Banner. Tải ảnh từ máy tính hoặc dán link ảnh trực tiếp.
+                    </p>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Host 1: KSAPS */}
-                    <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-3 flex flex-col justify-between">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Logo 1: VSAPS */}
+                    <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-black text-[#174ea6] font-display flex items-center gap-1.5">
-                          <span>KSAPS Hàn Quốc</span>
-                          <span className="text-[10px] text-slate-400">🇰🇷</span>
-                        </span>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-100 text-[#174ea6]">
-                          Host 1
-                        </span>
-                      </div>
-
-                      {/* Logo Preview & Upload */}
-                      <div className="flex items-center gap-3">
-                        <div className="w-14 h-14 rounded-xl border border-slate-200 bg-white p-1.5 flex items-center justify-center shrink-0 shadow-2xs overflow-hidden">
-                          {cmsData.eventDetails.heroKsapsLogoUrl || cmsData.partners.find(p => p.id === 'ksaps')?.logoUrl ? (
-                            <img
-                              src={cmsData.eventDetails.heroKsapsLogoUrl || cmsData.partners.find(p => p.id === 'ksaps')?.logoUrl}
-                              alt="KSAPS Logo"
-                              className="w-full h-full object-contain"
-                            />
-                          ) : (
-                            <span className="text-[10px] font-bold text-slate-400">Chưa có</span>
-                          )}
-                        </div>
-
-                        <div className="flex-1 space-y-1.5">
-                          <input
-                            type="file"
-                            ref={ksapsHeroFileRef}
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => handleHeroHostLogoUpload(e, 'ksaps')}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => ksapsHeroFileRef.current?.click()}
-                            className="w-full inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-[#174ea6] border border-slate-200 text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-95"
-                          >
-                            <Upload className="w-3 h-3 text-[#174ea6]" />
-                            <span>Tải logo từ máy</span>
-                          </button>
-
-                          {PARTNER_LOGOS.ksaps && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                updateEventDetails({ heroKsapsLogoUrl: PARTNER_LOGOS.ksaps });
-                                updatePartner('ksaps', { logoUrl: PARTNER_LOGOS.ksaps });
-                                showToast('Đã khôi phục logo KSAPS chuẩn!');
-                              }}
-                              className="w-full text-center text-[10.5px] font-bold text-slate-500 hover:text-[#174ea6] transition-colors cursor-pointer"
-                            >
-                              Khôi phục logo chuẩn
-                            </button>
-                          )}
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                          Đường dẫn URL ảnh:
-                        </label>
-                        <input
-                          type="text"
-                          value={cmsData.eventDetails.heroKsapsLogoUrl || cmsData.partners.find(p => p.id === 'ksaps')?.logoUrl || ''}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            updateEventDetails({ heroKsapsLogoUrl: val });
-                            updatePartner('ksaps', { logoUrl: val });
-                          }}
-                          placeholder="https://... hoặc data:image/..."
-                          className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-[11px] font-mono bg-white outline-none focus:border-[#174ea6]"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Host 2: VSAPS */}
-                    <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-3 flex flex-col justify-between">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-black text-[#c83271] font-display flex items-center gap-1.5">
-                          <span>VSAPS Việt Nam</span>
-                          <span className="text-[10px] text-slate-400">🇻🇳</span>
+                        <span className="text-xs font-black text-[#c83271] font-display">
+                          VSAPS Việt Nam 🇻🇳
                         </span>
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-pink-100 text-[#c83271]">
-                          Host 2
+                          Huy hiệu 1
                         </span>
                       </div>
 
-                      {/* Logo Preview & Upload */}
                       <div className="flex items-center gap-3">
-                        <div className="w-14 h-14 rounded-xl border border-slate-200 bg-white p-1.5 flex items-center justify-center shrink-0 shadow-2xs overflow-hidden">
-                          {cmsData.eventDetails.heroVsapsLogoUrl || cmsData.partners.find(p => p.id === 'vsaps')?.logoUrl ? (
-                            <img
-                              src={cmsData.eventDetails.heroVsapsLogoUrl || cmsData.partners.find(p => p.id === 'vsaps')?.logoUrl}
-                              alt="VSAPS Logo"
-                              className="w-full h-full object-contain"
-                            />
-                          ) : (
-                            <span className="text-[10px] font-bold text-slate-400">Chưa có</span>
-                          )}
+                        <div className="w-16 h-16 rounded-xl border border-slate-200 bg-white p-1 flex items-center justify-center shrink-0 shadow-2xs overflow-hidden">
+                          <img
+                            src={cmsData.eventDetails.heroVsapsLogoUrl || '/images/partners/vsaps-circle.png'}
+                            alt="VSAPS"
+                            className="w-full h-full object-contain"
+                          />
                         </div>
 
                         <div className="flex-1 space-y-1.5">
@@ -955,22 +1103,19 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                             className="w-full inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-[#c83271] border border-slate-200 text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-95"
                           >
                             <Upload className="w-3 h-3 text-[#c83271]" />
-                            <span>Tải logo từ máy</span>
+                            <span>Tải ảnh mới từ máy</span>
                           </button>
 
-                          {PARTNER_LOGOS.vsaps && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                updateEventDetails({ heroVsapsLogoUrl: PARTNER_LOGOS.vsaps });
-                                updatePartner('vsaps', { logoUrl: PARTNER_LOGOS.vsaps });
-                                showToast('Đã khôi phục logo VSAPS chuẩn!');
-                              }}
-                              className="w-full text-center text-[10.5px] font-bold text-slate-500 hover:text-[#c83271] transition-colors cursor-pointer"
-                            >
-                              Khôi phục logo chuẩn
-                            </button>
-                          )}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              updateEventDetails({ heroVsapsLogoUrl: '/images/partners/vsaps-circle.png' });
+                              showToast('Đã khôi phục logo tròn VSAPS chuẩn!');
+                            }}
+                            className="w-full text-center text-[10.5px] font-bold text-slate-500 hover:text-[#c83271] transition-colors cursor-pointer"
+                          >
+                            Khôi phục logo chuẩn
+                          </button>
                         </div>
                       </div>
 
@@ -980,74 +1125,61 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                         </label>
                         <input
                           type="text"
-                          value={cmsData.eventDetails.heroVsapsLogoUrl || cmsData.partners.find(p => p.id === 'vsaps')?.logoUrl || ''}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            updateEventDetails({ heroVsapsLogoUrl: val });
-                            updatePartner('vsaps', { logoUrl: val });
-                          }}
-                          placeholder="https://... hoặc data:image/..."
+                          value={cmsData.eventDetails.heroVsapsLogoUrl || ''}
+                          onChange={(e) => updateEventDetails({ heroVsapsLogoUrl: e.target.value })}
+                          placeholder="/images/partners/vsaps-circle.png"
                           className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-[11px] font-mono bg-white outline-none focus:border-[#c83271]"
                         />
                       </div>
                     </div>
 
-                    {/* Host 3: Bệnh viện Trung ương Quân đội 108 */}
-                    <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-3 flex flex-col justify-between">
+                    {/* Logo 2: KSAPS */}
+                    <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-black text-[#b91c1c] font-display flex items-center gap-1.5">
-                          <span>Bệnh viện Trung ương Quân đội 108</span>
-                          <span className="text-[10px] text-slate-400">🏥</span>
+                        <span className="text-xs font-black text-[#174ea6] font-display">
+                          KSAPS Hàn Quốc 🇰🇷
                         </span>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-red-100 text-[#b91c1c]">
-                          Host 3
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-100 text-[#174ea6]">
+                          Huy hiệu 2
                         </span>
                       </div>
 
-                      {/* Logo Preview & Upload */}
                       <div className="flex items-center gap-3">
-                        <div className="w-14 h-14 rounded-xl border border-slate-200 bg-white p-1.5 flex items-center justify-center shrink-0 shadow-2xs overflow-hidden">
-                          {cmsData.eventDetails.heroBv175LogoUrl || cmsData.partners.find(p => p.id === 'bv175')?.logoUrl ? (
-                            <img
-                              src={cmsData.eventDetails.heroBv175LogoUrl || cmsData.partners.find(p => p.id === 'bv175')?.logoUrl}
-                              alt="BV 108 Logo"
-                              className="w-full h-full object-contain"
-                            />
-                          ) : (
-                            <span className="text-[10px] font-bold text-slate-400">Chưa có</span>
-                          )}
+                        <div className="w-16 h-16 rounded-xl border border-slate-200 bg-white p-1 flex items-center justify-center shrink-0 shadow-2xs overflow-hidden">
+                          <img
+                            src={cmsData.eventDetails.heroKsapsLogoUrl || '/images/partners/ksaps-circle.png'}
+                            alt="KSAPS"
+                            className="w-full h-full object-contain"
+                          />
                         </div>
 
                         <div className="flex-1 space-y-1.5">
                           <input
                             type="file"
-                            ref={bv175HeroFileRef}
+                            ref={ksapsHeroFileRef}
                             accept="image/*"
                             className="hidden"
-                            onChange={(e) => handleHeroHostLogoUpload(e, 'bv175')}
+                            onChange={(e) => handleHeroHostLogoUpload(e, 'ksaps')}
                           />
                           <button
                             type="button"
-                            onClick={() => bv175HeroFileRef.current?.click()}
-                            className="w-full inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-[#b91c1c] border border-slate-200 text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-95"
+                            onClick={() => ksapsHeroFileRef.current?.click()}
+                            className="w-full inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-[#174ea6] border border-slate-200 text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-95"
                           >
-                            <Upload className="w-3 h-3 text-[#b91c1c]" />
-                            <span>Tải logo từ máy</span>
+                            <Upload className="w-3 h-3 text-[#174ea6]" />
+                            <span>Tải ảnh mới từ máy</span>
                           </button>
 
-                          {PARTNER_LOGOS.bv175 && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                updateEventDetails({ heroBv108LogoUrl: PARTNER_LOGOS.bv108, heroBv175LogoUrl: PARTNER_LOGOS.bv108 });
-                                updatePartner('bv108', { logoUrl: PARTNER_LOGOS.bv108 }); updatePartner('bv175', { logoUrl: PARTNER_LOGOS.bv108 });
-                                showToast('Đã khôi phục logo BV 108 chuẩn!');
-                              }}
-                              className="w-full text-center text-[10.5px] font-bold text-slate-500 hover:text-[#b91c1c] transition-colors cursor-pointer"
-                            >
-                              Khôi phục logo chuẩn
-                            </button>
-                          )}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              updateEventDetails({ heroKsapsLogoUrl: '/images/partners/ksaps-circle.png' });
+                              showToast('Đã khôi phục logo tròn KSAPS chuẩn!');
+                            }}
+                            className="w-full text-center text-[10.5px] font-bold text-slate-500 hover:text-[#174ea6] transition-colors cursor-pointer"
+                          >
+                            Khôi phục logo chuẩn
+                          </button>
                         </div>
                       </div>
 
@@ -1057,60 +1189,216 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                         </label>
                         <input
                           type="text"
-                          value={cmsData.eventDetails.heroBv175LogoUrl || cmsData.partners.find(p => p.id === 'bv175')?.logoUrl || ''}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            updateEventDetails({ heroBv175LogoUrl: val });
-                            updatePartner('bv175', { logoUrl: val });
-                          }}
-                          placeholder="https://... hoặc data:image/..."
-                          className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-[11px] font-mono bg-white outline-none focus:border-[#b91c1c]"
+                          value={cmsData.eventDetails.heroKsapsLogoUrl || ''}
+                          onChange={(e) => updateEventDetails({ heroKsapsLogoUrl: e.target.value })}
+                          placeholder="/images/partners/ksaps-circle.png"
+                          className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-[11px] font-mono bg-white outline-none focus:border-[#174ea6]"
                         />
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Event Titles Form */}
-                <div className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/90 shadow-xs space-y-4">
-                  <h3 className="text-[15px] font-bold text-slate-900 border-b border-slate-100 pb-2">
-                    Tiêu Đề &amp; Thông Điệp Hội Thảo
-                  </h3>
+                {/* 5. CÁC LOGO DƯỚI CÙNG (BẢO TRỢ & ĐƠN VỊ TỔ CHỨC) */}
+                <div className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/90 shadow-xs space-y-5">
+                  <div>
+                    <h3 className="text-[15px] font-bold text-slate-900 flex items-center gap-2">
+                      <Building2 className="w-4 h-4 text-emerald-600" />
+                      <span>Các Logo Dưới Cùng (Bảo Trợ &amp; Đơn Vị Tổ Chức)</span>
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Chỉnh sửa nhãn và thay đổi logo của Bộ Y tế Hàn Quốc (MOHW), KHIDI, BV 108, SNUBH và KBIT.
+                    </p>
+                  </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Nhãn hiển thị */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-2">
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-1">
-                        Dòng tiêu đề chính 1:
+                        Nhãn Bảo Trợ:
                       </label>
                       <input
                         type="text"
-                        value={cmsData.eventDetails.heroHeadingLine1}
-                        onChange={(e) => updateEventDetails({ heroHeadingLine1: e.target.value })}
+                        value={cmsData.eventDetails.heroPatronLabel || ''}
+                        onChange={(e) => updateEventDetails({ heroPatronLabel: e.target.value })}
+                        placeholder="Bảo trợ"
                         className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:border-[#174ea6] outline-none"
                       />
                     </div>
 
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-1">
-                        Dòng tiêu đề chính 2:
+                        Nhãn Đơn Vị Tổ Chức:
                       </label>
                       <input
                         type="text"
-                        value={cmsData.eventDetails.heroHeadingLine2}
-                        onChange={(e) => updateEventDetails({ heroHeadingLine2: e.target.value })}
+                        value={cmsData.eventDetails.heroOrgLabel || ''}
+                        onChange={(e) => updateEventDetails({ heroOrgLabel: e.target.value })}
+                        placeholder="Đơn vị tổ chức"
                         className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:border-[#174ea6] outline-none"
                       />
                     </div>
+                  </div>
 
-                    <div className="sm:col-span-2">
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
-                        Tiêu đề phụ (Slogan):
-                      </label>
+                  {/* 5 Logo Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {/* Logo MOHW */}
+                    <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-800">1. MOHW Hàn Quốc</span>
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 bg-blue-100 text-blue-800 rounded">Bảo trợ</span>
+                      </div>
+                      <div className="h-10 bg-white border border-slate-200 rounded-lg p-1 flex items-center justify-center">
+                        <img src={cmsData.eventDetails.heroPatronLogoUrl || '/images/partners/mohw.png'} alt="MOHW" className="max-h-full object-contain" />
+                      </div>
+                      <input
+                        type="file"
+                        ref={mohwPatronFileRef}
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleHeroSponsorUpload(e, 'heroPatronLogoUrl')}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => mohwPatronFileRef.current?.click()}
+                        className="w-full py-1 rounded bg-white hover:bg-slate-100 border border-slate-200 text-[11px] font-bold text-slate-700"
+                      >
+                        Tải ảnh mới
+                      </button>
                       <input
                         type="text"
-                        value={cmsData.eventDetails.subtitle}
-                        onChange={(e) => updateEventDetails({ subtitle: e.target.value })}
-                        className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:border-[#174ea6] outline-none"
+                        value={cmsData.eventDetails.heroPatronLogoUrl || ''}
+                        onChange={(e) => updateEventDetails({ heroPatronLogoUrl: e.target.value })}
+                        placeholder="/images/partners/mohw.png"
+                        className="w-full px-2 py-1 rounded border border-slate-200 text-[10px] font-mono"
+                      />
+                    </div>
+
+                    {/* Logo KHIDI */}
+                    <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-800">2. KHIDI</span>
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 bg-slate-200 text-slate-700 rounded">Tổ chức</span>
+                      </div>
+                      <div className="h-10 bg-white border border-slate-200 rounded-lg p-1 flex items-center justify-center">
+                        <img src={cmsData.eventDetails.heroKhidiLogoUrl || '/images/partners/khidi.png'} alt="KHIDI" className="max-h-full object-contain" />
+                      </div>
+                      <input
+                        type="file"
+                        ref={khidiHeroFileRef}
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleHeroSponsorUpload(e, 'heroKhidiLogoUrl')}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => khidiHeroFileRef.current?.click()}
+                        className="w-full py-1 rounded bg-white hover:bg-slate-100 border border-slate-200 text-[11px] font-bold text-slate-700"
+                      >
+                        Tải ảnh mới
+                      </button>
+                      <input
+                        type="text"
+                        value={cmsData.eventDetails.heroKhidiLogoUrl || ''}
+                        onChange={(e) => updateEventDetails({ heroKhidiLogoUrl: e.target.value })}
+                        placeholder="/images/partners/khidi.png"
+                        className="w-full px-2 py-1 rounded border border-slate-200 text-[10px] font-mono"
+                      />
+                    </div>
+
+                    {/* Logo BV 108 */}
+                    <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-red-700">3. BV TƯ QĐ 108</span>
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 bg-red-100 text-red-800 rounded">Tổ chức</span>
+                      </div>
+                      <div className="h-10 bg-white border border-slate-200 rounded-lg p-1 flex items-center justify-center">
+                        <img src={cmsData.eventDetails.heroBv108LogoUrl || '/images/partners/bv108.png'} alt="BV 108" className="max-h-full object-contain" />
+                      </div>
+                      <input
+                        type="file"
+                        ref={bv175HeroFileRef}
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleHeroSponsorUpload(e, 'heroBv108LogoUrl')}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => bv175HeroFileRef.current?.click()}
+                        className="w-full py-1 rounded bg-white hover:bg-slate-100 border border-slate-200 text-[11px] font-bold text-red-700"
+                      >
+                        Tải ảnh mới
+                      </button>
+                      <input
+                        type="text"
+                        value={cmsData.eventDetails.heroBv108LogoUrl || ''}
+                        onChange={(e) => updateEventDetails({ heroBv108LogoUrl: e.target.value, heroBv175LogoUrl: e.target.value })}
+                        placeholder="/images/partners/bv108.png"
+                        className="w-full px-2 py-1 rounded border border-slate-200 text-[10px] font-mono"
+                      />
+                    </div>
+
+                    {/* Logo SNUBH */}
+                    <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-800">4. SNUBH Seoul</span>
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 bg-slate-200 text-slate-700 rounded">Tổ chức</span>
+                      </div>
+                      <div className="h-10 bg-white border border-slate-200 rounded-lg p-1 flex items-center justify-center">
+                        <img src={cmsData.eventDetails.heroSnubhLogoUrl || '/images/partners/snubh.png'} alt="SNUBH" className="max-h-full object-contain" />
+                      </div>
+                      <input
+                        type="file"
+                        ref={snubhHeroFileRef}
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleHeroSponsorUpload(e, 'heroSnubhLogoUrl')}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => snubhHeroFileRef.current?.click()}
+                        className="w-full py-1 rounded bg-white hover:bg-slate-100 border border-slate-200 text-[11px] font-bold text-slate-700"
+                      >
+                        Tải ảnh mới
+                      </button>
+                      <input
+                        type="text"
+                        value={cmsData.eventDetails.heroSnubhLogoUrl || ''}
+                        onChange={(e) => updateEventDetails({ heroSnubhLogoUrl: e.target.value })}
+                        placeholder="/images/partners/snubh.png"
+                        className="w-full px-2 py-1 rounded border border-slate-200 text-[10px] font-mono"
+                      />
+                    </div>
+
+                    {/* Logo KBIT */}
+                    <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-800">5. KBIT Association</span>
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 bg-slate-200 text-slate-700 rounded">Tổ chức</span>
+                      </div>
+                      <div className="h-10 bg-white border border-slate-200 rounded-lg p-1 flex items-center justify-center">
+                        <img src={cmsData.eventDetails.heroKbitLogoUrl || '/images/partners/kbit.png'} alt="KBIT" className="max-h-full object-contain" />
+                      </div>
+                      <input
+                        type="file"
+                        ref={kbitHeroFileRef}
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleHeroSponsorUpload(e, 'heroKbitLogoUrl')}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => kbitHeroFileRef.current?.click()}
+                        className="w-full py-1 rounded bg-white hover:bg-slate-100 border border-slate-200 text-[11px] font-bold text-slate-700"
+                      >
+                        Tải ảnh mới
+                      </button>
+                      <input
+                        type="text"
+                        value={cmsData.eventDetails.heroKbitLogoUrl || ''}
+                        onChange={(e) => updateEventDetails({ heroKbitLogoUrl: e.target.value })}
+                        placeholder="/images/partners/kbit.png"
+                        className="w-full px-2 py-1 rounded border border-slate-200 text-[10px] font-mono"
                       />
                     </div>
                   </div>
