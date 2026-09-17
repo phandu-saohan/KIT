@@ -940,9 +940,12 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                       bgStyleSize = bgFit;
                     }
 
-                    const overlayMode = ev.heroOverlayMode || 'none';
+                    const overlayMode = ev.heroOverlayMode || 'pink';
                     let overlayGradient = 'transparent';
-                    if (overlayMode === 'gradient') {
+                    if (overlayMode === 'pink') {
+                      overlayGradient =
+                        'linear-gradient(90deg, rgba(255, 240, 245, 0.94) 0%, rgba(255, 242, 246, 0.88) 42%, rgba(255, 246, 250, 0.38) 70%, rgba(255, 255, 255, 0) 100%)';
+                    } else if (overlayMode === 'gradient') {
                       overlayGradient =
                         'linear-gradient(90deg, #ffffff 0%, #ffffff 42%, rgba(255,255,255,0.95) 54%, rgba(255,255,255,0.35) 75%, rgba(255,255,255,0) 100%)';
                     } else if (overlayMode === 'soft') {
@@ -1404,13 +1407,14 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                       <label className="block text-xs font-bold text-slate-700">
                         Lớp phủ mờ chữ (Overlay):
                       </label>
-                      <div className="grid grid-cols-3 gap-1.5">
+                      <div className="grid grid-cols-2 gap-1.5">
                         {[
-                          { id: 'gradient', label: 'Chuẩn' },
-                          { id: 'soft', label: 'Mờ nhẹ' },
+                          { id: 'pink', label: 'Hồng nhạt ⭐' },
                           { id: 'none', label: 'Trong suốt' },
+                          { id: 'soft', label: 'Mờ nhẹ' },
+                          { id: 'gradient', label: 'Trắng phủ' },
                         ].map((m) => {
-                          const active = (cmsData.eventDetails.heroOverlayMode || 'gradient') === m.id;
+                          const active = (cmsData.eventDetails.heroOverlayMode || 'pink') === m.id;
                           return (
                             <button
                               key={m.id}

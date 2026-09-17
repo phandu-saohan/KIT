@@ -35,7 +35,7 @@ export const EVENT_DETAILS: EventDetails = {
   heroBgImageUrl: '/images/hero-bv108-clean-bg.png',
   heroBuildingImageUrl: '',
   heroShowBuilding: false,
-  heroOverlayMode: 'none',
+  heroOverlayMode: 'pink',
   heroBgFit: 'cover',
   mapImageUrl: 'https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?w=1200&auto=format&fit=crop&q=80',
   googleMapsUrl: 'https://maps.google.com/?q=B%E1%BB%87nh+vi%E1%BB%87n+Trung+%C6%B0%C6%A1ng+Qu%C3%A2n+%C4%91%E1%BB%99i+108',

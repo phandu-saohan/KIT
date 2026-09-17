@@ -146,7 +146,7 @@ export interface EventDetails {
   heroBgImageUrl?: string;
   heroBuildingImageUrl?: string;
   heroShowBuilding?: boolean;
-  heroOverlayMode?: 'gradient' | 'soft' | 'none';
+  heroOverlayMode?: 'pink' | 'gradient' | 'soft' | 'none';
   heroBgFit?: 'cover' | 'contain' | 'right';
 }
 

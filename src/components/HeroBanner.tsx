@@ -63,9 +63,12 @@ export const HeroBanner: React.FC = () => {
   }
 
   // Overlay gradient
-  const overlayMode = event.heroOverlayMode || 'none';
+  const overlayMode = event.heroOverlayMode || 'pink';
   let overlayGradient = 'transparent';
-  if (overlayMode === 'gradient') {
+  if (overlayMode === 'pink') {
+    overlayGradient =
+      'linear-gradient(90deg, rgba(255, 240, 245, 0.94) 0%, rgba(255, 242, 246, 0.88) 42%, rgba(255, 246, 250, 0.38) 70%, rgba(255, 255, 255, 0) 100%)';
+  } else if (overlayMode === 'gradient') {
     overlayGradient =
       'linear-gradient(90deg, #ffffff 0%, #ffffff 42%, rgba(255,255,255,0.95) 54%, rgba(255,255,255,0.35) 72%, rgba(255,255,255,0) 100%)';
   } else if (overlayMode === 'soft') {
