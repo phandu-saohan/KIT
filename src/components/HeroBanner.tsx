@@ -149,26 +149,26 @@ export const HeroBanner: React.FC = () => {
             {venueText}
           </p>
 
-          {/* ACTION BUTTONS: Register & Date Pill - Centered on Mobile, 1 DÒNG DUY NHẤT */}
-          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 xs:gap-2.5 sm:gap-4">
+          {/* ACTION BUTTONS: Register on top, Date underneath on Mobile; side-by-side on desktop */}
+          <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-2 sm:gap-4">
             {/* CTA 1: Đăng ký tham dự - 1 DÒNG */}
             <a
               href={ctaLink}
-              className="inline-flex items-center justify-center gap-1.5 xs:gap-2 px-3.5 xs:px-4.5 sm:px-6 py-2 sm:py-2.5 rounded-full bg-[#d52b66] hover:bg-[#b81d51] text-white shadow-md hover:shadow-lg transition-all active:scale-[0.98] cursor-pointer group whitespace-nowrap shrink-0"
+              className="inline-flex items-center justify-center gap-1.5 xs:gap-2 px-4 xs:px-5 sm:px-6 py-2 sm:py-2.5 rounded-full bg-[#d52b66] hover:bg-[#b81d51] text-white shadow-md hover:shadow-lg transition-all active:scale-[0.98] cursor-pointer group whitespace-nowrap shrink-0"
             >
               {ctaTag && (
                 <span className="text-[8.5px] xs:text-[9.5px] font-bold bg-white/20 px-1.5 py-0.5 rounded-full uppercase tracking-wider text-pink-100 shrink-0">
                   {ctaTag}
                 </span>
               )}
-              <span className="text-[12px] xs:text-[13px] sm:text-[14.5px] font-black text-white tracking-tight">
+              <span className="text-[12.5px] xs:text-[13.5px] sm:text-[14.5px] font-black text-white tracking-tight">
                 {ctaText}
               </span>
               <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white group-hover:translate-x-1 transition-transform stroke-[2.5] shrink-0" />
             </a>
 
-            {/* CTA 2: Ngày tổ chức Date Pill - 1 DÒNG */}
-            <div className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 xs:px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-white/95 backdrop-blur-xs border border-[#d52b66] text-[#d52b66] shadow-xs whitespace-nowrap shrink-0">
+            {/* CTA 2: Ngày tổ chức Date Pill - Nằm dưới nút đăng ký trên mobile */}
+            <div className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 xs:px-4.5 sm:px-5 py-1.5 sm:py-2.5 rounded-full bg-white/95 backdrop-blur-xs border border-[#d52b66] text-[#d52b66] shadow-xs whitespace-nowrap shrink-0">
               <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#d52b66] shrink-0" />
               <span className="text-[12px] xs:text-[13px] sm:text-[14.5px] font-black tracking-tight">
                 {dateText}
