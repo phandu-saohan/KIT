@@ -30,25 +30,21 @@ export const HeroBanner: React.FC = () => {
 
       {/* Main Content Container constrained to 500px height */}
       <div className="relative z-10 w-full max-w-[1360px] mx-auto px-4 sm:px-8 lg:px-14 py-4 sm:py-5 flex flex-col justify-between h-[500px]">
-        {/* TOP: Two Host Logos (VSAPS & KSAPS) */}
-        <div className="flex items-center gap-3 sm:gap-3.5 pt-1">
+        {/* TOP: Two Host Logos (VSAPS & KSAPS) - Enlarged & Zero Padding */}
+        <div className="flex items-center gap-3.5 sm:gap-4 p-0">
           {/* Logo 1: VSAPS Circular Badge */}
-          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden shadow-2xs border border-slate-100 bg-white flex items-center justify-center">
-            <img
-              src="/images/partners/vsaps-circle.png"
-              alt="Hội Phẫu thuật Tạo hình Thẩm mỹ Việt Nam (VSAPS)"
-              className="w-full h-full object-contain"
-            />
-          </div>
+          <img
+            src="/images/partners/vsaps-circle.png"
+            alt="Hội Phẫu thuật Tạo hình Thẩm mỹ Việt Nam (VSAPS)"
+            className="w-14 h-14 sm:w-16 sm:h-16 lg:w-18 lg:h-18 object-contain drop-shadow-xs transition-transform hover:scale-105"
+          />
 
           {/* Logo 2: KSAPS Circular Badge */}
-          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden shadow-2xs border border-slate-100 bg-white flex items-center justify-center">
-            <img
-              src="/images/partners/ksaps-circle.png"
-              alt="Hội Phẫu thuật Tạo hình Thẩm mỹ Hàn Quốc (KSAPS)"
-              className="w-full h-full object-contain"
-            />
-          </div>
+          <img
+            src="/images/partners/ksaps-circle.png"
+            alt="Hội Phẫu thuật Tạo hình Thẩm mỹ Hàn Quốc (KSAPS)"
+            className="w-14 h-14 sm:w-16 sm:h-16 lg:w-18 lg:h-18 object-contain drop-shadow-xs transition-transform hover:scale-105"
+          />
         </div>
 
         {/* CENTER: Typography Matching 100% of User Banner */}
