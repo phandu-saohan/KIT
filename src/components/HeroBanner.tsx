@@ -87,7 +87,7 @@ export const HeroBanner: React.FC = () => {
         backgroundPosition: bgStylePosition,
         backgroundSize: bgStyleSize,
         backgroundRepeat: 'no-repeat',
-        fontFamily: "'Montserrat', 'Plus Jakarta Sans', sans-serif",
+        fontFamily: "'Inter', 'Noto Sans KR', system-ui, sans-serif",
       }}
     >
       {/* Soft left-to-right white wash gradient overlay ensuring pristine contrast */}
