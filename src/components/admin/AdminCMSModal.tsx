@@ -37,6 +37,9 @@ import {
   KeyRound,
   ShieldCheck,
   EyeOff,
+  Navigation,
+  Car,
+  Plane,
 } from 'lucide-react';
 import { useCMS, STORAGE_KEY } from '../../context/CMSContext';
 import { ExpertSpeaker, AgendaItem, Partner, HighlightItem, AttendeeBadge } from '../../types';
@@ -144,6 +147,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
   const khidiHeroFileRef = useRef<HTMLInputElement>(null);
   const snubhHeroFileRef = useRef<HTMLInputElement>(null);
   const kbitHeroFileRef = useRef<HTMLInputElement>(null);
+  const mapImageFileRef = useRef<HTMLInputElement>(null);
 
   const handleStartEditAttendee = (attendee: AttendeeBadge) => {
     setEditingAttendee(attendee);
@@ -295,6 +299,20 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
         showToast('Đã tải ảnh nền Hero thành công!');
       } catch (err: any) {
         alert(err.message || 'Lỗi tải ảnh');
+      }
+    }
+  };
+
+  const handleMapImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      try {
+        const url = await uploadImageFile(e.target.files[0]);
+        updateEventDetails({ mapImageUrl: url });
+        showToast('Đã tải ảnh sơ đồ / bản đồ địa điểm thành công!');
+      } catch (err: any) {
+        alert(err.message || 'Lỗi tải ảnh bản đồ');
+      } finally {
+        e.target.value = '';
       }
     }
   };
@@ -1874,22 +1892,31 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                   </div>
                 </div>
 
-                {/* Date, Time & Venue */}
+                {/* Date & Time */}
                 <div className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/90 shadow-xs space-y-4">
-                  <h3 className="text-[15px] font-bold text-slate-900 border-b border-slate-100 pb-2">
-                    Thời Gian &amp; Địa Điểm Tổ Chức
-                  </h3>
+                  <div className="flex items-center gap-2.5 border-b border-slate-100 pb-2">
+                    <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#174ea6] flex items-center justify-center font-bold">
+                      <Calendar className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-[15px] font-bold text-slate-900">
+                        Thời Gian Tổ Chức Sự Kiện
+                      </h3>
+                      <p className="text-xs text-slate-500">Cấu hình ngày và khung giờ tổ chức hội nghị</p>
+                    </div>
+                  </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-1">
-                        Ngày tổ chức:
+                        Ngày tổ chức hiển thị:
                       </label>
                       <input
                         type="text"
                         value={cmsData.eventDetails.dateString}
                         onChange={(e) => updateEventDetails({ dateString: e.target.value })}
                         className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:border-[#174ea6] outline-none"
+                        placeholder="27 - 28 Tháng 03, 2026"
                       />
                     </div>
 
@@ -1902,55 +1929,445 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                         value={cmsData.eventDetails.timeDetail}
                         onChange={(e) => updateEventDetails({ timeDetail: e.target.value })}
                         className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:border-[#174ea6] outline-none"
+                        placeholder="08:00 - 17:30 (Cả ngày)"
                       />
                     </div>
+                  </div>
+                </div>
 
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
-                        Tên hội trường / địa điểm rút gọn:
-                      </label>
-                      <input
-                        type="text"
-                        value={cmsData.eventDetails.venueShort}
-                        onChange={(e) => updateEventDetails({ venueShort: e.target.value })}
-                        className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:border-[#174ea6] outline-none"
-                      />
+                {/* Comprehensive Venue & Map Section Configuration */}
+                <div className="p-5 sm:p-6 rounded-3xl bg-white border border-blue-200/80 shadow-sm space-y-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center shadow-xs">
+                        <MapPin className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-[15px] font-bold text-slate-900">
+                            Địa Điểm Tổ Chức &amp; Sơ Đồ Chỉ Đường (BV TWQĐ 108)
+                          </h3>
+                          <span className="text-[10px] font-bold px-2 py-0.5 bg-red-100 text-red-700 rounded-full">
+                            Venue &amp; Map
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500">
+                          Tùy chỉnh toàn bộ nội dung hiển thị, hình ảnh bản đồ, bãi đỗ xe, sân bay và thông tin ban thư ký
+                        </p>
+                      </div>
                     </div>
 
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
-                        Tên hội trường đầy đủ:
-                      </label>
-                      <input
-                        type="text"
-                        value={cmsData.eventDetails.venueName}
-                        onChange={(e) => updateEventDetails({ venueName: e.target.value })}
-                        className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:border-[#174ea6] outline-none"
-                      />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        updateEventDetails({
+                          venueSectionTag: 'ĐỊA ĐIỂM TỔ CHỨC CHÍNH THỨC',
+                          venueSectionTitle: 'Hướng Dẫn Đến Bệnh Viện TWQĐ 108, Hà Nội',
+                          venueSectionDescription: 'Hội trường lớn Tầng 2 - Cụm công trình trung tâm. Vị trí đắc địa tại trung tâm Thủ đô, thuận tiện di chuyển cho các chuyên gia và đại biểu cả nước.',
+                          venueShort: 'Bệnh Viện TWQĐ 108, Hà Nội',
+                          venueName: 'Hội trường Trung tâm - Bệnh viện Trung ương Quân đội 108',
+                          venueAddressTitle: 'Hội trường Trung tâm - BV TWQĐ 108',
+                          venueAddress: 'Số 1 Trần Hưng Đạo, P. Bạch Đằng, Q. Hai Bà Trưng, Hà Nội',
+                          googleMapsUrl: 'https://maps.google.com/?q=B%E1%BB%87nh+vi%E1%BB%87t+Trung+%C6%B0%C6%A1ng+Qu%C3%A2n+%C4%91%E1%BB%99i+108',
+                          mapImageUrl: '/images/map-bv108-hanoi.png',
+                          mapButtonText: 'Mở Google Maps chỉ đường',
+                          venueParkingTitle: 'Bãi Đỗ Xe Ô Tô & Xe Máy',
+                          venueParkingDesc: 'Hầm giữ xe tầng B1 & B2 của Cụm công trình trung tâm BV 108 rộng rãi, có bảo vệ trực 24/7 và hệ thống hướng dẫn đỗ xe thông minh cho đại biểu tham dự.',
+                          venueAirportTitle: 'Từ Sân Bay Quốc Tế Nội Bài',
+                          venueAirportDesc: 'Khoảng cách ~28km (35-45 phút di chuyển bằng taxi/xe công nghệ). Tuyến đường thuận tiện nhất qua Cầu Nhật Tân - Đường Võ Chí Công - Đường vành đai 1 hoặc Cầu Long Biên/Chương Dương.',
+                          venueSupportTitle: 'Cần Hỗ Trợ Đón Tiếp Hoặc Khách Sạn Gần BV 108?',
+                          venueSupportHotline: '090 123 4567',
+                          venueSupportEmail: 'support@kbitassociation.com',
+                          venueSupportButtonText: 'Liên Hệ Ban Thư Ký',
+                        });
+                        showToast('Đã khôi phục toàn bộ nội dung chuẩn của Địa điểm BV 108!');
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-600 transition-colors"
+                      title="Khôi phục toàn bộ thông tin chuẩn về Bệnh viện TWQĐ 108"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      Khôi phục chuẩn BV 108
+                    </button>
+                  </div>
+
+                  {/* 1. Tiêu đề & Giới thiệu Section */}
+                  <div className="bg-slate-50/80 p-4 rounded-2xl border border-slate-200/80 space-y-3">
+                    <span className="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                      1. Tiêu Đề &amp; Giới Thiệu Khối Địa Điểm
+                    </span>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                          Nhãn nhỏ phía trên (Tagline):
+                        </label>
+                        <input
+                          type="text"
+                          value={cmsData.eventDetails.venueSectionTag ?? 'ĐỊA ĐIỂM TỔ CHỨC CHÍNH THỨC'}
+                          onChange={(e) => updateEventDetails({ venueSectionTag: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:border-[#174ea6] outline-none"
+                          placeholder="ĐỊA ĐIỂM TỔ CHỨC CHÍNH THỨC"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                          Tiêu đề lớn khu vực Địa điểm:
+                        </label>
+                        <input
+                          type="text"
+                          value={cmsData.eventDetails.venueSectionTitle ?? 'Hướng Dẫn Đến Bệnh Viện TWQĐ 108, Hà Nội'}
+                          onChange={(e) => updateEventDetails({ venueSectionTitle: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:border-[#174ea6] outline-none"
+                          placeholder="Hướng Dẫn Đến Bệnh Viện TWQĐ 108, Hà Nội"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                          Đoạn mô tả / giới thiệu chung:
+                        </label>
+                        <textarea
+                          rows={2}
+                          value={cmsData.eventDetails.venueSectionDescription ?? 'Hội trường lớn Tầng 2 - Cụm công trình trung tâm. Vị trí đắc địa tại trung tâm Thủ đô, thuận tiện di chuyển cho các chuyên gia và đại biểu cả nước.'}
+                          onChange={(e) => updateEventDetails({ venueSectionDescription: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:border-[#174ea6] outline-none"
+                          placeholder="Hội trường lớn Tầng 2 - Cụm công trình trung tâm. Vị trí đắc địa tại trung tâm Thủ đô..."
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 2. Quản lý Hình Ảnh Bản Đồ / Sơ Đồ Chỉ Đường */}
+                  <div className="bg-gradient-to-br from-slate-50 to-blue-50/40 p-4 rounded-2xl border border-blue-200/70 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-blue-900 uppercase tracking-wide flex items-center gap-1.5">
+                        <ImageIcon className="w-3.5 h-3.5 text-blue-600" />
+                        2. Hình Ảnh Sơ Đồ / Bản Đồ Vị Trí (Hà Nội - BV 108)
+                      </span>
+                      <span className="text-[11px] text-blue-700 font-semibold">
+                        Tải ảnh lên hoặc dán link URL
+                      </span>
                     </div>
 
-                    <div className="sm:col-span-2">
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
-                        Địa chỉ chính xác:
-                      </label>
-                      <input
-                        type="text"
-                        value={cmsData.eventDetails.venueAddress}
-                        onChange={(e) => updateEventDetails({ venueAddress: e.target.value })}
-                        className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:border-[#174ea6] outline-none"
-                      />
-                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                      {/* Thumbnail preview */}
+                      <div className="md:col-span-4 flex flex-col items-center">
+                        <div className="relative w-full aspect-video rounded-xl overflow-hidden border-2 border-slate-200 shadow-sm bg-slate-100 group">
+                          <img
+                            src={cmsData.eventDetails.mapImageUrl || '/images/map-bv108-hanoi.png'}
+                            alt="Bản đồ BV 108 Hà Nội"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = '/images/map-bv108-hanoi.png';
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => mapImageFileRef.current?.click()}
+                              className="px-2.5 py-1 bg-white text-slate-800 text-[11px] font-bold rounded-lg shadow-md hover:bg-slate-100"
+                            >
+                              Đổi ảnh
+                            </button>
+                            <a
+                              href={cmsData.eventDetails.mapImageUrl || '/images/map-bv108-hanoi.png'}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="p-1 bg-white/90 text-slate-800 rounded-lg shadow-md hover:bg-white"
+                              title="Xem ảnh gốc"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </a>
+                          </div>
+                        </div>
+                        <span className="text-[10px] text-slate-500 mt-1">Ảnh hiển thị trên website</span>
+                      </div>
 
-                    <div className="sm:col-span-2">
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
-                        Link chỉ đường Google Maps:
-                      </label>
-                      <input
-                        type="text"
-                        value={cmsData.eventDetails.googleMapsUrl}
-                        onChange={(e) => updateEventDetails({ googleMapsUrl: e.target.value })}
-                        className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:border-[#174ea6] outline-none"
-                      />
+                      {/* Upload controls & URL */}
+                      <div className="md:col-span-8 space-y-3">
+                        <input
+                          type="file"
+                          ref={mapImageFileRef}
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleMapImageUpload}
+                        />
+
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => mapImageFileRef.current?.click()}
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#174ea6] hover:bg-[#133e85] text-white text-xs font-bold shadow-xs transition-colors"
+                          >
+                            <Upload className="w-3.5 h-3.5" />
+                            Tải ảnh bản đồ từ máy tính
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              updateEventDetails({ mapImageUrl: '/images/map-bv108-hanoi.png' });
+                              showToast('Đã chuyển về bản đồ chuẩn BV 108 Hà Nội!');
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition-colors"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
+                            Bản đồ Hà Nội gốc
+                          </button>
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                            Hoặc nhập URL hình ảnh trực tiếp:
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              value={cmsData.eventDetails.mapImageUrl ?? '/images/map-bv108-hanoi.png'}
+                              onChange={(e) => updateEventDetails({ mapImageUrl: e.target.value })}
+                              className="w-full pl-3 pr-8 py-2 rounded-xl border border-slate-200 bg-white text-xs font-mono text-slate-800 focus:border-[#174ea6] outline-none"
+                              placeholder="/images/map-bv108-hanoi.png hoặc https://..."
+                            />
+                            {cmsData.eventDetails.mapImageUrl && (
+                              <a
+                                href={cmsData.eventDetails.mapImageUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600"
+                                title="Mở ảnh"
+                              >
+                                <ExternalLink className="w-3.5 h-3.5" />
+                              </a>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                              Tên nút mở bản đồ Google Maps:
+                            </label>
+                            <input
+                              type="text"
+                              value={cmsData.eventDetails.mapButtonText ?? 'Mở Google Maps chỉ đường'}
+                              onChange={(e) => updateEventDetails({ mapButtonText: e.target.value })}
+                              className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:border-[#174ea6] outline-none"
+                              placeholder="Mở Google Maps chỉ đường"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                              Link chỉ đường Google Maps:
+                            </label>
+                            <input
+                              type="text"
+                              value={cmsData.eventDetails.googleMapsUrl}
+                              onChange={(e) => updateEventDetails({ googleMapsUrl: e.target.value })}
+                              className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-mono text-slate-800 focus:border-[#174ea6] outline-none"
+                              placeholder="https://maps.google.com/?q=..."
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 3. Tên hội trường & Địa chỉ chi tiết */}
+                  <div className="bg-slate-50/80 p-4 rounded-2xl border border-slate-200/80 space-y-3">
+                    <span className="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
+                      <Building2 className="w-3.5 h-3.5 text-blue-600" />
+                      3. Tên Hội Trường &amp; Địa Chỉ Chi Tiết
+                    </span>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                          Tên hội trường / địa điểm rút gọn:
+                        </label>
+                        <input
+                          type="text"
+                          value={cmsData.eventDetails.venueShort}
+                          onChange={(e) => updateEventDetails({ venueShort: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:border-[#174ea6] outline-none"
+                          placeholder="Bệnh Viện TWQĐ 108, Hà Nội"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                          Tên hội trường đầy đủ:
+                        </label>
+                        <input
+                          type="text"
+                          value={cmsData.eventDetails.venueName}
+                          onChange={(e) => updateEventDetails({ venueName: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:border-[#174ea6] outline-none"
+                          placeholder="Hội trường Trung tâm - Bệnh viện Trung ương Quân đội 108"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                          Tiêu đề khối địa chỉ:
+                        </label>
+                        <input
+                          type="text"
+                          value={cmsData.eventDetails.venueAddressTitle ?? 'Hội trường Trung tâm - BV TWQĐ 108'}
+                          onChange={(e) => updateEventDetails({ venueAddressTitle: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:border-[#174ea6] outline-none"
+                          placeholder="Hội trường Trung tâm - BV TWQĐ 108"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                          Địa chỉ chính xác (Số nhà, Phường, Quận, Thành phố):
+                        </label>
+                        <input
+                          type="text"
+                          value={cmsData.eventDetails.venueAddress}
+                          onChange={(e) => updateEventDetails({ venueAddress: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:border-[#174ea6] outline-none"
+                          placeholder="Số 1 Trần Hưng Đạo, P. Bạch Đằng, Q. Hai Bà Trưng, Hà Nội"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 4. Hướng dẫn Bãi Xe & Sân Bay */}
+                  <div className="bg-slate-50/80 p-4 rounded-2xl border border-slate-200/80 space-y-4">
+                    <span className="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
+                      <Car className="w-3.5 h-3.5 text-blue-600" />
+                      4. Hướng Dẫn Bãi Đỗ Xe &amp; Di Chuyển Từ Sân Bay
+                    </span>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Bãi đỗ xe */}
+                      <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-2">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                          <Car className="w-4 h-4 text-emerald-600" />
+                          <span>Khối Bãi Đỗ Xe</span>
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-500 mb-1">Tiêu đề:</label>
+                          <input
+                            type="text"
+                            value={cmsData.eventDetails.venueParkingTitle ?? 'Bãi Đỗ Xe Ô Tô & Xe Máy'}
+                            onChange={(e) => updateEventDetails({ venueParkingTitle: e.target.value })}
+                            className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold focus:border-[#174ea6] outline-none"
+                            placeholder="Bãi Đỗ Xe Ô Tô & Xe Máy"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-500 mb-1">Nội dung hướng dẫn:</label>
+                          <textarea
+                            rows={3}
+                            value={cmsData.eventDetails.venueParkingDesc ?? 'Hầm giữ xe tầng B1 & B2 của Cụm công trình trung tâm BV 108 rộng rãi, có bảo vệ trực 24/7 và hệ thống hướng dẫn đỗ xe thông minh cho đại biểu tham dự.'}
+                            onChange={(e) => updateEventDetails({ venueParkingDesc: e.target.value })}
+                            className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-normal focus:border-[#174ea6] outline-none"
+                            placeholder="Hướng dẫn gửi xe ô tô, xe máy chi tiết..."
+                          />
+                        </div>
+                      </div>
+
+                      {/* Sân bay */}
+                      <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-2">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                          <Plane className="w-4 h-4 text-blue-600" />
+                          <span>Khối Sân Bay</span>
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-500 mb-1">Tiêu đề:</label>
+                          <input
+                            type="text"
+                            value={cmsData.eventDetails.venueAirportTitle ?? 'Từ Sân Bay Quốc Tế Nội Bài'}
+                            onChange={(e) => updateEventDetails({ venueAirportTitle: e.target.value })}
+                            className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold focus:border-[#174ea6] outline-none"
+                            placeholder="Từ Sân Bay Quốc Tế Nội Bài"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-500 mb-1">Nội dung hướng dẫn:</label>
+                          <textarea
+                            rows={3}
+                            value={cmsData.eventDetails.venueAirportDesc ?? 'Khoảng cách ~28km (35-45 phút di chuyển bằng taxi/xe công nghệ). Tuyến đường thuận tiện nhất qua Cầu Nhật Tân - Đường Võ Chí Công - Đường vành đai 1 hoặc Cầu Long Biên/Chương Dương.'}
+                            onChange={(e) => updateEventDetails({ venueAirportDesc: e.target.value })}
+                            className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-normal focus:border-[#174ea6] outline-none"
+                            placeholder="Khoảng cách, thời gian và hướng di chuyển từ sân bay..."
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 5. Khối Hỗ Trợ Đón Tiếp & Ban Thư Ký */}
+                  <div className="bg-slate-50/80 p-4 rounded-2xl border border-slate-200/80 space-y-3">
+                    <span className="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
+                      <Phone className="w-3.5 h-3.5 text-blue-600" />
+                      5. Khối Hỗ Trợ Đón Tiếp, Khách Sạn &amp; Ban Thư Ký
+                    </span>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                      <div className="sm:col-span-2 md:col-span-4">
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                          Tiêu đề khối hỗ trợ:
+                        </label>
+                        <input
+                          type="text"
+                          value={cmsData.eventDetails.venueSupportTitle ?? 'Cần Hỗ Trợ Đón Tiếp Hoặc Khách Sạn Gần BV 108?'}
+                          onChange={(e) => updateEventDetails({ venueSupportTitle: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:border-[#174ea6] outline-none"
+                          placeholder="Cần Hỗ Trợ Đón Tiếp Hoặc Khách Sạn Gần BV 108?"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-1 md:col-span-2">
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                          Số điện thoại Hotline:
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={cmsData.eventDetails.venueSupportHotline ?? '090 123 4567'}
+                            onChange={(e) => updateEventDetails({ venueSupportHotline: e.target.value })}
+                            className="w-full pl-8 pr-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-emerald-700 focus:border-[#174ea6] outline-none"
+                            placeholder="090 123 4567"
+                          />
+                          <Phone className="w-3.5 h-3.5 text-emerald-600 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                        </div>
+                      </div>
+
+                      <div className="sm:col-span-1 md:col-span-2">
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                          Email tiếp nhận hỗ trợ:
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="email"
+                            value={cmsData.eventDetails.venueSupportEmail ?? 'support@kbitassociation.com'}
+                            onChange={(e) => updateEventDetails({ venueSupportEmail: e.target.value })}
+                            className="w-full pl-8 pr-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-blue-700 focus:border-[#174ea6] outline-none"
+                            placeholder="support@kbitassociation.com"
+                          />
+                          <Mail className="w-3.5 h-3.5 text-blue-600 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                        </div>
+                      </div>
+
+                      <div className="sm:col-span-2 md:col-span-4">
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                          Tên nút liên hệ ban thư ký:
+                        </label>
+                        <input
+                          type="text"
+                          value={cmsData.eventDetails.venueSupportButtonText ?? 'Liên Hệ Ban Thư Ký'}
+                          onChange={(e) => updateEventDetails({ venueSupportButtonText: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:border-[#174ea6] outline-none"
+                          placeholder="Liên Hệ Ban Thư Ký"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>

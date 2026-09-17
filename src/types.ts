@@ -154,6 +154,19 @@ export interface EventDetails {
   highlightsSubtitle?: string;
   highlightsTitle?: string;
   highlightsDescription?: string;
+  venueSectionTag?: string;
+  venueSectionTitle?: string;
+  venueSectionDescription?: string;
+  venueAddressTitle?: string;
+  venueParkingTitle?: string;
+  venueParkingDesc?: string;
+  venueAirportTitle?: string;
+  venueAirportDesc?: string;
+  venueSupportTitle?: string;
+  venueSupportHotline?: string;
+  venueSupportEmail?: string;
+  venueSupportButtonText?: string;
+  mapButtonText?: string;
 }
 
 export interface FooterConfig {

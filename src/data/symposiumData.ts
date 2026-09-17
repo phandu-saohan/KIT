@@ -37,7 +37,7 @@ export const EVENT_DETAILS: EventDetails = {
   heroShowBuilding: false,
   heroOverlayMode: 'pink',
   heroBgFit: 'cover',
-  mapImageUrl: 'https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?w=1200&auto=format&fit=crop&q=80',
+  mapImageUrl: '/images/map-bv108-hanoi.png',
   googleMapsUrl: 'https://maps.google.com/?q=B%E1%BB%87nh+vi%E1%BB%87n+Trung+%C6%B0%C6%A1ng+Qu%C3%A2n+%C4%91%E1%BB%99i+108',
   hotline: '+82-10-4159-8777',
   telephone: '+82-10-4159-8777',
@@ -54,6 +54,19 @@ export const EVENT_DETAILS: EventDetails = {
   highlightsSubtitle: '',
   highlightsTitle: '',
   highlightsDescription: 'Hội nghị khoa học thẩm mỹ Việt – Hàn nổi bật năm 2026 là sự kiện khoa học quy mô lớn do KSAPS và VSAPS chủ trì, dưới sự bảo trợ của Bộ Y tế và Phúc lợi Hàn Quốc, quy tụ các tổ chức chuyên môn, bệnh viện và chuyên gia hàng đầu trong lĩnh vực thẩm mỹ đến từ Việt Nam và Hàn Quốc. Hội nghị được đồng tổ chức bởi KHIDI, Bệnh viện Đại học Quốc gia Seoul, Bệnh viện Trung ương Quân đội 108 và KBIT, hướng đến thúc đẩy trao đổi học thuật, cập nhật kỹ thuật chuyên môn và tăng cường hợp tác y khoa giữa hai quốc gia.',
+  venueSectionTag: 'ĐỊA ĐIỂM TỔ CHỨC CHÍNH THỨC',
+  venueSectionTitle: 'Hướng Dẫn Đến Bệnh Viện TWQĐ 108, Hà Nội',
+  venueSectionDescription: 'Hội nghị diễn ra tại Bệnh viện Trung ương Quân Đội 108, Hà Nội — Cơ sở y tế tuyến cuối đặc biệt hàng đầu cả nước với cơ sở vật chất hiện đại bậc nhất.',
+  venueAddressTitle: 'Địa chỉ chính xác:',
+  venueParkingTitle: 'Bãi đỗ xe ô tô & đón tiếp đại biểu:',
+  venueParkingDesc: 'Khuôn viên Bệnh viện Trung ương Quân đội 108 (Số 1 Trần Hưng Đạo) có khu vực đón tiếp và bãi đỗ xe ưu tiên dành riêng cho Đại biểu Hội nghị Thẩm mỹ Việt – Hàn 2026.',
+  venueAirportTitle: 'Từ Sân bay Quốc tế Nội Bài:',
+  venueAirportDesc: 'Cách sân bay Nội Bài khoảng 30–35 km (khoảng 35–45 phút di chuyển taxi/ô tô qua cầu Nhật Tân), thuận tiện cho các đoàn chuyên gia Hàn Quốc và đại biểu bay từ TP.HCM, Đà Nẵng.',
+  venueSupportTitle: 'Ban Thư Ký KBIT Hỗ Trợ',
+  venueSupportHotline: '(+84) 903 175 2026',
+  venueSupportEmail: 'contact@viethan-aesthetic2026.com',
+  venueSupportButtonText: 'Liên Hệ',
+  mapButtonText: 'Mở Bản Đồ Chỉ Đường',
 };
 
 export const KEY_HIGHLIGHTS: HighlightItem[] = [

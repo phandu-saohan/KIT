@@ -1,23 +1,50 @@
 import React from 'react';
-import { MapPin, Phone, Car, Plane, Navigation, ExternalLink } from 'lucide-react';
 import { useCMS } from '../context/CMSContext';
 
 export const VenueSection: React.FC = () => {
   const { cmsData } = useCMS();
   const eventDetails = cmsData.eventDetails;
 
+  const tag = eventDetails.venueSectionTag || 'ĐỊA ĐIỂM TỔ CHỨC CHÍNH THỨC';
+  const title = eventDetails.venueSectionTitle || 'Hướng Dẫn Đến Bệnh Viện TWQĐ 108, Hà Nội';
+  const description =
+    eventDetails.venueSectionDescription ||
+    `Hội nghị diễn ra tại ${eventDetails.venueName} — Cơ sở y tế tuyến cuối đặc biệt hàng đầu cả nước với cơ sở vật chất hiện đại bậc nhất.`;
+
+  const addressTitle = eventDetails.venueAddressTitle || 'Địa chỉ chính xác:';
+  const parkingTitle = eventDetails.venueParkingTitle || 'Bãi đỗ xe ô tô & đón tiếp đại biểu:';
+  const parkingDesc =
+    eventDetails.venueParkingDesc ||
+    'Khuôn viên Bệnh viện Trung ương Quân đội 108 (Số 1 Trần Hưng Đạo) có khu vực đón tiếp và bãi đỗ xe ưu tiên dành riêng cho Đại biểu Hội nghị Thẩm mỹ Việt – Hàn 2026.';
+
+  const airportTitle = eventDetails.venueAirportTitle || 'Từ Sân bay Quốc tế Nội Bài:';
+  const airportDesc =
+    eventDetails.venueAirportDesc ||
+    'Cách sân bay Nội Bài khoảng 30–35 km (khoảng 35–45 phút di chuyển taxi/ô tô qua cầu Nhật Tân), thuận tiện cho các đoàn chuyên gia Hàn Quốc và đại biểu bay từ TP.HCM, Đà Nẵng.';
+
+  const supportTitle = eventDetails.venueSupportTitle || 'Ban Thư Ký KBIT Hỗ Trợ';
+  const supportHotline = eventDetails.venueSupportHotline || eventDetails.hotline || '(+84) 903 175 2026';
+  const supportEmail = eventDetails.venueSupportEmail || eventDetails.email || 'contact@viethan-aesthetic2026.com';
+  const supportBtn = eventDetails.venueSupportButtonText || 'Liên Hệ';
+
+  const mapImg = eventDetails.mapImageUrl || '/images/map-bv108-hanoi.png';
+  const mapBtn = eventDetails.mapButtonText || 'Mở Bản Đồ Chỉ Đường';
+  const mapsUrl =
+    eventDetails.googleMapsUrl ||
+    'https://maps.google.com/?q=B%E1%BB%87nh+vi%E1%BB%87n+Trung+%C6%B0%C6%A1ng+Qu%C3%A2n+%C4%91%E1%BB%99i+108';
+
   return (
     <section className="w-full pt-10 sm:pt-14 pb-5 sm:pb-8 bg-white" id="dia-diem">
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-10">
           <span className="text-[12px] uppercase text-secondary font-bold tracking-widest font-display">
-            ĐỊA ĐIỂM TỔ CHỨC CHÍNH THỨC
+            {tag}
           </span>
           <h2 className="text-[26px] sm:text-[34px] text-primary font-extrabold mt-1 font-display tracking-tight">
-            Hướng Dẫn Đến Bệnh Viện TWQĐ 108, Hà Nội
+            {title}
           </h2>
           <p className="text-[13.5px] text-on-surface-variant mt-2 leading-relaxed">
-            Hội nghị diễn ra tại {eventDetails.venueName} — Cơ sở y tế tuyến cuối đặc biệt hàng đầu cả nước với cơ sở vật chất hiện đại bậc nhất.
+            {description}
           </p>
         </div>
 
@@ -32,7 +59,7 @@ export const VenueSection: React.FC = () => {
                 </div>
                 <div>
                   <h4 className="text-[15px] text-primary font-bold font-display">
-                    Địa chỉ chính xác:
+                    {addressTitle}
                   </h4>
                   <p className="text-[13px] text-on-surface-variant mt-1 leading-relaxed">
                     {eventDetails.venueName}
@@ -51,10 +78,10 @@ export const VenueSection: React.FC = () => {
                 </div>
                 <div>
                   <h4 className="text-[15px] text-primary font-bold font-display">
-                    Bãi đỗ xe ô tô &amp; đón tiếp đại biểu:
+                    {parkingTitle}
                   </h4>
                   <p className="text-[13px] text-on-surface-variant mt-1 leading-relaxed">
-                    Khuôn viên Bệnh viện Trung ương Quân đội 108 (Số 1 Trần Hưng Đạo) có khu vực đón tiếp và bãi đỗ xe ưu tiên dành riêng cho Đại biểu Hội nghị Thẩm mỹ Việt – Hàn 2026.
+                    {parkingDesc}
                   </p>
                 </div>
               </div>
@@ -66,10 +93,10 @@ export const VenueSection: React.FC = () => {
                 </div>
                 <div>
                   <h4 className="text-[15px] text-primary font-bold font-display">
-                    Từ Sân bay Quốc tế Nội Bài:
+                    {airportTitle}
                   </h4>
                   <p className="text-[13px] text-on-surface-variant mt-1 leading-relaxed">
-                    Cách sân bay Nội Bài khoảng 30–35 km (khoảng 35–45 phút di chuyển taxi/ô tô qua cầu Nhật Tân), thuận tiện cho các đoàn chuyên gia Hàn Quốc và đại biểu bay từ TP.HCM, Đà Nẵng.
+                    {airportDesc}
                   </p>
                 </div>
               </div>
@@ -83,19 +110,19 @@ export const VenueSection: React.FC = () => {
                 </div>
                 <div className="min-w-0">
                   <p className="text-[12.5px] sm:text-[13px] text-primary font-bold font-display truncate">
-                    Ban Thư Ký KBIT Hỗ Trợ
+                    {supportTitle}
                   </p>
                   <p className="text-[11.5px] sm:text-[12px] text-on-surface-variant font-medium truncate">
-                    {eventDetails.hotline} • {eventDetails.email}
+                    {supportHotline} • {supportEmail}
                   </p>
                 </div>
               </div>
 
               <a
-                href={`tel:${eventDetails.hotline.replace(/\s+/g, '')}`}
-                className="px-3.5 py-2 sm:px-4 sm:py-2 rounded-xl bg-primary text-white text-[12px] font-bold hover:bg-primary-container transition-colors shadow-xs shrink-0 active:scale-95"
+                href={`tel:${supportHotline.replace(/[^\d+]/g, '')}`}
+                className="px-3.5 py-2 sm:px-4 sm:py-2 rounded-xl bg-primary text-white text-[12px] font-bold hover:bg-primary-container transition-colors shadow-xs shrink-0 active:scale-95 cursor-pointer"
               >
-                Liên Hệ
+                {supportBtn}
               </a>
             </div>
           </div>
@@ -105,7 +132,7 @@ export const VenueSection: React.FC = () => {
             <div
               className="w-full h-[320px] sm:h-[420px] bg-cover bg-center rounded-3xl shadow-lg relative overflow-hidden flex items-end p-3 sm:p-6 group border border-[#e5eeff]"
               style={{
-                backgroundImage: `url('${eventDetails.mapImageUrl}')`,
+                backgroundImage: `url('${mapImg}')`,
               }}
             >
               {/* Glass Info Pill at bottom of map */}
@@ -116,7 +143,7 @@ export const VenueSection: React.FC = () => {
                   </div>
                   <div>
                     <p className="text-[14px] sm:text-[16px] text-primary font-bold font-display leading-tight">
-                      {eventDetails.venueShort}
+                      {eventDetails.venueShort || 'Bệnh viện TWQĐ 108'}
                     </p>
                     <p className="text-[11px] sm:text-[12px] text-on-surface-variant line-clamp-1">
                       {eventDetails.venueAddress}
@@ -125,12 +152,12 @@ export const VenueSection: React.FC = () => {
                 </div>
 
                 <a
-                  href={eventDetails.googleMapsUrl}
+                  href={mapsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full sm:w-auto px-4 py-2 sm:py-2.5 rounded-xl bg-secondary text-white text-[12.5px] sm:text-[13px] font-bold hover:opacity-90 transition-all flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap active:scale-[0.98]"
+                  className="w-full sm:w-auto px-4 py-2 sm:py-2.5 rounded-xl bg-secondary text-white text-[12.5px] sm:text-[13px] font-bold hover:opacity-90 transition-all flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap active:scale-[0.98] cursor-pointer"
                 >
-                  <span>Mở Bản Đồ Chỉ Đường</span>
+                  <span>{mapBtn}</span>
                   <span className="material-symbols-outlined text-[15px] sm:text-[16px]">open_in_new</span>
                 </a>
               </div>
@@ -141,3 +168,4 @@ export const VenueSection: React.FC = () => {
     </section>
   );
 };
+
