@@ -990,13 +990,21 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
 
                     {/* Center Typography Preview */}
                     <div className="relative z-10 max-w-md my-2">
-                      <h4 className="text-base sm:text-xl font-black uppercase leading-tight text-[#d7417b]">
-                        <span>{cmsData.eventDetails.heroHeadingLine1 || 'HỘI NGHỊ'} </span>
-                        <span>{cmsData.eventDetails.heroHeadingLine2 || 'KHOA HỌC THẨM MỸ'} </span>
-                        <span>{cmsData.eventDetails.heroHeadingLine3 || 'VIỆT - HÀN'} </span>
-                        <span className="text-[#8b46c2]">{cmsData.eventDetails.heroHeadingYear || '2026'}</span>
+                      <h4 className={`text-base sm:text-lg font-black uppercase tracking-tight flex flex-col text-[#d52b66] ${
+                        (cmsData.eventDetails.heroHeadingSpacing || 'relaxed') === 'loose'
+                          ? 'gap-1.5 sm:gap-2'
+                          : (cmsData.eventDetails.heroHeadingSpacing || 'relaxed') === 'normal'
+                          ? 'gap-0.5'
+                          : 'gap-1 sm:gap-1.5'
+                      } leading-tight`}>
+                        <span>{cmsData.eventDetails.heroHeadingLine1 || 'HỘI NGHỊ'}</span>
+                        <span>{cmsData.eventDetails.heroHeadingLine2 || 'KHOA HỌC THẨM MỸ'}</span>
+                        <span>
+                          {cmsData.eventDetails.heroHeadingLine3 || 'VIỆT - HÀN'}{' '}
+                          <span className="text-[#6c35a8]">{cmsData.eventDetails.heroHeadingYear || '2026'}</span>
+                        </span>
                       </h4>
-                      <p className="text-[11px] text-slate-600 font-semibold mt-1">
+                      <p className="text-[11px] text-slate-600 font-semibold mt-1.5">
                         {cmsData.eventDetails.heroVenueText || cmsData.eventDetails.venueName || 'Bệnh viện Trung ương Quân đội 108, Hà Nội'}
                       </p>
 
@@ -1088,6 +1096,41 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                           placeholder="2026"
                           className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-[#8b46c2] focus:border-[#8b46c2] outline-none"
                         />
+                      </div>
+                    </div>
+
+                    {/* Spacing Selector for 3 Heading lines */}
+                    <div className="sm:col-span-3 flex flex-wrap items-center justify-between gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-200/80">
+                      <div>
+                        <span className="text-xs font-bold text-slate-700 block">
+                          Khoảng cách giữa 3 dòng chữ tiêu đề:
+                        </span>
+                        <span className="text-[11px] text-slate-500">
+                          Tùy chỉnh độ giãn dòng giữa HỘI NGHỊ - KHOA HỌC THẨM MỸ - VIỆT - HÀN 2026
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {[
+                          { id: 'normal', label: 'Gọn gàng' },
+                          { id: 'relaxed', label: 'Rộng rãi (Mặc định ⭐)' },
+                          { id: 'loose', label: 'Rất thoáng' },
+                        ].map((sp) => {
+                          const active = (cmsData.eventDetails.heroHeadingSpacing || 'relaxed') === sp.id;
+                          return (
+                            <button
+                              key={sp.id}
+                              type="button"
+                              onClick={() => updateEventDetails({ heroHeadingSpacing: sp.id as any })}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                                active
+                                  ? 'bg-[#d53774] text-white shadow-xs'
+                                  : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
+                              }`}
+                            >
+                              {sp.label}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
 

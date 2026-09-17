@@ -108,6 +108,7 @@ export interface EventDetails {
   heroHeadingLine3?: string;
   heroHeadingYear?: string;
   heroBannerHeight?: number;
+  heroHeadingSpacing?: 'normal' | 'relaxed' | 'loose';
   heroVenueText?: string;
   heroCtaTag?: string;
   heroCtaText?: string;

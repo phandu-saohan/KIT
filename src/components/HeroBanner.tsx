@@ -124,15 +124,27 @@ export const HeroBanner: React.FC = () => {
 
         {/* CENTER: Typography Matching 100% of User Banner */}
         <div className="max-w-2xl lg:max-w-3xl my-auto">
-          <h1 className="text-[28px] xs:text-[34px] sm:text-[42px] md:text-[46px] lg:text-[50px] font-black uppercase tracking-tight leading-[1.08] font-display">
-            <span className="block text-[#d52b66]">{heading1}</span>
-            <span className="block text-[#d52b66]">{heading2}</span>
-            <span className="block text-[#d52b66]">
-              {heading3} <span className="text-[#6c35a8]">{headingYear}</span>
-            </span>
-          </h1>
+          {(() => {
+            const sp = event.heroHeadingSpacing || 'relaxed';
+            const gapClass =
+              sp === 'loose'
+                ? 'gap-3 sm:gap-4 lg:gap-5'
+                : sp === 'normal'
+                ? 'gap-1 sm:gap-1.5 lg:gap-2'
+                : 'gap-2 sm:gap-2.5 lg:gap-3.5';
 
-          <p className="text-[14px] sm:text-[16px] text-slate-600 font-semibold mt-1.5 sm:mt-2 mb-4 sm:mb-5">
+            return (
+              <h1 className={`text-[28px] xs:text-[34px] sm:text-[42px] md:text-[46px] lg:text-[50px] font-black uppercase tracking-tight font-display flex flex-col ${gapClass} leading-[1.12]`}>
+                <span className="block text-[#d52b66]">{heading1}</span>
+                <span className="block text-[#d52b66]">{heading2}</span>
+                <span className="block text-[#d52b66]">
+                  {heading3} <span className="text-[#6c35a8]">{headingYear}</span>
+                </span>
+              </h1>
+            );
+          })()}
+
+          <p className="text-[14px] sm:text-[16px] text-slate-600 font-semibold mt-3 sm:mt-3.5 mb-4 sm:mb-5">
             {venueText}
           </p>
 

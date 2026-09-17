@@ -8,6 +8,7 @@ export const EVENT_DETAILS: EventDetails = {
   heroHeadingLine3: 'VIỆT - HÀN',
   heroHeadingYear: '2026',
   heroBannerHeight: 500,
+  heroHeadingSpacing: 'relaxed',
   heroVenueText: 'Bệnh viện Trung ương Quân đội 108, Hà Nội',
   heroCtaTag: 'Miễn phí',
   heroCtaText: 'Đăng ký tham dự',
