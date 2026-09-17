@@ -33,14 +33,14 @@ export const HeroBanner: React.FC = () => {
   // Resolve Main Background Image:
   // 1. If explicit heroBgImageUrl is set, use it.
   // 2. Otherwise, if bannerImageUrl is set and is NOT the building-only cutout ('/images/hero-building-right.png'), use bannerImageUrl.
-  // 3. Fallback to '/images/hero-hospital.jpg'.
+  // 3. Fallback to '/images/hero-bv108-clean-bg.png' (100% match with user banner).
   const isBuildingOnly = event.bannerImageUrl === '/images/hero-building-right.png';
   const mainBgImage = event.heroBgImageUrl
     ? event.heroBgImageUrl
-    : (!isBuildingOnly && event.bannerImageUrl ? event.bannerImageUrl : '/images/hero-hospital.jpg');
+    : (!isBuildingOnly && event.bannerImageUrl ? event.bannerImageUrl : '/images/hero-bv108-clean-bg.png');
 
   // Building overlay on the right (optional, active for standard hospital setup)
-  const showBuilding = event.heroShowBuilding !== false;
+  const showBuilding = Boolean(event.heroShowBuilding);
   const buildingImage = event.heroBuildingImageUrl || (isBuildingOnly ? '/images/hero-building-right.png' : '');
 
   // Fit mode
@@ -62,14 +62,14 @@ export const HeroBanner: React.FC = () => {
   }
 
   // Overlay gradient
-  const overlayMode = event.heroOverlayMode || 'gradient';
-  let overlayGradient =
-    'linear-gradient(90deg, #ffffff 0%, #ffffff 42%, rgba(255,255,255,0.95) 54%, rgba(255,255,255,0.35) 72%, rgba(255,255,255,0) 100%)';
-  if (overlayMode === 'soft') {
+  const overlayMode = event.heroOverlayMode || 'none';
+  let overlayGradient = 'transparent';
+  if (overlayMode === 'gradient') {
+    overlayGradient =
+      'linear-gradient(90deg, #ffffff 0%, #ffffff 42%, rgba(255,255,255,0.95) 54%, rgba(255,255,255,0.35) 72%, rgba(255,255,255,0) 100%)';
+  } else if (overlayMode === 'soft') {
     overlayGradient =
       'linear-gradient(90deg, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.80) 45%, rgba(255,255,255,0.2) 80%, rgba(255,255,255,0) 100%)';
-  } else if (overlayMode === 'none') {
-    overlayGradient = 'transparent';
   }
 
   return (
@@ -122,10 +122,10 @@ export const HeroBanner: React.FC = () => {
         {/* CENTER: Typography Matching 100% of User Banner */}
         <div className="max-w-2xl lg:max-w-3xl my-auto">
           <h1 className="text-[28px] xs:text-[34px] sm:text-[42px] md:text-[46px] lg:text-[50px] font-black uppercase tracking-tight leading-[1.08] font-display">
-            <span className="block text-[#d7417b]">{heading1}</span>
-            <span className="block text-[#d7417b]">{heading2}</span>
-            <span className="block text-[#d7417b]">
-              {heading3} <span className="text-[#8b46c2]">{headingYear}</span>
+            <span className="block text-[#d52b66]">{heading1}</span>
+            <span className="block text-[#d52b66]">{heading2}</span>
+            <span className="block text-[#d52b66]">
+              {heading3} <span className="text-[#6c35a8]">{headingYear}</span>
             </span>
           </h1>
 
@@ -138,7 +138,7 @@ export const HeroBanner: React.FC = () => {
             {/* CTA 1: Đăng ký tham dự */}
             <a
               href={ctaLink}
-              className="inline-flex items-center gap-3 px-6 sm:px-7 py-2 sm:py-2.5 rounded-full bg-[#d53774] hover:bg-[#c02663] text-white shadow-md hover:shadow-lg transition-all active:scale-[0.98] cursor-pointer group"
+              className="inline-flex items-center gap-3 px-6 sm:px-7 py-2 sm:py-2.5 rounded-full bg-[#d52b66] hover:bg-[#b81d51] text-white shadow-md hover:shadow-lg transition-all active:scale-[0.98] cursor-pointer group"
             >
               <div className="flex flex-col text-left leading-none">
                 <span className="text-[9px] sm:text-[9.5px] font-semibold text-pink-100 uppercase tracking-wider">
@@ -152,8 +152,8 @@ export const HeroBanner: React.FC = () => {
             </a>
 
             {/* CTA 2: Ngày tổ chức Date Pill */}
-            <div className="inline-flex items-center gap-2 px-5 sm:px-6 py-2 sm:py-2.5 rounded-full bg-white border-2 border-[#d53774] text-[#d53774] shadow-xs">
-              <Calendar className="w-4 h-4 text-[#d53774] shrink-0" />
+            <div className="inline-flex items-center gap-2 px-5 sm:px-6 py-2 sm:py-2.5 rounded-full bg-white border-2 border-[#d52b66] text-[#d52b66] shadow-xs">
+              <Calendar className="w-4 h-4 text-[#d52b66] shrink-0" />
               <span className="text-[13.5px] sm:text-[15px] font-black tracking-tight">
                 {dateText}
               </span>

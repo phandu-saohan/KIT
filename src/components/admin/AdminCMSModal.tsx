@@ -868,8 +868,8 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                     const isBuildingOnly = ev.bannerImageUrl === '/images/hero-building-right.png';
                     const mainBg = ev.heroBgImageUrl
                       ? ev.heroBgImageUrl
-                      : (!isBuildingOnly && ev.bannerImageUrl ? ev.bannerImageUrl : '/images/hero-hospital.jpg');
-                    const showBld = ev.heroShowBuilding !== false;
+                      : (!isBuildingOnly && ev.bannerImageUrl ? ev.bannerImageUrl : '/images/hero-bv108-clean-bg.png');
+                    const showBld = Boolean(ev.heroShowBuilding);
                     const bldImg = ev.heroBuildingImageUrl || (isBuildingOnly ? '/images/hero-building-right.png' : '');
                     const bgFit = ev.heroBgFit || 'cover';
 
@@ -887,14 +887,14 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                       bgStyleSize = bgFit;
                     }
 
-                    const overlayMode = ev.heroOverlayMode || 'gradient';
-                    let overlayGradient =
-                      'linear-gradient(90deg, #ffffff 0%, #ffffff 42%, rgba(255,255,255,0.95) 54%, rgba(255,255,255,0.35) 75%, rgba(255,255,255,0) 100%)';
-                    if (overlayMode === 'soft') {
+                    const overlayMode = ev.heroOverlayMode || 'none';
+                    let overlayGradient = 'transparent';
+                    if (overlayMode === 'gradient') {
+                      overlayGradient =
+                        'linear-gradient(90deg, #ffffff 0%, #ffffff 42%, rgba(255,255,255,0.95) 54%, rgba(255,255,255,0.35) 75%, rgba(255,255,255,0) 100%)';
+                    } else if (overlayMode === 'soft') {
                       overlayGradient =
                         'linear-gradient(90deg, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.80) 45%, rgba(255,255,255,0.2) 80%, rgba(255,255,255,0) 100%)';
-                    } else if (overlayMode === 'none') {
-                      overlayGradient = 'transparent';
                     }
 
                     return (
@@ -1155,12 +1155,12 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                           cmsData.eventDetails.heroBgImageUrl ||
                           (cmsData.eventDetails.bannerImageUrl !== '/images/hero-building-right.png' && cmsData.eventDetails.bannerImageUrl
                             ? cmsData.eventDetails.bannerImageUrl
-                            : '/images/hero-hospital.jpg')
+                            : '/images/hero-bv108-clean-bg.png')
                         }
                         alt="Hero Banner Background Preview"
                         className="w-full h-full object-cover rounded-lg"
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src = '/images/hero-hospital.jpg';
+                          (e.target as HTMLImageElement).src = '/images/hero-bv108-clean-bg.png';
                         }}
                       />
                       <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-black/70 text-white text-[10px] font-mono">
@@ -1184,7 +1184,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                                 heroBgImageUrl: val,
                               });
                             }}
-                            placeholder="/images/hero-hospital.jpg hoặc /BG.png hoặc https://..."
+                            placeholder="/images/hero-bv108-clean-bg.png hoặc https://..."
                             className="flex-1 px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-mono focus:border-[#d53774] outline-none bg-white"
                           />
                           {(cmsData.eventDetails.heroBgImageUrl || cmsData.eventDetails.bannerImageUrl) && (
@@ -1192,10 +1192,12 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                               type="button"
                               onClick={() => {
                                 updateEventDetails({
-                                  bannerImageUrl: '/images/hero-hospital.jpg',
-                                  heroBgImageUrl: '/images/hero-hospital.jpg',
+                                  bannerImageUrl: '/images/hero-bv108-clean-bg.png',
+                                  heroBgImageUrl: '/images/hero-bv108-clean-bg.png',
+                                  heroOverlayMode: 'none',
+                                  heroShowBuilding: false,
                                 });
-                                showToast('Đã đặt lại ảnh nền Bệnh viện 108');
+                                showToast('Đã đặt lại ảnh nền Chuẩn Bệnh viện 108');
                               }}
                               className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer"
                               title="Khôi phục ảnh nền mặc định"
@@ -1212,11 +1214,36 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                         </label>
                         <div className="flex flex-wrap gap-2">
                           {[
-                            { name: 'Bệnh viện TWQĐ 108', url: '/images/hero-hospital.jpg' },
-                            { name: 'Banner cũ Hội nghị', url: '/BG.png' },
-                            { name: 'Tòa nhà kết hợp', url: '/images/hero-building-right.png' },
-                            { name: 'Phòng mổ thẩm mỹ', url: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=1600&auto=format&fit=crop&q=80' },
-                            { name: 'Hội trường quốc tế', url: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1600&auto=format&fit=crop&q=80' },
+                            {
+                              name: '⭐ Chuẩn 100% hình mẫu BV 108',
+                              url: '/images/hero-bv108-clean-bg.png',
+                              overlay: 'none',
+                              building: false,
+                            },
+                            {
+                              name: 'Bệnh viện TWQĐ 108 (Thực tế)',
+                              url: '/images/hero-hospital.jpg',
+                              overlay: 'gradient',
+                              building: true,
+                            },
+                            {
+                              name: 'Banner cũ Hội nghị',
+                              url: '/BG.png',
+                              overlay: 'none',
+                              building: false,
+                            },
+                            {
+                              name: 'Phòng mổ thẩm mỹ',
+                              url: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=1600&auto=format&fit=crop&q=80',
+                              overlay: 'gradient',
+                              building: false,
+                            },
+                            {
+                              name: 'Hội trường quốc tế',
+                              url: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1600&auto=format&fit=crop&q=80',
+                              overlay: 'gradient',
+                              building: false,
+                            },
                           ].map((item) => (
                             <button
                               key={item.url}
@@ -1225,6 +1252,8 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                                 updateEventDetails({
                                   bannerImageUrl: item.url,
                                   heroBgImageUrl: item.url,
+                                  heroOverlayMode: item.overlay as any,
+                                  heroShowBuilding: item.building,
                                 });
                                 showToast(`Đã áp dụng ảnh nền: ${item.name}`);
                               }}
