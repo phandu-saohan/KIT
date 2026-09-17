@@ -1,4 +1,4 @@
-import { AgendaItem, Partner, ExpertSpeaker, EventDetails, HighlightItem } from '../types';
+import { AgendaItem, Partner, ExpertSpeaker, EventDetails, HighlightItem, SEOConfig } from '../types';
 import { PARTNER_LOGOS } from './partnerLogos';
 
 export const EVENT_DETAILS: EventDetails = {
@@ -796,3 +796,19 @@ export const KOREAN_BUSINESSES: string[] = [
   'Medro',
   'Aribio',
 ];
+
+export const DEFAULT_SEO_CONFIG: SEOConfig = {
+  metaTitle: 'Hội Nghị Khoa Học Thẩm Mỹ Việt – Hàn 2026 | Bệnh viện TWQĐ 108',
+  metaDescription: 'Cổng thông tin và đăng ký chính thức Hội nghị Khoa học Thẩm mỹ Việt – Hàn 2026 tại Bệnh viện Trung ương Quân đội 108, Hà Nội (17–18/10/2026). Quy tụ hơn 15 giáo sư, chuyên gia đầu ngành từ Hàn Quốc và Việt Nam.',
+  metaKeywords: 'Hội thảo thẩm mỹ Việt Hàn 2026, thẩm mỹ Hàn Quốc, BV 108, phẫu thuật thẩm mỹ, da liễu laser, Deep Plane Facelift, nâng mũi sụn sườn, CME thẩm mỹ, KBIT 2026, chuyển giao công nghệ thẩm mỹ',
+  canonicalUrl: 'https://hoithao-thammy-viethan2026.vn',
+  ogImageUrl: '/BG.png',
+  author: 'Bệnh viện Trung ương Quân đội 108 & KBIT Association',
+  robots: 'index, follow',
+  googleAnalyticsId: 'G-XXXXXXXXXX',
+  facebookPixelId: '',
+  googleSiteVerification: '',
+  structuredDataEnabled: true,
+  customHeadTags: '',
+};
+

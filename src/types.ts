@@ -210,6 +210,21 @@ export interface AdminAccountConfig {
   lastUpdated?: string;
 }
 
+export interface SEOConfig {
+  metaTitle: string;
+  metaDescription: string;
+  metaKeywords: string;
+  canonicalUrl: string;
+  ogImageUrl: string;
+  author: string;
+  robots: string;
+  googleAnalyticsId?: string;
+  facebookPixelId?: string;
+  googleSiteVerification?: string;
+  structuredDataEnabled?: boolean;
+  customHeadTags?: string;
+}
+
 export interface CMSData {
   eventDetails: EventDetails;
   experts: ExpertSpeaker[];
@@ -220,4 +235,6 @@ export interface CMSData {
   mediaLibrary: string[];
   footerConfig?: FooterConfig;
   adminAccount?: AdminAccountConfig;
+  seoConfig?: SEOConfig;
 }
+

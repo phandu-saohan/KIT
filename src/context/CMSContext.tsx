@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { CMSData, EventDetails, ExpertSpeaker, AgendaItem, HighlightItem, Partner, AttendeeBadge, FooterConfig, AdminAccountConfig } from '../types';
+import { CMSData, EventDetails, ExpertSpeaker, AgendaItem, HighlightItem, Partner, AttendeeBadge, FooterConfig, AdminAccountConfig, SEOConfig } from '../types';
 import {
   EVENT_DETAILS as DEFAULT_EVENT_DETAILS,
   LEADING_EXPERTS as DEFAULT_EXPERTS,
   AGENDA_ITEMS as DEFAULT_AGENDA,
   KEY_HIGHLIGHTS as DEFAULT_HIGHLIGHTS,
   PARTNERS as DEFAULT_PARTNERS,
+  DEFAULT_SEO_CONFIG,
 } from '../data/symposiumData';
 
 export const STORAGE_KEY = 'viet_han_aesthetic_cms_data_v9';
@@ -142,6 +143,7 @@ const INITIAL_CMS_DATA: CMSData = {
   mediaLibrary: DEFAULT_MEDIA_LIBRARY,
   footerConfig: DEFAULT_FOOTER_CONFIG,
   adminAccount: DEFAULT_ADMIN_ACCOUNT,
+  seoConfig: DEFAULT_SEO_CONFIG,
 };
 
 interface CMSContextType {
@@ -170,6 +172,7 @@ interface CMSContextType {
   deleteRegistration: (id: string) => void;
   updateFooterConfig: (updated: Partial<FooterConfig>) => void;
   updateAdminAccount: (updated: Partial<AdminAccountConfig>) => void;
+  updateSEOConfig: (updated: Partial<SEOConfig>) => void;
   resetToDefaults: () => void;
   clearAllCacheAndReload: () => void;
   exportDataToJson: () => void;
@@ -203,7 +206,7 @@ export const getInitialAdminTab = (): string => {
   const tabParam = search.get('tab');
   if (tabParam) return tabParam;
   const hash = window.location.hash.replace(/^#\/?admin\/?/, '').replace(/^#/, '');
-  const validTabs = ['general', 'speakers', 'agenda', 'media', 'partners', 'highlights', 'registrations', 'footer'];
+  const validTabs = ['general', 'seo', 'speakers', 'agenda', 'media', 'partners', 'highlights', 'registrations', 'footer'];
   if (validTabs.includes(hash)) {
     return hash;
   }
@@ -248,6 +251,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           mediaLibrary: parsed.mediaLibrary || DEFAULT_MEDIA_LIBRARY,
           footerConfig: { ...DEFAULT_FOOTER_CONFIG, ...(parsed.footerConfig || {}) },
           adminAccount: { ...DEFAULT_ADMIN_ACCOUNT, ...(parsed.adminAccount || {}) },
+          seoConfig: { ...DEFAULT_SEO_CONFIG, ...(parsed.seoConfig || {}) },
         };
       }
     } catch (e) {
@@ -641,6 +645,16 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   };
 
+  const updateSEOConfig = (updated: Partial<SEOConfig>) => {
+    setCmsData((prev) => ({
+      ...prev,
+      seoConfig: {
+        ...(prev.seoConfig || DEFAULT_SEO_CONFIG),
+        ...updated,
+      },
+    }));
+  };
+
   const addImageToLibrary = (imageUrl: string) => {
     if (!imageUrl) return;
     setCmsData((prev) => {
@@ -793,6 +807,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         deleteRegistration,
         updateFooterConfig,
         updateAdminAccount,
+        updateSEOConfig,
         resetToDefaults,
         clearAllCacheAndReload,
         exportDataToJson,

@@ -40,10 +40,15 @@ import {
   Navigation,
   Car,
   Plane,
+  Globe,
+  Share2,
+  Code2,
+  BarChart2,
 } from 'lucide-react';
 import { useCMS, STORAGE_KEY } from '../../context/CMSContext';
-import { ExpertSpeaker, AgendaItem, Partner, HighlightItem, AttendeeBadge } from '../../types';
+import { ExpertSpeaker, AgendaItem, Partner, HighlightItem, AttendeeBadge, SEOConfig } from '../../types';
 import { PARTNER_LOGOS } from '../../data/partnerLogos';
+import { DEFAULT_SEO_CONFIG } from '../../data/symposiumData';
 
 interface AdminCMSModalProps {
   onLogout?: () => void;
@@ -76,6 +81,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
     deleteRegistration,
     updateFooterConfig,
     updateAdminAccount,
+    updateSEOConfig,
     resetToDefaults,
     clearAllCacheAndReload,
     exportDataToJson,
@@ -89,6 +95,9 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
 
   // Local feedback states
   const [saveToast, setSaveToast] = useState<string | null>(null);
+  const [showMediaPickerForOgImage, setShowMediaPickerForOgImage] = useState(false);
+  const [seoPreviewMode, setSeoPreviewMode] = useState<'google' | 'facebook'>('google');
+  const [jsonLdCopied, setJsonLdCopied] = useState(false);
   const [selectedExpertId, setSelectedExpertId] = useState<string | null>(cmsData.experts[0]?.id || null);
   const [editingAgendaId, setEditingAgendaId] = useState<string | null>(null);
   const [agendaDayFilter, setAgendaDayFilter] = useState<'all' | 1 | 2>('all');
@@ -148,6 +157,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
   const snubhHeroFileRef = useRef<HTMLInputElement>(null);
   const kbitHeroFileRef = useRef<HTMLInputElement>(null);
   const mapImageFileRef = useRef<HTMLInputElement>(null);
+  const ogImageFileRef = useRef<HTMLInputElement>(null);
 
   const handleStartEditAttendee = (attendee: AttendeeBadge) => {
     setEditingAttendee(attendee);
@@ -311,6 +321,20 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
         showToast('Đã tải ảnh sơ đồ / bản đồ địa điểm thành công!');
       } catch (err: any) {
         alert(err.message || 'Lỗi tải ảnh bản đồ');
+      } finally {
+        e.target.value = '';
+      }
+    }
+  };
+
+  const handleOgImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      try {
+        const url = await uploadImageFile(e.target.files[0]);
+        updateSEOConfig({ ogImageUrl: url });
+        showToast('Đã tải và cập nhật ảnh đại diện mạng xã hội (OG Image) thành công!');
+      } catch (err: any) {
+        alert(err.message || 'Lỗi tải ảnh');
       } finally {
         e.target.value = '';
       }
@@ -718,6 +742,23 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
             >
               <Building className="w-4 h-4 shrink-0" />
               <span>Cài đặt chung &amp; Banner</span>
+            </button>
+
+            <button
+              onClick={() => setActiveAdminTab('seo')}
+              className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left text-[13px] font-bold transition-all cursor-pointer shrink-0 ${
+                activeAdminTab === 'seo'
+                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Globe className="w-4 h-4 shrink-0" />
+                <span>SEO &amp; Mạng Xã Hội</span>
+              </div>
+              <span className={`px-2 py-0.5 rounded-full text-[10.5px] font-bold ${activeAdminTab === 'seo' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-800'}`}>
+                Chuẩn
+              </span>
             </button>
 
             <button
@@ -2896,6 +2937,642 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                       </button>
                     </div>
                   </form>
+                </div>
+              </div>
+            )}
+
+            {/* =========================================================================
+                TAB: QUẢN LÝ SEO & CHIA SẺ MẠNG XÃ HỘI (SOCIAL SHARE)
+               ========================================================================= */}
+            {activeAdminTab === 'seo' && (
+              <div className="max-w-4xl space-y-6">
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-[20px] font-black text-slate-900 flex items-center gap-2">
+                      <Globe className="w-5 h-5 text-emerald-600" />
+                      <span>Cấu Hình SEO &amp; Chia Sẻ Mạng Xã Hội (Social Share)</span>
+                    </h2>
+                    <p className="text-[13px] text-slate-500">
+                      Tối ưu hóa khả năng hiển thị khi tìm kiếm trên Google và khi chia sẻ liên kết qua Facebook, Zalo, LinkedIn, Messenger.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        updateSEOConfig(DEFAULT_SEO_CONFIG);
+                        showToast('Đã khôi phục toàn bộ cấu hình SEO về chuẩn mặc định!');
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-600 transition-colors cursor-pointer"
+                      title="Khôi phục thông tin SEO chuẩn"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Khôi phục chuẩn SEO</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleManualSave()}
+                      disabled={isSaving}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
+                    >
+                      {saveSuccessTick ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+                      <span>{isSaving ? 'Đang lưu...' : 'Lưu Cài Đặt SEO'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Hidden OG File Input */}
+                <input
+                  ref={ogImageFileRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/jpg"
+                  onChange={handleOgImageUpload}
+                  className="hidden"
+                />
+
+                {/* =========================================================================
+                    REAL-TIME SEARCH & SOCIAL PREVIEW
+                   ========================================================================= */}
+                <div className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/90 shadow-xs space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                    <div>
+                      <h3 className="text-[15px] font-bold text-slate-900 flex items-center gap-2">
+                        <Eye className="w-4 h-4 text-emerald-600" />
+                        <span>Xem Trước Hiển Thị Thực Tế (Live Preview)</span>
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Hình ảnh mô phỏng chính xác cách trang web của bạn xuất hiện trên kết quả tìm kiếm Google và khi gửi qua Zalo/Facebook.
+                      </p>
+                    </div>
+
+                    <div className="inline-flex p-1 bg-slate-100 rounded-xl">
+                      <button
+                        type="button"
+                        onClick={() => setSeoPreviewMode('google')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                          seoPreviewMode === 'google'
+                            ? 'bg-white text-slate-900 shadow-xs'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        <Search className="w-3.5 h-3.5 text-blue-500" />
+                        <span>Google Search (SERP)</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setSeoPreviewMode('facebook')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                          seoPreviewMode === 'facebook'
+                            ? 'bg-white text-slate-900 shadow-xs'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        <Share2 className="w-3.5 h-3.5 text-blue-600" />
+                        <span>Facebook / Zalo Share</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* PREVIEW 1: GOOGLE SERP */}
+                  {seoPreviewMode === 'google' && (
+                    <div className="p-4 sm:p-5 rounded-2xl bg-[#f8f9fa] border border-slate-200 space-y-3 font-sans">
+                      <div className="flex items-center gap-2 text-[12px] text-[#202124]">
+                        <div className="w-6 h-6 rounded-full bg-blue-600 text-white text-[10px] font-black flex items-center justify-center">
+                          108
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-slate-800 text-[12px] leading-none">
+                            Hội Nghị Khoa Học Thẩm Mỹ Việt – Hàn 2026
+                          </span>
+                          <span className="text-[11px] text-[#4d5156] mt-0.5 truncate max-w-xs sm:max-w-md">
+                            {cmsData.seoConfig?.canonicalUrl || 'https://hoithao-thammy-viethan2026.vn'} › congress-2026
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <div className="text-[18px] sm:text-[20px] text-[#1a0dab] hover:underline font-medium leading-snug cursor-pointer line-clamp-1">
+                          {cmsData.seoConfig?.metaTitle || DEFAULT_SEO_CONFIG.metaTitle}
+                        </div>
+                        <p className="text-[13px] text-[#4d5156] leading-relaxed line-clamp-2">
+                          {cmsData.seoConfig?.metaDescription || DEFAULT_SEO_CONFIG.metaDescription}
+                        </p>
+                      </div>
+
+                      {/* Character Count & Quality Analysis */}
+                      <div className="pt-3 border-t border-slate-200/80 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        <div className="bg-white p-2.5 rounded-xl border border-slate-200">
+                          <div className="flex items-center justify-between text-[11px] font-bold mb-1">
+                            <span className="text-slate-600">Độ dài Tiêu đề (Title):</span>
+                            <span className={
+                              (cmsData.seoConfig?.metaTitle?.length || 0) <= 60
+                                ? 'text-emerald-700 font-extrabold'
+                                : 'text-amber-700 font-extrabold'
+                            }>
+                              {(cmsData.seoConfig?.metaTitle || DEFAULT_SEO_CONFIG.metaTitle).length} / 60 ký tự
+                            </span>
+                          </div>
+                          <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                            <div
+                              className={`h-full transition-all ${
+                                (cmsData.seoConfig?.metaTitle?.length || 0) <= 60 ? 'bg-emerald-500' : 'bg-amber-500'
+                              }`}
+                              style={{ width: `${Math.min(100, (((cmsData.seoConfig?.metaTitle || DEFAULT_SEO_CONFIG.metaTitle).length) / 60) * 100)}%` }}
+                            />
+                          </div>
+                          <p className="text-[10px] text-slate-400 mt-1">Lý tưởng: 40 - 60 ký tự để không bị Google cắt ngắn.</p>
+                        </div>
+
+                        <div className="bg-white p-2.5 rounded-xl border border-slate-200">
+                          <div className="flex items-center justify-between text-[11px] font-bold mb-1">
+                            <span className="text-slate-600">Độ dài Thẻ mô tả (Description):</span>
+                            <span className={
+                              (cmsData.seoConfig?.metaDescription?.length || 0) <= 160
+                                ? 'text-emerald-700 font-extrabold'
+                                : 'text-amber-700 font-extrabold'
+                            }>
+                              {(cmsData.seoConfig?.metaDescription || DEFAULT_SEO_CONFIG.metaDescription).length} / 160 ký tự
+                            </span>
+                          </div>
+                          <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                            <div
+                              className={`h-full transition-all ${
+                                (cmsData.seoConfig?.metaDescription?.length || 0) <= 160 ? 'bg-emerald-500' : 'bg-amber-500'
+                              }`}
+                              style={{ width: `${Math.min(100, (((cmsData.seoConfig?.metaDescription || DEFAULT_SEO_CONFIG.metaDescription).length) / 160) * 100)}%` }}
+                            />
+                          </div>
+                          <p className="text-[10px] text-slate-400 mt-1">Lý tưởng: 120 - 160 ký tự giúp hiển thị đầy đủ thông điệp.</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* PREVIEW 2: FACEBOOK / ZALO SHARE CARD */}
+                  {seoPreviewMode === 'facebook' && (
+                    <div className="max-w-md mx-auto rounded-2xl border border-slate-300 overflow-hidden bg-white shadow-xs font-sans">
+                      {/* Card Image */}
+                      <div className="relative w-full aspect-[1.91/1] bg-slate-100 overflow-hidden">
+                        <img
+                          src={cmsData.seoConfig?.ogImageUrl || '/BG.png'}
+                          alt="OG Preview"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/BG.png';
+                          }}
+                        />
+                      </div>
+
+                      {/* Card Text Info */}
+                      <div className="p-3 bg-[#f0f2f5] border-t border-slate-200 space-y-1">
+                        <span className="block text-[11px] uppercase font-bold text-slate-500 tracking-wider">
+                          {(cmsData.seoConfig?.canonicalUrl || 'https://hoithao-thammy-viethan2026.vn').replace(/^https?:\/\//, '').split('/')[0]}
+                        </span>
+                        <h4 className="text-[14px] font-bold text-slate-900 leading-snug line-clamp-2">
+                          {cmsData.seoConfig?.metaTitle || DEFAULT_SEO_CONFIG.metaTitle}
+                        </h4>
+                        <p className="text-[12px] text-slate-600 line-clamp-2 leading-relaxed">
+                          {cmsData.seoConfig?.metaDescription || DEFAULT_SEO_CONFIG.metaDescription}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* =========================================================================
+                    CARD 1: THẺ META CƠ BẢN & NỘI DUNG TÌM KIẾM
+                   ========================================================================= */}
+                <div className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/90 shadow-xs space-y-4">
+                  <div className="border-b border-slate-100 pb-3">
+                    <h3 className="text-[15px] font-bold text-slate-900 flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-emerald-600" />
+                      <span>Thẻ Meta Cơ Bản (Meta Title, Description, Keywords)</span>
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Đây là các thẻ quan trọng nhất quyết định vị trí thứ hạng của website trên Google, Bing và các bộ máy tìm kiếm.
+                    </p>
+                  </div>
+
+                  <div className="space-y-4">
+                    {/* Meta Title */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-bold text-slate-700">
+                          Tiêu đề trang (Meta Title - Thẻ &lt;title&gt;):
+                        </label>
+                        <span className="text-[11px] text-slate-500">
+                          {(cmsData.seoConfig?.metaTitle ?? DEFAULT_SEO_CONFIG.metaTitle).length} ký tự
+                        </span>
+                      </div>
+                      <input
+                        type="text"
+                        value={cmsData.seoConfig?.metaTitle ?? DEFAULT_SEO_CONFIG.metaTitle}
+                        onChange={(e) => updateSEOConfig({ metaTitle: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 outline-none transition-all"
+                        placeholder="Hội Nghị Khoa Học Thẩm Mỹ Việt – Hàn 2026 | Bệnh viện TWQĐ 108"
+                      />
+                    </div>
+
+                    {/* Meta Description */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-bold text-slate-700">
+                          Thẻ mô tả tìm kiếm (Meta Description):
+                        </label>
+                        <span className="text-[11px] text-slate-500">
+                          {(cmsData.seoConfig?.metaDescription ?? DEFAULT_SEO_CONFIG.metaDescription).length} ký tự
+                        </span>
+                      </div>
+                      <textarea
+                        rows={3}
+                        value={cmsData.seoConfig?.metaDescription ?? DEFAULT_SEO_CONFIG.metaDescription}
+                        onChange={(e) => updateSEOConfig({ metaDescription: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 outline-none transition-all"
+                        placeholder="Cổng thông tin và đăng ký chính thức Hội nghị Khoa học Thẩm mỹ Việt – Hàn 2026..."
+                      />
+                    </div>
+
+                    {/* Meta Keywords */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                        Từ khóa tìm kiếm (Meta Keywords - cách nhau bằng dấu phẩy):
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={cmsData.seoConfig?.metaKeywords ?? DEFAULT_SEO_CONFIG.metaKeywords}
+                        onChange={(e) => updateSEOConfig({ metaKeywords: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 outline-none transition-all"
+                        placeholder="Hội thảo thẩm mỹ Việt Hàn 2026, thẩm mỹ Hàn Quốc, BV 108, phẫu thuật thẩm mỹ..."
+                      />
+
+                      {/* Quick Keywords Suggestions */}
+                      <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[11px] font-bold text-slate-500">Gợi ý từ khóa hot:</span>
+                        {[
+                          'Hội thảo thẩm mỹ Việt Hàn 2026',
+                          'Bệnh viện TWQĐ 108',
+                          'Deep Plane Facelift',
+                          'Nâng mũi sụn sườn',
+                          'KBIT Association',
+                          'CME Thẩm mỹ',
+                          'Chuyên gia Hàn Quốc',
+                        ].map((kw) => (
+                          <button
+                            key={kw}
+                            type="button"
+                            onClick={() => {
+                              const cur = cmsData.seoConfig?.metaKeywords || DEFAULT_SEO_CONFIG.metaKeywords;
+                              if (!cur.includes(kw)) {
+                                updateSEOConfig({ metaKeywords: cur ? `${cur}, ${kw}` : kw });
+                                showToast(`Đã thêm từ khóa: "${kw}"`);
+                              }
+                            }}
+                            className="px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-200 text-[10.5px] font-medium transition-colors cursor-pointer"
+                          >
+                            + {kw}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Canonical URL & Author & Robots */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          Đường dẫn chuẩn (Canonical URL):
+                        </label>
+                        <input
+                          type="url"
+                          value={cmsData.seoConfig?.canonicalUrl ?? DEFAULT_SEO_CONFIG.canonicalUrl}
+                          onChange={(e) => updateSEOConfig({ canonicalUrl: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:border-emerald-600 outline-none"
+                          placeholder="https://hoithao-thammy-viethan2026.vn"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          Tác giả / Tổ chức (Author):
+                        </label>
+                        <input
+                          type="text"
+                          value={cmsData.seoConfig?.author ?? DEFAULT_SEO_CONFIG.author}
+                          onChange={(e) => updateSEOConfig({ author: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:border-emerald-600 outline-none"
+                          placeholder="BV TWQĐ 108 & KBIT Association"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          Chỉ mục tìm kiếm (Robots Tag):
+                        </label>
+                        <select
+                          value={cmsData.seoConfig?.robots ?? 'index, follow'}
+                          onChange={(e) => updateSEOConfig({ robots: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:border-emerald-600 outline-none cursor-pointer"
+                        >
+                          <option value="index, follow">index, follow (Khuyên dùng: Cho phép Google lập chỉ mục)</option>
+                          <option value="noindex, nofollow">noindex, nofollow (Chặn bot tìm kiếm)</option>
+                          <option value="noindex, follow">noindex, follow (Không index nhưng theo dõi link)</option>
+                          <option value="index, nofollow">index, nofollow (Index nhưng không theo dõi link)</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* =========================================================================
+                    CARD 2: HÌNH ẢNH ĐẠI DIỆN MẠNG XÃ HỘI (OG IMAGE)
+                   ========================================================================= */}
+                <div className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/90 shadow-xs space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                    <div>
+                      <h3 className="text-[15px] font-bold text-slate-900 flex items-center gap-2">
+                        <ImageIcon className="w-4 h-4 text-emerald-600" />
+                        <span>Hình Ảnh Đại Diện Mạng Xã Hội (Social Share Image - og:image)</span>
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Ảnh này sẽ xuất hiện làm banner đại diện lớn khi link website được gửi trong chat Zalo, Facebook Messenger hoặc đăng bài viết.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => ogImageFileRef.current?.click()}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold transition-all cursor-pointer"
+                      >
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>Tải ảnh từ máy tính</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setShowMediaPickerForOgImage(!showMediaPickerForOgImage)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-700 transition-colors cursor-pointer"
+                      >
+                        <Layers className="w-3.5 h-3.5" />
+                        <span>{showMediaPickerForOgImage ? 'Đóng thư viện' : 'Chọn từ kho ảnh'}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+                    {/* Thumbnail Preview */}
+                    <div className="sm:col-span-4 relative aspect-[1.91/1] rounded-2xl border-2 border-dashed border-slate-300 overflow-hidden bg-slate-50 flex items-center justify-center group shadow-xs">
+                      <img
+                        src={cmsData.seoConfig?.ogImageUrl || '/BG.png'}
+                        alt="OG Image Preview"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-all duration-300"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/BG.png';
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <button
+                          type="button"
+                          onClick={() => ogImageFileRef.current?.click()}
+                          className="px-3 py-1.5 rounded-xl bg-white text-slate-900 text-xs font-bold shadow-md cursor-pointer flex items-center gap-1.5"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                          <span>Đổi ảnh</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Direct URL Input */}
+                    <div className="sm:col-span-8 space-y-2">
+                      <label className="block text-xs font-bold text-slate-700">
+                        Đường dẫn URL ảnh đại diện (hoặc tải trực tiếp):
+                      </label>
+                      <input
+                        type="text"
+                        value={cmsData.seoConfig?.ogImageUrl ?? DEFAULT_SEO_CONFIG.ogImageUrl}
+                        onChange={(e) => updateSEOConfig({ ogImageUrl: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:border-emerald-600 outline-none"
+                        placeholder="/BG.png hoặc https://..."
+                      />
+                      <p className="text-[11px] text-slate-500 leading-relaxed">
+                        💡 <strong>Kích thước chuẩn:</strong> 1200 × 630 pixels (tỷ lệ 1.91:1) để hình ảnh hiển thị sắc nét nhất trên cả Facebook Desktop, Mobile và Zalo Feed.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Collapsible Media Library Picker for OG Image */}
+                  {showMediaPickerForOgImage && (
+                    <div className="p-3.5 rounded-2xl bg-emerald-50/40 border border-emerald-200 space-y-2 animate-in fade-in duration-150 shadow-2xs">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11.5px] font-bold text-emerald-900">
+                          Bấm vào ảnh bất kỳ để đặt làm ảnh đại diện mạng xã hội:
+                        </span>
+                        <span className="text-[10.5px] text-slate-400">
+                          {cmsData.mediaLibrary.length} ảnh có sẵn
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 max-h-48 overflow-y-auto p-1">
+                        {cmsData.mediaLibrary.map((imgUrl, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => {
+                              updateSEOConfig({ ogImageUrl: imgUrl });
+                              showToast('Đã chọn ảnh đại diện mạng xã hội từ thư viện!');
+                            }}
+                            className={`relative aspect-[1.91/1] rounded-xl overflow-hidden border-2 transition-all cursor-pointer group ${
+                              (cmsData.seoConfig?.ogImageUrl || DEFAULT_SEO_CONFIG.ogImageUrl) === imgUrl
+                                ? 'border-emerald-600 ring-2 ring-emerald-500/30 scale-95'
+                                : 'border-slate-200 hover:border-emerald-500'
+                            }`}
+                          >
+                            <img src={imgUrl} alt={`media-${i}`} className="w-full h-full object-cover" />
+                            {(cmsData.seoConfig?.ogImageUrl || DEFAULT_SEO_CONFIG.ogImageUrl) === imgUrl && (
+                              <div className="absolute inset-0 bg-emerald-600/40 flex items-center justify-center text-white">
+                                <Check className="w-4 h-4 stroke-[3]" />
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* =========================================================================
+                    CARD 3: MÃ THEO DÕI TIẾP THỊ & ĐO LƯỜNG (TRACKING CODES)
+                   ========================================================================= */}
+                <div className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/90 shadow-xs space-y-4">
+                  <div className="border-b border-slate-100 pb-3">
+                    <h3 className="text-[15px] font-bold text-slate-900 flex items-center gap-2">
+                      <BarChart2 className="w-4 h-4 text-emerald-600" />
+                      <span>Mã Tiếp Thị &amp; Đo Lường Lưu Lượng (Analytics &amp; Pixel)</span>
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Tích hợp Google Analytics 4, Meta Pixel và Google Search Console trực tiếp mà không cần sửa code.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {/* GA4 */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-bold text-slate-700">
+                          Google Analytics (GA4 ID):
+                        </label>
+                        {cmsData.seoConfig?.googleAnalyticsId && cmsData.seoConfig.googleAnalyticsId !== 'G-XXXXXXXXXX' && (
+                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.2 rounded-md">
+                            Đang chạy
+                          </span>
+                        )}
+                      </div>
+                      <input
+                        type="text"
+                        value={cmsData.seoConfig?.googleAnalyticsId ?? 'G-XXXXXXXXXX'}
+                        onChange={(e) => updateSEOConfig({ googleAnalyticsId: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:border-emerald-600 outline-none"
+                        placeholder="G-XXXXXXXXXX"
+                      />
+                      <p className="text-[11px] text-slate-400 mt-1">Định dạng: <code>G-XXXXXXX</code></p>
+                    </div>
+
+                    {/* Meta Pixel */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-bold text-slate-700">
+                          Facebook Pixel (Meta Pixel ID):
+                        </label>
+                        {cmsData.seoConfig?.facebookPixelId && cmsData.seoConfig.facebookPixelId.trim() !== '' && (
+                          <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-1.5 py-0.2 rounded-md">
+                            Đang chạy
+                          </span>
+                        )}
+                      </div>
+                      <input
+                        type="text"
+                        value={cmsData.seoConfig?.facebookPixelId ?? ''}
+                        onChange={(e) => updateSEOConfig({ facebookPixelId: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:border-emerald-600 outline-none"
+                        placeholder="123456789012345"
+                      />
+                      <p className="text-[11px] text-slate-400 mt-1">Dãy số ID Pixel Facebook Ads</p>
+                    </div>
+
+                    {/* Google Site Verification */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Google Search Console Verification:
+                      </label>
+                      <input
+                        type="text"
+                        value={cmsData.seoConfig?.googleSiteVerification ?? ''}
+                        onChange={(e) => updateSEOConfig({ googleSiteVerification: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:border-emerald-600 outline-none"
+                        placeholder="Mã xác minh Google Search Console"
+                      />
+                      <p className="text-[11px] text-slate-400 mt-1">Nội dung trong thẻ meta verification</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* =========================================================================
+                    CARD 4: DỮ LIỆU CÓ CẤU TRÚC RICH SNIPPET (SCHEMA.ORG JSON-LD)
+                   ========================================================================= */}
+                <div className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/90 shadow-xs space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
+                        <Code2 className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="text-[15px] font-bold text-slate-900">
+                          Dữ Liệu Có Cấu Trúc Schema.org (JSON-LD MedicalEvent)
+                        </h3>
+                        <p className="text-xs text-slate-500">
+                          Tự động sinh cấu trúc dữ liệu Rich Snippet chuẩn Google để xuất hiện dạng Sự Kiện Nổi Bật (Event Card) trên Google.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={cmsData.seoConfig?.structuredDataEnabled !== false}
+                          onChange={(e) => updateSEOConfig({ structuredDataEnabled: e.target.checked })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                      </label>
+                      <span className="text-xs font-bold text-slate-700">
+                        {cmsData.seoConfig?.structuredDataEnabled !== false ? 'Đang bật' : 'Đang tắt'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Schema Code View & Copy */}
+                  <div className="relative rounded-2xl bg-slate-900 text-slate-100 p-4 font-mono text-[11px] overflow-x-auto max-h-56">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const schemaObj = {
+                          '@context': 'https://schema.org',
+                          '@type': 'MedicalEvent',
+                          name: cmsData.seoConfig?.metaTitle || DEFAULT_SEO_CONFIG.metaTitle,
+                          description: cmsData.seoConfig?.metaDescription || DEFAULT_SEO_CONFIG.metaDescription,
+                          startDate: '2026-10-17T08:00:00+07:00',
+                          endDate: '2026-10-18T17:30:00+07:00',
+                          location: {
+                            '@type': 'Place',
+                            name: cmsData.eventDetails.venueName || 'Bệnh viện Trung ương Quân đội 108',
+                            address: {
+                              '@type': 'PostalAddress',
+                              streetAddress: cmsData.eventDetails.venueAddress || 'Số 1 Trần Hưng Đạo, P. Bạch Đằng, Q. Hai Bà Trưng',
+                              addressLocality: 'Hà Nội',
+                              addressCountry: 'VN',
+                            },
+                          },
+                          organizer: {
+                            '@type': 'Organization',
+                            name: 'Bệnh viện Trung ương Quân đội 108 & KBIT Association',
+                            url: cmsData.seoConfig?.canonicalUrl || 'https://hoithao-thammy-viethan2026.vn',
+                          },
+                          performer: (cmsData.experts || []).slice(0, 5).map(e => ({ '@type': 'Person', name: e.name, jobTitle: e.title })),
+                        };
+                        navigator.clipboard.writeText(JSON.stringify(schemaObj, null, 2));
+                        setJsonLdCopied(true);
+                        setTimeout(() => setJsonLdCopied(false), 3000);
+                        showToast('Đã sao chép mã Schema JSON-LD vào Clipboard!');
+                      }}
+                      className="absolute right-3 top-3 px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-white text-[10.5px] font-sans font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      {jsonLdCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{jsonLdCopied ? 'Đã chép' : 'Sao chép JSON-LD'}</span>
+                    </button>
+
+                    <pre className="text-emerald-400 leading-relaxed">
+                      {`{\n  "@context": "https://schema.org",\n  "@type": "MedicalEvent",\n  "name": "${cmsData.seoConfig?.metaTitle || DEFAULT_SEO_CONFIG.metaTitle}",\n  "startDate": "2026-10-17T08:00:00+07:00",\n  "endDate": "2026-10-18T17:30:00+07:00",\n  "location": {\n    "@type": "Place",\n    "name": "${cmsData.eventDetails.venueName || 'Bệnh viện Trung ương Quân đội 108'}"\n  },\n  "organizer": {\n    "@type": "Organization",\n    "name": "Bệnh viện TWQĐ 108 & KBIT Association"\n  }\n}`}
+                    </pre>
+                  </div>
+
+                  <div className="flex items-center justify-between flex-wrap gap-2 text-xs pt-1">
+                    <p className="text-slate-500 text-[11px]">
+                      Hệ thống tự động nhúng cấu trúc JSON-LD này vào thẻ <code>&lt;head&gt;</code> của trang chủ.
+                    </p>
+                    <a
+                      href="https://search.google.com/test/rich-results"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-800 font-bold hover:underline"
+                    >
+                      <span>Mở Google Rich Results Test để kiểm tra</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
                 </div>
               </div>
             )}

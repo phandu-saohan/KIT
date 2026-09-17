@@ -10,6 +10,7 @@ import { CMSProvider, useCMS } from './context/CMSContext';
 import { AdminCMSModal } from './components/admin/AdminCMSModal';
 import { AdminLoginScreen } from './components/admin/AdminLoginScreen';
 import { MobileQuickNav } from './components/MobileQuickNav';
+import { SEOHead } from './components/SEOHead';
 
 function MainApp() {
   const { isAdminOpen, closeAdmin } = useCMS();
@@ -51,6 +52,9 @@ function MainApp() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8f9ff] text-[#0b1c30] selection:bg-secondary/20 selection:text-secondary">
+      {/* Dynamic SEO Meta Tags & Head Scripts */}
+      <SEOHead />
+
       {/* Main Content Sections */}
       <main className="flex-1 w-full">
         {/* Section 1: Hero Symposium Banner & Real-time Countdown */}
