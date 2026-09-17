@@ -8,7 +8,21 @@ import {
   PARTNERS as DEFAULT_PARTNERS,
 } from '../data/symposiumData';
 
-const STORAGE_KEY = 'viet_han_aesthetic_cms_data_v4';
+const STORAGE_KEY = 'viet_han_aesthetic_cms_data_v5';
+
+// Purge all old cache versions immediately to ensure 100% fresh data
+if (typeof window !== 'undefined') {
+  try {
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('viet_han_aesthetic') && k !== STORAGE_KEY) {
+        keysToRemove.push(k);
+      }
+    }
+    keysToRemove.forEach(k => localStorage.removeItem(k));
+  } catch (e) {}
+}
 
 const DEFAULT_MEDIA_LIBRARY: string[] = [
   '/BG.png',
