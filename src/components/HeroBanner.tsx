@@ -82,7 +82,6 @@ export const HeroBanner: React.FC = () => {
       className="relative w-full flex items-center bg-white bg-no-repeat overflow-hidden border-b border-slate-200/60"
       style={{
         minHeight: `${bannerHeight}px`,
-        height: `${bannerHeight}px`,
         backgroundImage: bgStyleImage,
         backgroundPosition: bgStylePosition,
         backgroundSize: bgStyleSize,
@@ -102,13 +101,13 @@ export const HeroBanner: React.FC = () => {
 
       {/* Main Content Container constrained to banner height */}
       <div 
-        className="relative z-10 w-full max-w-[1360px] mx-auto px-3.5 sm:px-8 lg:px-14 py-2 sm:py-5 flex flex-col justify-between items-center sm:items-start"
+        className="relative z-10 w-full max-w-[1360px] mx-auto px-3.5 sm:px-8 lg:px-14 py-6 xs:py-7 sm:py-5 flex flex-col justify-between items-center sm:items-start"
         style={{
           minHeight: `${bannerHeight}px`,
         }}
       >
-        {/* TOP: Two Host Logos (VSAPS & KSAPS) - Đưa lên 1 tý */}
-        <div className="flex items-center justify-center sm:justify-start gap-3 sm:gap-4 p-0 w-full pt-0.5 sm:pt-0 -mt-0.5 sm:mt-0">
+        {/* TOP: Two Host Logos (VSAPS & KSAPS) */}
+        <div className="flex items-center justify-center sm:justify-start gap-3 sm:gap-4 p-0 w-full mb-2 sm:mb-0">
           {/* Logo 1: VSAPS Circular Badge */}
           <img
             src={vsapsLogo}
@@ -125,18 +124,18 @@ export const HeroBanner: React.FC = () => {
         </div>
 
         {/* CENTER: Typography Matching 100% of User Banner - Centered on Mobile */}
-        <div className="w-full max-w-full sm:max-w-2xl lg:max-w-3xl my-auto flex flex-col items-center sm:items-start text-center sm:text-left py-1 sm:py-0">
+        <div className="w-full max-w-full sm:max-w-2xl lg:max-w-3xl my-auto flex flex-col items-center sm:items-start text-center sm:text-left py-2 sm:py-0">
           {(() => {
             const sp = event.heroHeadingSpacing || 'relaxed';
             const gapClass =
               sp === 'loose'
-                ? 'gap-1 sm:gap-4 lg:gap-5'
+                ? 'gap-3 xs:gap-3.5 sm:gap-4 lg:gap-5'
                 : sp === 'normal'
-                ? 'gap-0.5 sm:gap-1.5 lg:gap-2'
-                : 'gap-0.5 sm:gap-2.5 lg:gap-3.5';
+                ? 'gap-1.5 xs:gap-2 sm:gap-2.5 lg:gap-3'
+                : 'gap-2 xs:gap-2.5 sm:gap-3 lg:gap-3.5';
 
             return (
-              <h1 className={`text-[25px] xs:text-[29px] sm:text-[40px] md:text-[46px] lg:text-[50px] font-black uppercase tracking-tight font-display flex flex-col ${gapClass} leading-[1.1] sm:leading-[1.12] items-center sm:items-start`}>
+              <h1 className={`text-[25px] xs:text-[29px] sm:text-[40px] md:text-[46px] lg:text-[50px] font-black uppercase tracking-tight font-display flex flex-col ${gapClass} leading-[1.18] sm:leading-[1.14] items-center sm:items-start`}>
                 <span className="block text-[#d52b66]">{heading1}</span>
                 <span className="block text-[#d52b66]">{heading2}</span>
                 <span className="block text-[#d52b66]">
@@ -146,7 +145,7 @@ export const HeroBanner: React.FC = () => {
             );
           })()}
 
-          <p className="text-[12.5px] xs:text-[14px] sm:text-[16px] text-slate-700 font-semibold mt-1.5 sm:mt-3 mb-2 sm:mb-4 text-center sm:text-left max-w-md sm:max-w-none">
+          <p className="text-[12.5px] xs:text-[14px] sm:text-[16px] text-slate-700 font-semibold mt-2.5 sm:mt-3 mb-3 sm:mb-4 text-center sm:text-left max-w-md sm:max-w-none">
             {venueText}
           </p>
 
@@ -178,8 +177,8 @@ export const HeroBanner: React.FC = () => {
           </div>
         </div>
 
-        {/* BOTTOM: Sponsors & Co-Organizers Logos - Đưa xuống 1 tý */}
-        <div className="flex flex-wrap items-center sm:items-end justify-center sm:justify-start gap-3 sm:gap-8 pb-1.5 sm:pb-2 pt-2.5 sm:pt-3 border-t border-slate-200/80 w-full text-center sm:text-left mt-auto sm:mt-0 mb-0.5 sm:mb-0">
+        {/* BOTTOM: Sponsors & Co-Organizers Logos */}
+        <div className="flex flex-wrap items-center sm:items-end justify-center sm:justify-start gap-3 sm:gap-8 pb-1 sm:pb-2 pt-3 sm:pt-3 border-t border-slate-200/80 w-full text-center sm:text-left mt-auto sm:mt-0 mb-0.5 sm:mb-0">
           {/* Column 1: Bảo trợ (MOHW Korea) */}
           <div className="flex flex-col items-center sm:items-start gap-0.5 sm:gap-1">
             <span className="text-[9.5px] sm:text-[11px] font-medium text-slate-500">
