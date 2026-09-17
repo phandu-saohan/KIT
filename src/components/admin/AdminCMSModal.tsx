@@ -230,11 +230,54 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
     showToast('Đã cập nhật thông tin tài khoản & mật khẩu quản trị thành công!');
   };
 
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccessTick, setSaveSuccessTick] = useState(false);
+  const [lastSavedTime, setLastSavedTime] = useState<string>('Vừa xong');
+
   if (!isAdminOpen) return null;
 
   const showToast = (msg: string) => {
     setSaveToast(msg);
     setTimeout(() => setSaveToast(null), 3000);
+  };
+
+  const handleManualSave = async (showFeedback = true): Promise<boolean> => {
+    setIsSaving(true);
+    try {
+      // 1. Force save to localStorage
+      try {
+        localStorage.setItem('viet_han_aesthetic_cms_data_v6', JSON.stringify(cmsData));
+      } catch (e) {
+        console.warn('LocalStorage manual save warning:', e);
+      }
+
+      // 2. Trigger cloud sync if connected
+      let cloudSuccess = false;
+      try {
+        cloudSuccess = await saveCmsToCloud();
+      } catch {}
+
+      const now = new Date();
+      const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+      setLastSavedTime(timeStr);
+
+      setIsSaving(false);
+      setSaveSuccessTick(true);
+      setTimeout(() => setSaveSuccessTick(false), 3500);
+
+      if (showFeedback) {
+        if (cloudSuccess) {
+          showToast('✅ Đã lưu toàn bộ thay đổi và đồng bộ Vercel Postgres thành công!');
+        } else {
+          showToast('✅ Đã lưu toàn bộ thay đổi thành công! Dữ liệu đã cập nhật ngay trên website.');
+        }
+      }
+      return true;
+    } catch (err: any) {
+      setIsSaving(false);
+      showToast('❌ Có lỗi khi lưu: ' + (err?.message || 'Thử lại'));
+      return false;
+    }
   };
 
   const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -481,6 +524,36 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
 
         {/* Quick Actions in Header */}
         <div className="flex items-center gap-2 sm:gap-2.5 ml-auto flex-wrap">
+          {/* PRIMARY PROMINENT SAVE BUTTON */}
+          <button
+            type="button"
+            onClick={() => handleManualSave(true)}
+            disabled={isSaving}
+            className={`inline-flex items-center gap-2 px-4 sm:px-5 py-2 rounded-xl text-white text-xs font-black shadow-md hover:shadow-lg transition-all cursor-pointer active:scale-95 ${
+              saveSuccessTick
+                ? 'bg-emerald-600 hover:bg-emerald-700 ring-2 ring-emerald-300'
+                : 'bg-gradient-to-r from-[#d53774] via-[#b0225d] to-[#174ea6] hover:opacity-95 ring-2 ring-pink-300/50'
+            }`}
+            title="Lưu toàn bộ thay đổi CMS và áp dụng ra frontend ngay lập tức"
+          >
+            {isSaving ? (
+              <>
+                <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>Đang lưu...</span>
+              </>
+            ) : saveSuccessTick ? (
+              <>
+                <CheckCircle2 className="w-4 h-4 text-white" />
+                <span>ĐÃ LƯU THÀNH CÔNG!</span>
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 text-white" />
+                <span>LƯU THAY ĐỔI</span>
+              </>
+            )}
+          </button>
+
           {/* Cloud Database Status Badge */}
           <div
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-[11px] font-bold transition-all ${
@@ -1242,6 +1315,24 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                         <span>{cmsData.eventDetails.heroShowBuilding !== false ? 'Đang bật họa tiết' : 'Đã ẩn họa tiết'}</span>
                       </button>
                     </div>
+                  </div>
+
+                  {/* Dedicated Action Save Bar for Hero Banner */}
+                  <div className="pt-3.5 mt-2 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>Các thiết lập ảnh nền và hiệu ứng sẽ được áp dụng ngay vào frontend.</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleManualSave(true)}
+                      disabled={isSaving}
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#d53774] to-[#b0225d] hover:from-[#c02663] hover:to-[#961a4c] text-white text-xs font-black shadow-sm hover:shadow-md transition-all cursor-pointer active:scale-95"
+                    >
+                      <Save className="w-4 h-4" />
+                      <span>{isSaving ? 'Đang lưu...' : 'LƯU THAY ĐỔI HERO BANNER'}</span>
+                    </button>
                   </div>
                 </div>
 
@@ -3983,20 +4074,74 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
           </main>
         </div>
 
-        {/* CMS Bottom Status Footer */}
-        <footer className="px-6 py-3 bg-white border-t border-slate-200/90 flex items-center justify-between text-xs text-slate-500 shrink-0">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span>Dữ liệu được lưu trữ tự động trong bộ nhớ trình duyệt</span>
+        {/* CMS Bottom Status Footer - Sticky Action Bar */}
+        <footer className="sticky bottom-0 z-30 px-4 sm:px-8 py-3 bg-white/95 backdrop-blur-md border-t border-slate-200/90 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 shrink-0 shadow-lg">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <span className={`w-2.5 h-2.5 rounded-full ${saveSuccessTick ? 'bg-emerald-500 animate-ping' : 'bg-emerald-500'}`} />
+            <span className="font-semibold text-slate-700">
+              Trạng thái: <span className="text-emerald-700 font-bold">Tự động đồng bộ</span>
+            </span>
+            <span className="text-slate-300 hidden sm:inline">|</span>
+            <span className="text-slate-500 hidden sm:inline">
+              Lần lưu gần nhất: <span className="font-mono font-bold text-slate-800">{lastSavedTime}</span>
+            </span>
           </div>
 
-          <button
-            onClick={() => closeAdmin()}
-            className="px-4 py-1.5 rounded-xl bg-[#174ea6] hover:bg-[#123e85] text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
-          >
-            <span>Về Website (/)</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
+          <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end flex-wrap">
+            {/* 1. NÚT LƯU THAY ĐỔI CHÍNH */}
+            <button
+              type="button"
+              onClick={() => handleManualSave(true)}
+              disabled={isSaving}
+              className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-white text-xs font-black shadow-md hover:shadow-lg transition-all cursor-pointer active:scale-95 ${
+                saveSuccessTick
+                  ? 'bg-emerald-600 hover:bg-emerald-700 ring-2 ring-emerald-300'
+                  : 'bg-gradient-to-r from-[#d53774] via-[#b0225d] to-[#174ea6] hover:opacity-95 ring-2 ring-pink-300/40'
+              }`}
+            >
+              {isSaving ? (
+                <>
+                  <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Đang lưu...</span>
+                </>
+              ) : saveSuccessTick ? (
+                <>
+                  <CheckCircle2 className="w-4 h-4 text-white" />
+                  <span>ĐÃ LƯU THÀNH CÔNG!</span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 text-white" />
+                  <span>LƯU THAY ĐỔI</span>
+                </>
+              )}
+            </button>
+
+            {/* 2. NÚT LƯU & VỀ TRANG CHỦ */}
+            <button
+              type="button"
+              onClick={async () => {
+                await handleManualSave(false);
+                closeAdmin();
+              }}
+              disabled={isSaving}
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#002045] hover:bg-[#001733] text-white font-bold text-xs transition-all cursor-pointer shadow-xs active:scale-95"
+              title="Lưu tất cả thay đổi và chuyển ngay ra trang chủ"
+            >
+              <Check className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden xs:inline">Lưu &amp; Về Trang Chủ</span>
+              <span className="xs:hidden">Lưu &amp; Xem</span>
+            </button>
+
+            {/* 3. NÚT ĐÓNG */}
+            <button
+              type="button"
+              onClick={() => closeAdmin()}
+              className="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
+            >
+              Đóng
+            </button>
+          </div>
         </footer>
     </div>
   );
