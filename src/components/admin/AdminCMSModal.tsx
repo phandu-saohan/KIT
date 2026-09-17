@@ -209,12 +209,14 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
     showToast('Đã cập nhật chương trình tham dự & hồ sơ đại biểu thành công!');
   };
 
+  const isEditingAdminAccountRef = useRef(false);
+
   React.useEffect(() => {
-    if (cmsData.adminAccount) {
+    if (cmsData.adminAccount && !isEditingAdminAccountRef.current) {
       setAdminUsernameInput(cmsData.adminAccount.username || 'admin');
       setAdminPasswordInput(cmsData.adminAccount.password || 'kbit@2026');
     }
-  }, [cmsData.adminAccount]);
+  }, [cmsData.adminAccount?.username, cmsData.adminAccount?.password]);
 
   const handleSaveAdminAccount = (e: React.FormEvent) => {
     e.preventDefault();
@@ -2090,6 +2092,8 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                           type="text"
                           value={adminUsernameInput}
                           onChange={(e) => setAdminUsernameInput(e.target.value)}
+                          onFocus={() => { isEditingAdminAccountRef.current = true; }}
+                          onBlur={() => { isEditingAdminAccountRef.current = false; }}
                           placeholder="admin"
                           required
                           className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:border-[#174ea6] focus:ring-1 focus:ring-[#174ea6] outline-none transition-all"
@@ -2106,6 +2110,8 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                             type={showAdminPassword ? 'text' : 'password'}
                             value={adminPasswordInput}
                             onChange={(e) => setAdminPasswordInput(e.target.value)}
+                            onFocus={() => { isEditingAdminAccountRef.current = true; }}
+                            onBlur={() => { isEditingAdminAccountRef.current = false; }}
                             placeholder="••••••••"
                             required
                             className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:border-[#174ea6] focus:ring-1 focus:ring-[#174ea6] outline-none transition-all"

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { CMSData, EventDetails, ExpertSpeaker, AgendaItem, HighlightItem, Partner, AttendeeBadge, FooterConfig, AdminAccountConfig } from '../types';
 import {
   EVENT_DETAILS as DEFAULT_EVENT_DETAILS,
@@ -374,32 +374,54 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, []);
 
-  // Save to localStorage on any data modification with quota safeguard
+  const lastSavedJsonRef = useRef<string>('');
+  const isSyncingFromStorageRef = useRef<boolean>(false);
+
+  // Debounced safe localStorage write to prevent blocking UI and ping-pong sync loops
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(cmsData));
-    } catch (err) {
-      console.warn('LocalStorage quota exceeded or serialization warning, attempting safe recovery...', err);
-      try {
-        // If quota exceeded, retain newest 4 media items to shrink payload and retry
-        const safeData = {
-          ...cmsData,
-          mediaLibrary: cmsData.mediaLibrary.slice(0, 4),
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(safeData));
-      } catch (e2) {
-        console.error('Critical localStorage save failure:', e2);
-      }
+    if (isSyncingFromStorageRef.current) {
+      isSyncingFromStorageRef.current = false;
+      return;
     }
+
+    const timer = setTimeout(() => {
+      try {
+        const json = JSON.stringify(cmsData);
+        if (json !== lastSavedJsonRef.current) {
+          lastSavedJsonRef.current = json;
+          localStorage.setItem(STORAGE_KEY, json);
+        }
+      } catch (err) {
+        console.warn('LocalStorage quota warning or size limit, attempting safe recovery...', err);
+        try {
+          const safeData = {
+            ...cmsData,
+            mediaLibrary: cmsData.mediaLibrary.slice(0, 3),
+          };
+          const jsonSafe = JSON.stringify(safeData);
+          lastSavedJsonRef.current = jsonSafe;
+          localStorage.setItem(STORAGE_KEY, jsonSafe);
+        } catch (e2) {
+          console.error('Critical localStorage save failure:', e2);
+        }
+      }
+    }, 250);
+
+    return () => clearTimeout(timer);
   }, [cmsData]);
 
-  // Real-time synchronization across browser tabs
+  // Real-time synchronization across browser tabs without feedback loop
   useEffect(() => {
     const handleStorage = (e: StorageEvent) => {
       if (e.key === STORAGE_KEY && e.newValue) {
+        // If this event was fired from our own last write, skip!
+        if (e.newValue === lastSavedJsonRef.current) return;
+
         try {
           const parsed = JSON.parse(e.newValue);
           if (parsed && parsed.eventDetails) {
+            lastSavedJsonRef.current = e.newValue;
+            isSyncingFromStorageRef.current = true;
             setCmsData((prev) => ({ ...prev, ...parsed }));
           }
         } catch (e) {
