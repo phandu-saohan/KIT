@@ -225,21 +225,23 @@ export const ScientificAgenda: React.FC = () => {
         </div>
 
         {/* Day 1 / Day 2 Tab Selector Buttons */}
-        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3.5 mb-5">
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-3.5 mb-5">
           <button
             onClick={() => {
               setActiveDay(1);
               setSelectedHallFilter('all');
             }}
-            className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-2xl font-display font-extrabold text-[13px] sm:text-[14.5px] transition-all flex items-center gap-2.5 cursor-pointer shadow-xs ${
+            className={`w-full sm:w-auto px-2 xs:px-3 sm:px-6 py-2.5 sm:py-3 rounded-2xl font-display font-extrabold transition-all flex items-center justify-center sm:justify-start cursor-pointer shadow-xs ${
               activeDay === 1
                 ? 'bg-[#232a55] text-white shadow-md scale-[1.01]'
                 : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200/90'
             }`}
           >
-            <div className="text-left leading-tight">
-              <span className="block">NGÀY 1 · THỨ 7, 17.10.2026</span>
-              <span className={`text-[10px] font-semibold uppercase tracking-wider ${activeDay === 1 ? 'text-indigo-200' : 'text-slate-500'}`}>
+            <div className="text-center sm:text-left leading-tight">
+              <span className="block text-[10.5px] xs:text-[11.5px] sm:text-[14px]">
+                NGÀY 1 · THỨ 7, 17.10.2026
+              </span>
+              <span className={`block text-[8.5px] xs:text-[9.5px] sm:text-[10px] font-semibold uppercase tracking-tight xs:tracking-wider mt-0.5 ${activeDay === 1 ? 'text-indigo-200' : 'text-slate-500'}`}>
                 Phiên báo cáo khoa học
               </span>
             </div>
@@ -250,15 +252,17 @@ export const ScientificAgenda: React.FC = () => {
               setActiveDay(2);
               setSelectedHallFilter('all');
             }}
-            className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-2xl font-display font-extrabold text-[13px] sm:text-[14.5px] transition-all flex items-center gap-2.5 cursor-pointer shadow-xs ${
+            className={`w-full sm:w-auto px-2 xs:px-3 sm:px-6 py-2.5 sm:py-3 rounded-2xl font-display font-extrabold transition-all flex items-center justify-center sm:justify-start cursor-pointer shadow-xs ${
               activeDay === 2
                 ? 'bg-[#232a55] text-white shadow-md scale-[1.01]'
                 : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200/90'
             }`}
           >
-            <div className="text-left leading-tight">
-              <span className="block">NGÀY 2 · CHỦ NHẬT, 18.10.2026</span>
-              <span className={`text-[10px] font-semibold uppercase tracking-wider ${activeDay === 2 ? 'text-indigo-200' : 'text-slate-500'}`}>
+            <div className="text-center sm:text-left leading-tight">
+              <span className="block text-[10.5px] xs:text-[11.5px] sm:text-[14px]">
+                NGÀY 2 · CHỦ NHẬT, 18.10.2026
+              </span>
+              <span className={`block text-[8.5px] xs:text-[9.5px] sm:text-[10px] font-semibold uppercase tracking-tight xs:tracking-wider mt-0.5 ${activeDay === 2 ? 'text-indigo-200' : 'text-slate-500'}`}>
                 Phiên thị phạm &amp; Mổ trực tiếp
               </span>
             </div>
