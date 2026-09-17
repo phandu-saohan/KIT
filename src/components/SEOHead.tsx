@@ -38,6 +38,18 @@ export const SEOHead: React.FC = () => {
       el.setAttribute('href', href);
     };
 
+    // Helper to set or create link tag (e.g. favicon)
+    const setLinkTag = (rel: string, href: string) => {
+      if (!href) return;
+      let el = document.querySelector(`link[rel="${rel}"]`) as HTMLLinkElement | null;
+      if (!el) {
+        el = document.createElement('link');
+        el.setAttribute('rel', rel);
+        document.head.appendChild(el);
+      }
+      el.setAttribute('href', href);
+    };
+
     // Full absolute URL for og:image
     const getFullImageUrl = (url: string) => {
       if (!url) return '';
@@ -47,15 +59,20 @@ export const SEOHead: React.FC = () => {
 
     const fullOgImage = getFullImageUrl(seo.ogImageUrl || '/BG.png');
     const fullCanonical = seo.canonicalUrl || window.location.href;
+    const faviconUrl = seo.faviconUrl || '/images/partners/bv108.png';
 
-    // 2. Standard Meta Tags
+    // 2. Favicon & Apple Touch Icon
+    setLinkTag('icon', faviconUrl);
+    setLinkTag('apple-touch-icon', faviconUrl);
+
+    // 3. Standard Meta Tags
     setMetaTag('name', 'description', seo.metaDescription);
     setMetaTag('name', 'keywords', seo.metaKeywords);
     setMetaTag('name', 'author', seo.author);
     setMetaTag('name', 'robots', seo.robots || 'index, follow');
     setCanonical(fullCanonical);
 
-    // 3. OpenGraph Tags (Facebook, Zalo, LinkedIn)
+    // 4. OpenGraph Tags (Facebook, Zalo, LinkedIn)
     setMetaTag('property', 'og:title', seo.metaTitle);
     setMetaTag('property', 'og:description', seo.metaDescription);
     setMetaTag('property', 'og:url', fullCanonical);

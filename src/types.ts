@@ -216,6 +216,7 @@ export interface SEOConfig {
   metaKeywords: string;
   canonicalUrl: string;
   ogImageUrl: string;
+  faviconUrl?: string;
   author: string;
   robots: string;
   googleAnalyticsId?: string;

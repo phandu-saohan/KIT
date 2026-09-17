@@ -96,6 +96,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
   // Local feedback states
   const [saveToast, setSaveToast] = useState<string | null>(null);
   const [showMediaPickerForOgImage, setShowMediaPickerForOgImage] = useState(false);
+  const [showMediaPickerForFavicon, setShowMediaPickerForFavicon] = useState(false);
   const [seoPreviewMode, setSeoPreviewMode] = useState<'google' | 'facebook'>('google');
   const [jsonLdCopied, setJsonLdCopied] = useState(false);
   const [selectedExpertId, setSelectedExpertId] = useState<string | null>(cmsData.experts[0]?.id || null);
@@ -158,6 +159,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
   const kbitHeroFileRef = useRef<HTMLInputElement>(null);
   const mapImageFileRef = useRef<HTMLInputElement>(null);
   const ogImageFileRef = useRef<HTMLInputElement>(null);
+  const faviconFileRef = useRef<HTMLInputElement>(null);
 
   const handleStartEditAttendee = (attendee: AttendeeBadge) => {
     setEditingAttendee(attendee);
@@ -335,6 +337,20 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
         showToast('Đã tải và cập nhật ảnh đại diện mạng xã hội (OG Image) thành công!');
       } catch (err: any) {
         alert(err.message || 'Lỗi tải ảnh');
+      } finally {
+        e.target.value = '';
+      }
+    }
+  };
+
+  const handleFaviconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      try {
+        const url = await uploadImageFile(e.target.files[0]);
+        updateSEOConfig({ faviconUrl: url });
+        showToast('Đã tải và cập nhật biểu tượng Favicon website thành công!');
+      } catch (err: any) {
+        alert(err.message || 'Lỗi tải favicon');
       } finally {
         e.target.value = '';
       }
@@ -3041,8 +3057,15 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                   {seoPreviewMode === 'google' && (
                     <div className="p-4 sm:p-5 rounded-2xl bg-[#f8f9fa] border border-slate-200 space-y-3 font-sans">
                       <div className="flex items-center gap-2 text-[12px] text-[#202124]">
-                        <div className="w-6 h-6 rounded-full bg-blue-600 text-white text-[10px] font-black flex items-center justify-center">
-                          108
+                        <div className="w-6 h-6 rounded-full bg-white border border-slate-200 overflow-hidden flex items-center justify-center shrink-0 p-0.5 shadow-2xs">
+                          <img
+                            src={cmsData.seoConfig?.faviconUrl || '/images/partners/bv108.png'}
+                            alt="Favicon"
+                            className="w-4 h-4 object-contain"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = '/images/partners/bv108.png';
+                            }}
+                          />
                         </div>
                         <div className="flex flex-col">
                           <span className="font-semibold text-slate-800 text-[12px] leading-none">
@@ -3287,7 +3310,184 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                 </div>
 
                 {/* =========================================================================
-                    CARD 2: HÌNH ẢNH ĐẠI DIỆN MẠNG XÃ HỘI (OG IMAGE)
+                    CARD 2: FAVICON & BIỂU TƯỢNG WEBSITE (BROWSER TAB ICON)
+                   ========================================================================= */}
+                <div className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/90 shadow-xs space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                    <div>
+                      <h3 className="text-[15px] font-bold text-slate-900 flex items-center gap-2">
+                        <Globe className="w-4 h-4 text-emerald-600" />
+                        <span>Biểu Tượng Website &amp; Favicon (Browser Tab Icon)</span>
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Biểu tượng hiển thị trên thanh tab trình duyệt, dấu trang (bookmark) và biểu tượng ứng dụng khi người dùng lưu website ra màn hình điện thoại/máy tính.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => faviconFileRef.current?.click()}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold transition-all cursor-pointer"
+                      >
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>Tải Favicon mới</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setShowMediaPickerForFavicon(!showMediaPickerForFavicon)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-700 transition-colors cursor-pointer"
+                      >
+                        <Layers className="w-3.5 h-3.5" />
+                        <span>{showMediaPickerForFavicon ? 'Đóng kho ảnh' : 'Chọn từ kho ảnh'}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Hidden Favicon File Input */}
+                  <input
+                    ref={faviconFileRef}
+                    type="file"
+                    accept="image/png,image/x-icon,image/svg+xml,image/jpeg,image/webp,.ico"
+                    onChange={handleFaviconUpload}
+                    className="hidden"
+                  />
+
+                  {/* Mockup Preview: Realistic Browser Tab */}
+                  <div className="p-4 rounded-2xl bg-slate-100/90 border border-slate-200 space-y-3">
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                      Mô phỏng hiển thị trên Tab Trình Duyệt (Chrome / Safari / Edge):
+                    </span>
+
+                    {/* Browser Window Header Simulation */}
+                    <div className="rounded-xl bg-[#dee1e6] p-2 border border-slate-300 shadow-inner max-w-xl">
+                      <div className="flex items-center gap-1.5 mb-2 px-1">
+                        <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-[#27c93f]" />
+                      </div>
+
+                      {/* Active Browser Tab */}
+                      <div className="inline-flex items-center gap-2 bg-white rounded-t-xl px-3 py-1.5 max-w-xs shadow-xs border-t border-x border-slate-200">
+                        <img
+                          src={cmsData.seoConfig?.faviconUrl || '/images/partners/bv108.png'}
+                          alt="Favicon Tab"
+                          className="w-4 h-4 object-contain shrink-0"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/images/partners/bv108.png';
+                          }}
+                        />
+                        <span className="text-[11.5px] font-medium text-slate-800 truncate max-w-[180px]">
+                          {cmsData.seoConfig?.metaTitle || DEFAULT_SEO_CONFIG.metaTitle}
+                        </span>
+                        <span className="text-[11px] text-slate-400 hover:text-slate-700 cursor-pointer ml-auto pl-1">
+                          ×
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Favicon Settings Details */}
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+                    <div className="sm:col-span-3 flex items-center justify-center p-3 bg-slate-50 rounded-2xl border border-slate-200">
+                      <div className="relative w-16 h-16 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center justify-center p-2">
+                        <img
+                          src={cmsData.seoConfig?.faviconUrl || '/images/partners/bv108.png'}
+                          alt="Favicon Large"
+                          className="w-full h-full object-contain"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/images/partners/bv108.png';
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="sm:col-span-9 space-y-2">
+                      <label className="block text-xs font-bold text-slate-700">
+                        Đường dẫn URL Favicon (hoặc tải trực tiếp từ nút trên):
+                      </label>
+                      <input
+                        type="text"
+                        value={cmsData.seoConfig?.faviconUrl ?? '/images/partners/bv108.png'}
+                        onChange={(e) => updateSEOConfig({ faviconUrl: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:border-emerald-600 outline-none"
+                        placeholder="/images/partners/bv108.png hoặc https://..."
+                      />
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[11px] text-slate-500">Biểu tượng nhanh đề xuất:</span>
+                        {[
+                          { name: 'Logo BV 108', url: '/images/partners/bv108.png' },
+                          { name: 'Logo KBIT', url: '/images/partners/kbit.png' },
+                          { name: 'Logo VSAPS', url: '/images/partners/vsaps-circle.png' },
+                          { name: 'Logo KSAPS', url: '/images/partners/ksaps-circle.png' },
+                        ].map((opt) => (
+                          <button
+                            key={opt.name}
+                            type="button"
+                            onClick={() => {
+                              updateSEOConfig({ faviconUrl: opt.url });
+                              showToast(`Đã chọn Favicon: ${opt.name}`);
+                            }}
+                            className={`px-2.5 py-1 rounded-lg border text-[10.5px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                              (cmsData.seoConfig?.faviconUrl || '/images/partners/bv108.png') === opt.url
+                                ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                                : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                            }`}
+                          >
+                            <img src={opt.url} alt={opt.name} className="w-3.5 h-3.5 object-contain" />
+                            <span>{opt.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-[11px] text-slate-400 mt-1">
+                        💡 <strong>Khuyến nghị:</strong> Ảnh hình vuông (.PNG, .ICO, .SVG), kích thước tối thiểu 32×32 px hoặc 180×180 px (dành cho Apple Touch Icon).
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Collapsible Media Library Picker for Favicon */}
+                  {showMediaPickerForFavicon && (
+                    <div className="p-3.5 rounded-2xl bg-emerald-50/40 border border-emerald-200 space-y-2 animate-in fade-in duration-150 shadow-2xs">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11.5px] font-bold text-emerald-900">
+                          Bấm vào biểu tượng bất kỳ để đặt làm Favicon:
+                        </span>
+                        <span className="text-[10.5px] text-slate-400">
+                          {cmsData.mediaLibrary.length} ảnh trong kho
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2 max-h-48 overflow-y-auto p-1">
+                        {cmsData.mediaLibrary.map((imgUrl, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => {
+                              updateSEOConfig({ faviconUrl: imgUrl });
+                              showToast('Đã chọn Favicon từ thư viện ảnh!');
+                            }}
+                            className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all cursor-pointer p-1 bg-white group ${
+                              (cmsData.seoConfig?.faviconUrl || '/images/partners/bv108.png') === imgUrl
+                                ? 'border-emerald-600 ring-2 ring-emerald-500/30 scale-95'
+                                : 'border-slate-200 hover:border-emerald-500'
+                            }`}
+                          >
+                            <img src={imgUrl} alt={`favicon-${i}`} className="w-full h-full object-contain" />
+                            {(cmsData.seoConfig?.faviconUrl || '/images/partners/bv108.png') === imgUrl && (
+                              <div className="absolute inset-0 bg-emerald-600/40 flex items-center justify-center text-white">
+                                <Check className="w-4 h-4 stroke-[3]" />
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* =========================================================================
+                    CARD 3: HÌNH ẢNH ĐẠI DIỆN MẠNG XÃ HỘI (OG IMAGE)
                    ========================================================================= */}
                 <div className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/90 shadow-xs space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">

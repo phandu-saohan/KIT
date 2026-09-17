@@ -803,6 +803,7 @@ export const DEFAULT_SEO_CONFIG: SEOConfig = {
   metaKeywords: 'Hội thảo thẩm mỹ Việt Hàn 2026, thẩm mỹ Hàn Quốc, BV 108, phẫu thuật thẩm mỹ, da liễu laser, Deep Plane Facelift, nâng mũi sụn sườn, CME thẩm mỹ, KBIT 2026, chuyển giao công nghệ thẩm mỹ',
   canonicalUrl: 'https://hoithao-thammy-viethan2026.vn',
   ogImageUrl: '/BG.png',
+  faviconUrl: '/images/partners/bv108.png',
   author: 'Bệnh viện Trung ương Quân đội 108 & KBIT Association',
   robots: 'index, follow',
   googleAnalyticsId: 'G-XXXXXXXXXX',
