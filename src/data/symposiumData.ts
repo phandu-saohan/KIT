@@ -48,6 +48,12 @@ export const EVENT_DETAILS: EventDetails = {
   hostsText: 'KSAPS • VSAPS • Bệnh viện Trung ương Quân đội 108',
   patronizeText: 'Bộ Y tế & Phúc lợi Hàn Quốc (MOHW)',
   heroBv175LogoUrl: '/images/partners/bv108.png',
+  showHighlightsHeader: true,
+  highlightsHostsText: 'KSAPS • VSAPS • BV QUÂN Y 175',
+  highlightsCoOrganizersText: 'KHIDI • KBIT • SNUH',
+  highlightsSubtitle: 'K-BEAUTY MEETS 2026 · HỘI NGHỊ TRỌNG ĐIỂM',
+  highlightsTitle: 'Hội Nghị Khoa Học Thẩm Mỹ Việt – Hàn 2026',
+  highlightsDescription: 'Sự kiện khoa học thẩm mỹ quy mô lớn tại Bệnh viện Trung ương Quân đội 108, quy tụ các chuyên gia và bác sĩ hàng đầu đến từ Việt Nam và Hàn Quốc.',
 };
 
 export const KEY_HIGHLIGHTS: HighlightItem[] = [

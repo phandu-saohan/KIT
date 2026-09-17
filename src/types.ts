@@ -148,6 +148,12 @@ export interface EventDetails {
   heroShowBuilding?: boolean;
   heroOverlayMode?: 'pink' | 'gradient' | 'soft' | 'none';
   heroBgFit?: 'cover' | 'contain' | 'right';
+  showHighlightsHeader?: boolean;
+  highlightsHostsText?: string;
+  highlightsCoOrganizersText?: string;
+  highlightsSubtitle?: string;
+  highlightsTitle?: string;
+  highlightsDescription?: string;
 }
 
 export interface FooterConfig {

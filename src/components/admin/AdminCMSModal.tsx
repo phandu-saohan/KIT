@@ -2997,8 +2997,102 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                     Điểm Nhấn Sự Kiện &amp; Chứng Nhận CME
                   </h2>
                   <p className="text-[13px] text-slate-500">
-                    Quản lý 4 cột mốc quan trọng về quy mô, khu triển lãm, ngôn ngữ và CME.
+                    Quản lý khối tiêu đề giới thiệu và 4 cột mốc quan trọng về quy mô, khu triển lãm, ngôn ngữ và CME.
                   </p>
+                </div>
+
+                {/* KHỐI TIÊU ĐỀ & ĐƠN VỊ TỔ CHỨC (PHẦN ĐẦU ĐIỂM NHẤN) */}
+                <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-4">
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div>
+                      <h3 className="text-[14.5px] font-black text-slate-800">
+                        Khối tiêu đề &amp; Đơn vị tổ chức (Phần đầu Điểm Nhấn)
+                      </h3>
+                      <p className="text-[11.5px] text-slate-500">
+                        Phần hiển thị ngay bên dưới Hero Banner
+                      </p>
+                    </div>
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <span className="text-[12px] font-bold text-slate-700">
+                        {cmsData.eventDetails.showHighlightsHeader !== false ? 'Đang bật' : 'Đã ẩn'}
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={cmsData.eventDetails.showHighlightsHeader !== false}
+                        onChange={(e) => updateEventDetails({ showHighlightsHeader: e.target.checked })}
+                        className="w-4 h-4 text-pink-600 rounded cursor-pointer"
+                      />
+                    </label>
+                  </div>
+
+                  {cmsData.eventDetails.showHighlightsHeader !== false && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                          Đơn vị Chủ trì (CHỦ TRÌ):
+                        </label>
+                        <input
+                          type="text"
+                          value={cmsData.eventDetails.highlightsHostsText ?? cmsData.eventDetails.hostsText ?? 'KSAPS • VSAPS • BV QUÂN Y 175'}
+                          onChange={(e) => updateEventDetails({ highlightsHostsText: e.target.value })}
+                          placeholder="KSAPS • VSAPS • BV QUÂN Y 175"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:border-pink-500 focus:outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                          Đơn vị Đồng tổ chức (ĐỒNG TỔ CHỨC):
+                        </label>
+                        <input
+                          type="text"
+                          value={cmsData.eventDetails.highlightsCoOrganizersText ?? cmsData.eventDetails.coOrganizersText ?? 'KHIDI • KBIT • SNUH'}
+                          onChange={(e) => updateEventDetails({ highlightsCoOrganizersText: e.target.value })}
+                          placeholder="KHIDI • KBIT • SNUH"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:border-pink-500 focus:outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                          Dòng phụ đề trên (Subtitle):
+                        </label>
+                        <input
+                          type="text"
+                          value={cmsData.eventDetails.highlightsSubtitle ?? 'K-BEAUTY MEETS 2026 · HỘI NGHỊ TRỌNG ĐIỂM'}
+                          onChange={(e) => updateEventDetails({ highlightsSubtitle: e.target.value })}
+                          placeholder="K-BEAUTY MEETS 2026 · HỘI NGHỊ TRỌNG ĐIỂM"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:border-pink-500 focus:outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                          Tiêu đề chính hội nghị:
+                        </label>
+                        <input
+                          type="text"
+                          value={cmsData.eventDetails.highlightsTitle ?? cmsData.eventDetails.title ?? 'Hội Nghị Khoa Học Thẩm Mỹ Việt – Hàn 2026'}
+                          onChange={(e) => updateEventDetails({ highlightsTitle: e.target.value })}
+                          placeholder="Hội Nghị Khoa Học Thẩm Mỹ Việt – Hàn 2026"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-pink-700 focus:border-pink-500 focus:outline-none"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                          Đoạn mô tả chi tiết:
+                        </label>
+                        <textarea
+                          rows={2}
+                          value={cmsData.eventDetails.highlightsDescription ?? 'Sự kiện khoa học thẩm mỹ quy mô lớn tại Bệnh viện Trung ương Quân đội 108, quy tụ các chuyên gia và bác sĩ hàng đầu đến từ Việt Nam và Hàn Quốc.'}
+                          onChange={(e) => updateEventDetails({ highlightsDescription: e.target.value })}
+                          placeholder="Sự kiện khoa học thẩm mỹ quy mô lớn..."
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-800 focus:border-pink-500 focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

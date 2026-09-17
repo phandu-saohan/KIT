@@ -35,32 +35,34 @@ export const KeyHighlights: React.FC<KeyHighlightsProps> = () => {
         {/* =========================================================================
             HEADER SECTION (STYLIZED ACCORDING TO OFFICIAL CONGRESS)
            ========================================================================= */}
-        <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-12">
-          {/* Official Organizing Entities Pill */}
-          <div className="inline-flex flex-wrap items-center justify-center gap-2 px-4 py-1.5 rounded-full bg-white/95 border border-slate-200/80 shadow-xs text-[11.5px] font-bold text-slate-600 mb-3.5">
-            <span className="text-[#174ea6] flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#174ea6]" />
-              CHỦ TRÌ: {cmsData.eventDetails.hostsText || 'KSAPS • VSAPS'}
-            </span>
-            <span className="text-slate-300">|</span>
-            <span className="text-[#c83271] flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#c83271]" />
-              ĐỒNG TỔ CHỨC: {cmsData.eventDetails.coOrganizersText || 'BV 108 • KHIDI • SNUBH • KBIT'}
-            </span>
+        {cmsData.eventDetails.showHighlightsHeader !== false && (
+          <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-12">
+            {/* Official Organizing Entities Pill */}
+            <div className="inline-flex flex-wrap items-center justify-center gap-2 px-4 py-1.5 rounded-full bg-white/95 border border-slate-200/80 shadow-xs text-[11.5px] font-bold text-slate-600 mb-3.5">
+              <span className="text-[#174ea6] flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#174ea6]" />
+                CHỦ TRÌ: {cmsData.eventDetails.highlightsHostsText || cmsData.eventDetails.hostsText || 'KSAPS • VSAPS • BV QUÂN Y 175'}
+              </span>
+              <span className="text-slate-300">|</span>
+              <span className="text-[#c83271] flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#c83271]" />
+                ĐỒNG TỔ CHỨC: {cmsData.eventDetails.highlightsCoOrganizersText || cmsData.eventDetails.coOrganizersText || 'KHIDI • KBIT • SNUH'}
+              </span>
+            </div>
+
+            <p className="text-[12px] sm:text-[13px] uppercase font-bold tracking-widest text-slate-500 font-display">
+              {cmsData.eventDetails.highlightsSubtitle || 'K-BEAUTY MEETS 2026 · HỘI NGHỊ TRỌNG ĐIỂM'}
+            </p>
+
+            <h2 className="text-[30px] sm:text-[42px] font-black text-transparent bg-clip-text bg-gradient-to-r from-[#d81b60] via-[#c83271] to-[#174ea6] mt-1.5 font-display tracking-tight uppercase leading-tight">
+              {cmsData.eventDetails.highlightsTitle || cmsData.eventDetails.title || 'Hội Nghị Khoa Học Thẩm Mỹ Việt – Hàn 2026'}
+            </h2>
+
+            <p className="text-[14px] sm:text-[15.5px] text-slate-600 mt-3 leading-relaxed max-w-2xl mx-auto font-medium">
+              {cmsData.eventDetails.highlightsDescription || 'Sự kiện khoa học thẩm mỹ quy mô lớn tại Bệnh viện Trung ương Quân đội 108, quy tụ các chuyên gia và bác sĩ hàng đầu đến từ Việt Nam và Hàn Quốc.'}
+            </p>
           </div>
-
-          <p className="text-[12px] sm:text-[13px] uppercase font-bold tracking-widest text-slate-500 font-display">
-            K-BEAUTY MEETS 2026 · HỘI NGHỊ TRỌNG ĐIỂM
-          </p>
-
-          <h2 className="text-[30px] sm:text-[42px] font-black text-transparent bg-clip-text bg-gradient-to-r from-[#d81b60] via-[#c83271] to-[#174ea6] mt-1.5 font-display tracking-tight uppercase leading-tight">
-            Hội Nghị Khoa Học Thẩm Mỹ Việt – Hàn 2026
-          </h2>
-
-          <p className="text-[14px] sm:text-[15.5px] text-slate-600 mt-3 leading-relaxed max-w-2xl mx-auto font-medium">
-            Sự kiện khoa học thẩm mỹ quy mô lớn tại Bệnh viện Trung ương Quân đội 108, quy tụ các chuyên gia và bác sĩ hàng đầu đến từ Việt Nam và Hàn Quốc.
-          </p>
-        </div>
+        )}
 
         {/* =========================================================================
             CONGRESS OVERVIEW STATS (6 METRIC CARDS)
