@@ -151,7 +151,7 @@ export const ScientificAgenda: React.FC = () => {
         ];
 
   return (
-    <section className="w-full py-10 sm:py-16 bg-[#f8faff] relative border-b border-slate-200/80" id="chuong-trinh">
+    <section className="w-full pt-3 sm:pt-4 pb-10 sm:pb-16 bg-[#f8faff] relative border-b border-slate-200/80" id="chuong-trinh">
       <div className="max-w-[1320px] mx-auto px-3 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 sm:mb-8">

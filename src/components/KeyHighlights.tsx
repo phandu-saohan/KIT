@@ -28,7 +28,7 @@ export const KeyHighlights: React.FC<KeyHighlightsProps> = () => {
 
   return (
     <section
-      className="w-full py-16 sm:py-20 bg-gradient-to-b from-[#f8faff] via-[#fff5f8]/35 to-[#f8faff] relative border-b border-slate-200/80"
+      className="w-full pt-12 sm:pt-16 pb-3 sm:pb-4 bg-gradient-to-b from-[#f8faff] via-[#fff5f8]/35 to-[#f8faff] relative"
       id="diem-nhan"
     >
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
