@@ -33,33 +33,17 @@ export const KeyHighlights: React.FC<KeyHighlightsProps> = () => {
     >
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* =========================================================================
-            HEADER SECTION (STYLIZED ACCORDING TO OFFICIAL CONGRESS)
+            OVERVIEW INTRODUCTION (REPLACING OLD REPETITIVE HEADER)
            ========================================================================= */}
         {cmsData.eventDetails.showHighlightsHeader !== false && (
-          <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-12">
-            {/* Official Organizing Entities Pill */}
-            <div className="inline-flex flex-wrap items-center justify-center gap-2 px-4 py-1.5 rounded-full bg-white/95 border border-slate-200/80 shadow-xs text-[11.5px] font-bold text-slate-600 mb-3.5">
-              <span className="text-[#174ea6] flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#174ea6]" />
-                CHỦ TRÌ: {cmsData.eventDetails.highlightsHostsText || cmsData.eventDetails.hostsText || 'KSAPS • VSAPS • BV QUÂN Y 175'}
-              </span>
-              <span className="text-slate-300">|</span>
-              <span className="text-[#c83271] flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#c83271]" />
-                ĐỒNG TỔ CHỨC: {cmsData.eventDetails.highlightsCoOrganizersText || cmsData.eventDetails.coOrganizersText || 'KHIDI • KBIT • SNUH'}
-              </span>
+          <div className="max-w-4xl mx-auto mb-10 sm:mb-14 text-center px-3 sm:px-6">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-pink-50 border border-pink-200/70 text-[#d52b66] text-[11px] font-bold uppercase tracking-wider mb-3.5 shadow-2xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#d52b66]" />
+              Tổng quan sự kiện
             </div>
-
-            <p className="text-[12px] sm:text-[13px] uppercase font-bold tracking-widest text-slate-500 font-display">
-              {cmsData.eventDetails.highlightsSubtitle || 'K-BEAUTY MEETS 2026 · HỘI NGHỊ TRỌNG ĐIỂM'}
-            </p>
-
-            <h2 className="text-[30px] sm:text-[42px] font-black text-transparent bg-clip-text bg-gradient-to-r from-[#d81b60] via-[#c83271] to-[#174ea6] mt-1.5 font-display tracking-tight uppercase leading-tight">
-              {cmsData.eventDetails.highlightsTitle || cmsData.eventDetails.title || 'Hội Nghị Khoa Học Thẩm Mỹ Việt – Hàn 2026'}
-            </h2>
-
-            <p className="text-[14px] sm:text-[15.5px] text-slate-600 mt-3 leading-relaxed max-w-2xl mx-auto font-medium">
-              {cmsData.eventDetails.highlightsDescription || 'Sự kiện khoa học thẩm mỹ quy mô lớn tại Bệnh viện Trung ương Quân đội 108, quy tụ các chuyên gia và bác sĩ hàng đầu đến từ Việt Nam và Hàn Quốc.'}
+            <p className="text-[14.5px] sm:text-[16px] md:text-[17px] leading-relaxed sm:leading-[1.8] text-slate-700 font-medium text-justify sm:text-center">
+              {cmsData.eventDetails.highlightsDescription ||
+                'Hội nghị khoa học thẩm mỹ Việt – Hàn nổi bật năm 2026 là sự kiện khoa học quy mô lớn do KSAPS và VSAPS chủ trì, dưới sự bảo trợ của Bộ Y tế và Phúc lợi Hàn Quốc, quy tụ các tổ chức chuyên môn, bệnh viện và chuyên gia hàng đầu trong lĩnh vực thẩm mỹ đến từ Việt Nam và Hàn Quốc. Hội nghị được đồng tổ chức bởi KHIDI, Bệnh viện Đại học Quốc gia Seoul, Bệnh viện Trung ương Quân đội 108 và KBIT, hướng đến thúc đẩy trao đổi học thuật, cập nhật kỹ thuật chuyên môn và tăng cường hợp tác y khoa giữa hai quốc gia.'}
             </p>
           </div>
         )}

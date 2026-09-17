@@ -49,11 +49,11 @@ export const EVENT_DETAILS: EventDetails = {
   patronizeText: 'Bộ Y tế & Phúc lợi Hàn Quốc (MOHW)',
   heroBv175LogoUrl: '/images/partners/bv108.png',
   showHighlightsHeader: true,
-  highlightsHostsText: 'KSAPS • VSAPS • BV QUÂN Y 175',
-  highlightsCoOrganizersText: 'KHIDI • KBIT • SNUH',
-  highlightsSubtitle: 'K-BEAUTY MEETS 2026 · HỘI NGHỊ TRỌNG ĐIỂM',
-  highlightsTitle: 'Hội Nghị Khoa Học Thẩm Mỹ Việt – Hàn 2026',
-  highlightsDescription: 'Sự kiện khoa học thẩm mỹ quy mô lớn tại Bệnh viện Trung ương Quân đội 108, quy tụ các chuyên gia và bác sĩ hàng đầu đến từ Việt Nam và Hàn Quốc.',
+  highlightsHostsText: 'KSAPS • VSAPS',
+  highlightsCoOrganizersText: 'KHIDI • SNUBH • BV 108 • KBIT',
+  highlightsSubtitle: '',
+  highlightsTitle: '',
+  highlightsDescription: 'Hội nghị khoa học thẩm mỹ Việt – Hàn nổi bật năm 2026 là sự kiện khoa học quy mô lớn do KSAPS và VSAPS chủ trì, dưới sự bảo trợ của Bộ Y tế và Phúc lợi Hàn Quốc, quy tụ các tổ chức chuyên môn, bệnh viện và chuyên gia hàng đầu trong lĩnh vực thẩm mỹ đến từ Việt Nam và Hàn Quốc. Hội nghị được đồng tổ chức bởi KHIDI, Bệnh viện Đại học Quốc gia Seoul, Bệnh viện Trung ương Quân đội 108 và KBIT, hướng đến thúc đẩy trao đổi học thuật, cập nhật kỹ thuật chuyên môn và tăng cường hợp tác y khoa giữa hai quốc gia.',
 };
 
 export const KEY_HIGHLIGHTS: HighlightItem[] = [
