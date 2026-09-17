@@ -833,17 +833,70 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-3">
                     <span className="text-xs font-bold text-slate-600">Chiều cao Banner:</span>
-                    <div className="flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
+
+                    {/* Presets */}
+                    <div className="flex items-center gap-1">
+                      {[450, 500, 550, 600].map((h) => {
+                        const current = Number(cmsData.eventDetails.heroBannerHeight) || 500;
+                        const isAct = current === h;
+                        return (
+                          <button
+                            key={h}
+                            type="button"
+                            onClick={() => updateEventDetails({ heroBannerHeight: h })}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                              isAct
+                                ? 'bg-[#d53774] text-white shadow-xs'
+                                : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200'
+                            }`}
+                          >
+                            {h}px{h === 500 ? ' ⭐' : ''}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Range Slider */}
+                    <div className="hidden sm:flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-xl border border-slate-200">
                       <input
-                        type="number"
+                        type="range"
                         min="380"
                         max="800"
                         step="10"
-                        value={cmsData.eventDetails.heroBannerHeight || 500}
-                        onChange={(e) => updateEventDetails({ heroBannerHeight: Number(e.target.value) || 500 })}
-                        className="w-16 text-center font-bold text-[#d53774] text-xs bg-transparent outline-none"
+                        value={Number(cmsData.eventDetails.heroBannerHeight) || 500}
+                        onChange={(e) => updateEventDetails({ heroBannerHeight: Number(e.target.value) })}
+                        className="w-20 lg:w-28 accent-[#d53774] cursor-pointer"
+                        title="Kéo trượt để thay đổi chiều cao banner"
+                      />
+                    </div>
+
+                    {/* Number input */}
+                    <div className="flex items-center gap-1 bg-slate-100 px-2.5 py-1 rounded-xl border border-slate-200">
+                      <input
+                        type="number"
+                        min="380"
+                        max="850"
+                        step="10"
+                        value={cmsData.eventDetails.heroBannerHeight ?? 500}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === '') {
+                            updateEventDetails({ heroBannerHeight: undefined });
+                            return;
+                          }
+                          const n = parseInt(val, 10);
+                          if (!isNaN(n)) {
+                            updateEventDetails({ heroBannerHeight: n });
+                          }
+                        }}
+                        onBlur={(e) => {
+                          const n = parseInt(e.target.value, 10);
+                          const safe = isNaN(n) ? 500 : Math.max(380, Math.min(850, n));
+                          updateEventDetails({ heroBannerHeight: safe });
+                        }}
+                        className="w-14 text-center font-bold text-[#d53774] text-xs bg-transparent outline-none"
                       />
                       <span className="text-[11px] font-bold text-slate-400">px</span>
                     </div>
@@ -858,7 +911,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                       Xem trước trực tiếp (Live Preview Hero Banner)
                     </span>
                     <span className="text-slate-400 text-[11px]">
-                      Chiều cao: {cmsData.eventDetails.heroBannerHeight || 500}px (Tỉ lệ co giãn thông minh)
+                      Chiều cao thực tế: {cmsData.eventDetails.heroBannerHeight || 500}px (Tỉ lệ co giãn trực quan)
                     </span>
                   </div>
 
@@ -897,11 +950,15 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                         'linear-gradient(90deg, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.80) 45%, rgba(255,255,255,0.2) 80%, rgba(255,255,255,0) 100%)';
                     }
 
+                    const currentHeight = Number(ev.heroBannerHeight) || 500;
+                    const previewHeight = Math.max(250, Math.min(420, Math.round(currentHeight * 0.58)));
+
                     return (
                       <div 
-                        className="relative w-full rounded-2xl overflow-hidden bg-white text-slate-900 border border-slate-700/60 flex flex-col justify-between p-4 sm:p-6 transition-all"
+                        className="relative w-full rounded-2xl overflow-hidden bg-white text-slate-900 border border-slate-700/60 flex flex-col justify-between p-4 sm:p-6 transition-all duration-300"
                         style={{
-                          minHeight: '260px',
+                          height: `${previewHeight}px`,
+                          minHeight: `${previewHeight}px`,
                           backgroundImage: bgStyleImage,
                           backgroundPosition: bgStylePosition,
                           backgroundSize: bgStyleSize,
@@ -1267,8 +1324,8 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                     </div>
                   </div>
 
-                  {/* Display Mode & Overlay Customization */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+                  {/* Display Mode, Overlay & Height Customization */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-1">
                     {/* Mode 1: Kiểu hiển thị ảnh nền */}
                     <div className="p-3.5 rounded-2xl border border-slate-200/80 bg-white space-y-2">
                       <label className="block text-xs font-bold text-slate-700">
@@ -1355,6 +1412,45 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                         <span className={`w-2 h-2 rounded-full ${cmsData.eventDetails.heroShowBuilding !== false ? 'bg-emerald-500' : 'bg-slate-400'}`}></span>
                         <span>{cmsData.eventDetails.heroShowBuilding !== false ? 'Đang bật họa tiết' : 'Đã ẩn họa tiết'}</span>
                       </button>
+                    </div>
+
+                    {/* Mode 4: Chiều cao Hero Banner */}
+                    <div className="p-3.5 rounded-2xl border border-slate-200/80 bg-white space-y-2 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-xs font-bold text-slate-700">
+                            Chiều cao Banner:
+                          </label>
+                          <span className="text-xs font-mono font-bold text-[#d53774]">
+                            {cmsData.eventDetails.heroBannerHeight || 500}px
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="400"
+                          max="750"
+                          step="10"
+                          value={Number(cmsData.eventDetails.heroBannerHeight) || 500}
+                          onChange={(e) => updateEventDetails({ heroBannerHeight: Number(e.target.value) })}
+                          className="w-full accent-[#d53774] cursor-pointer my-1"
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 gap-1">
+                        {[450, 500, 550, 600].map((h) => (
+                          <button
+                            key={h}
+                            type="button"
+                            onClick={() => updateEventDetails({ heroBannerHeight: h })}
+                            className={`py-1 text-[10px] font-bold rounded-md border transition-all cursor-pointer text-center ${
+                              (cmsData.eventDetails.heroBannerHeight || 500) === h
+                                ? 'bg-[#d53774] text-white border-[#d53774]'
+                                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                            }`}
+                          >
+                            {h}px
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
 

@@ -28,7 +28,8 @@ export const HeroBanner: React.FC = () => {
   const snubhLogo = event.heroSnubhLogoUrl || '/images/partners/snubh.png';
   const kbitLogo = event.heroKbitLogoUrl || '/images/partners/kbit.png';
 
-  const bannerHeight = event.heroBannerHeight || 500;
+  const rawHeight = Number(event.heroBannerHeight);
+  const bannerHeight = !isNaN(rawHeight) && rawHeight >= 380 && rawHeight <= 900 ? rawHeight : 500;
 
   // Resolve Main Background Image:
   // 1. If explicit heroBgImageUrl is set, use it.
@@ -77,9 +78,8 @@ export const HeroBanner: React.FC = () => {
       id="hero-banner"
       className="relative w-full flex items-center bg-white bg-no-repeat overflow-hidden border-b border-slate-200/60"
       style={{
-        height: `${bannerHeight}px`,
         minHeight: `${bannerHeight}px`,
-        maxHeight: `${bannerHeight}px`,
+        height: `${bannerHeight}px`,
         backgroundImage: bgStyleImage,
         backgroundPosition: bgStylePosition,
         backgroundSize: bgStyleSize,
@@ -100,7 +100,10 @@ export const HeroBanner: React.FC = () => {
       {/* Main Content Container constrained to banner height */}
       <div 
         className="relative z-10 w-full max-w-[1360px] mx-auto px-4 sm:px-8 lg:px-14 py-4 sm:py-5 flex flex-col justify-between"
-        style={{ height: `${bannerHeight}px` }}
+        style={{
+          minHeight: `${bannerHeight}px`,
+          height: '100%',
+        }}
       >
         {/* TOP: Two Host Logos (VSAPS & KSAPS) - Enlarged & Zero Padding */}
         <div className="flex items-center gap-3.5 sm:gap-4 p-0">
