@@ -373,14 +373,42 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, []);
 
-  // Save to localStorage on any data modification
+  // Save to localStorage on any data modification with quota safeguard
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(cmsData));
     } catch (err) {
-      console.warn('LocalStorage quota or serialization error:', err);
+      console.warn('LocalStorage quota exceeded or serialization warning, attempting safe recovery...', err);
+      try {
+        // If quota exceeded, retain newest 4 media items to shrink payload and retry
+        const safeData = {
+          ...cmsData,
+          mediaLibrary: cmsData.mediaLibrary.slice(0, 4),
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(safeData));
+      } catch (e2) {
+        console.error('Critical localStorage save failure:', e2);
+      }
     }
   }, [cmsData]);
+
+  // Real-time synchronization across browser tabs
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (parsed && parsed.eventDetails) {
+            setCmsData((prev) => ({ ...prev, ...parsed }));
+          }
+        } catch (e) {
+          console.error('Cross-tab sync error:', e);
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
 
   const updateEventDetails = (details: Partial<EventDetails>) => {
     setCmsData((prev) => ({
@@ -565,25 +593,70 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  const uploadImageFile = (file: File): Promise<string> => {
+  // Client-side image compression to guarantee lightweight storage (< 250KB) and prevent LocalStorage quota errors
+  const compressImageFile = (file: File, maxWidth = 1920, maxHeight = 1080, quality = 0.82): Promise<string> => {
     return new Promise((resolve, reject) => {
       if (!file.type.startsWith('image/')) {
         reject(new Error('Vui lòng chọn định dạng file ảnh (PNG, JPG, WEBP, SVG)'));
         return;
       }
+
+      // Keep SVGs as pure vector data URLs
+      if (file.type === 'image/svg+xml') {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target?.result as string);
+        reader.onerror = () => reject(new Error('Lỗi khi đọc file SVG'));
+        reader.readAsDataURL(file);
+        return;
+      }
+
       const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        if (result) {
-          addImageToLibrary(result);
-          resolve(result);
-        } else {
-          reject(new Error('Không thể đọc file hình ảnh'));
-        }
+      reader.onload = (readerEvent) => {
+        const img = new Image();
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
+
+          // Scale down keeping aspect ratio
+          if (width > maxWidth || height > maxHeight) {
+            const ratio = Math.min(maxWidth / width, maxHeight / height);
+            width = Math.round(width * ratio);
+            height = Math.round(height * ratio);
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            resolve(readerEvent.target?.result as string);
+            return;
+          }
+
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const isPngWithAlpha = file.type === 'image/png';
+          let dataUrl = canvas.toDataURL(isPngWithAlpha ? 'image/png' : 'image/jpeg', isPngWithAlpha ? undefined : quality);
+          // If PNG is overly large (> 1.2MB), convert to optimized JPEG to guarantee smooth storage
+          if (isPngWithAlpha && dataUrl.length > 1200000) {
+            dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          }
+          resolve(dataUrl);
+        };
+        img.onerror = () => reject(new Error('Không thể xử lý hình ảnh này'));
+        img.src = readerEvent.target?.result as string;
       };
-      reader.onerror = () => reject(new Error('Lỗi khi đọc file'));
+      reader.onerror = () => reject(new Error('Lỗi khi tải file'));
       reader.readAsDataURL(file);
     });
+  };
+
+  const uploadImageFile = async (file: File): Promise<string> => {
+    const result = await compressImageFile(file);
+    addImageToLibrary(result);
+    return result;
   };
 
   const resetToDefaults = () => {

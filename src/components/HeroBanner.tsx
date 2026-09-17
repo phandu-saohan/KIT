@@ -29,7 +29,48 @@ export const HeroBanner: React.FC = () => {
   const kbitLogo = event.heroKbitLogoUrl || '/images/partners/kbit.png';
 
   const bannerHeight = event.heroBannerHeight || 500;
-  const bgRightImage = event.bannerImageUrl || '/images/hero-building-right.png';
+
+  // Resolve Main Background Image:
+  // 1. If explicit heroBgImageUrl is set, use it.
+  // 2. Otherwise, if bannerImageUrl is set and is NOT the building-only cutout ('/images/hero-building-right.png'), use bannerImageUrl.
+  // 3. Fallback to '/images/hero-hospital.jpg'.
+  const isBuildingOnly = event.bannerImageUrl === '/images/hero-building-right.png';
+  const mainBgImage = event.heroBgImageUrl
+    ? event.heroBgImageUrl
+    : (!isBuildingOnly && event.bannerImageUrl ? event.bannerImageUrl : '/images/hero-hospital.jpg');
+
+  // Building overlay on the right (optional, active for standard hospital setup)
+  const showBuilding = event.heroShowBuilding !== false;
+  const buildingImage = event.heroBuildingImageUrl || (isBuildingOnly ? '/images/hero-building-right.png' : '');
+
+  // Fit mode
+  const bgFit = event.heroBgFit || 'cover';
+
+  // Construct CSS backgroundImage, backgroundPosition, backgroundSize
+  let bgStyleImage: string;
+  let bgStylePosition: string;
+  let bgStyleSize: string;
+
+  if (showBuilding && buildingImage && buildingImage !== mainBgImage) {
+    bgStyleImage = `url('${buildingImage}'), url('${mainBgImage}')`;
+    bgStylePosition = 'right center, center center';
+    bgStyleSize = `contain, ${bgFit}`;
+  } else {
+    bgStyleImage = `url('${mainBgImage}')`;
+    bgStylePosition = bgFit === 'contain' ? 'center center' : 'right center';
+    bgStyleSize = bgFit;
+  }
+
+  // Overlay gradient
+  const overlayMode = event.heroOverlayMode || 'gradient';
+  let overlayGradient =
+    'linear-gradient(90deg, #ffffff 0%, #ffffff 42%, rgba(255,255,255,0.95) 54%, rgba(255,255,255,0.35) 72%, rgba(255,255,255,0) 100%)';
+  if (overlayMode === 'soft') {
+    overlayGradient =
+      'linear-gradient(90deg, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.80) 45%, rgba(255,255,255,0.2) 80%, rgba(255,255,255,0) 100%)';
+  } else if (overlayMode === 'none') {
+    overlayGradient = 'transparent';
+  }
 
   return (
     <section
@@ -39,20 +80,22 @@ export const HeroBanner: React.FC = () => {
         height: `${bannerHeight}px`,
         minHeight: `${bannerHeight}px`,
         maxHeight: `${bannerHeight}px`,
-        backgroundImage: `url('${bgRightImage}'), url('/images/hero-hospital.jpg')`,
-        backgroundPosition: 'right center, right center',
-        backgroundSize: 'contain, cover',
+        backgroundImage: bgStyleImage,
+        backgroundPosition: bgStylePosition,
+        backgroundSize: bgStyleSize,
+        backgroundRepeat: 'no-repeat',
         fontFamily: "'Montserrat', 'Plus Jakarta Sans', sans-serif",
       }}
     >
       {/* Soft left-to-right white wash gradient overlay ensuring pristine contrast */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            'linear-gradient(90deg, #ffffff 0%, #ffffff 42%, rgba(255,255,255,0.95) 54%, rgba(255,255,255,0.35) 72%, rgba(255,255,255,0) 100%)',
-        }}
-      />
+      {overlayMode !== 'none' && (
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: overlayGradient,
+          }}
+        />
+      )}
 
       {/* Main Content Container constrained to banner height */}
       <div 

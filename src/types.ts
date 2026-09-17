@@ -142,6 +142,11 @@ export interface EventDetails {
   heroVsapsLogoUrl?: string;
   heroBv175LogoUrl?: string;
   heroBv108LogoUrl?: string;
+  heroBgImageUrl?: string;
+  heroBuildingImageUrl?: string;
+  heroShowBuilding?: boolean;
+  heroOverlayMode?: 'gradient' | 'soft' | 'none';
+  heroBgFit?: 'cover' | 'contain' | 'right';
 }
 
 export interface FooterConfig {

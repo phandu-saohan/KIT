@@ -778,22 +778,59 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                   </div>
 
                   {/* Mini Canvas Simulation */}
-                  <div 
-                    className="relative w-full rounded-2xl overflow-hidden bg-white text-slate-900 border border-slate-700/60 flex flex-col justify-between p-4 sm:p-6"
-                    style={{
-                      minHeight: '260px',
-                      backgroundImage: `url('${cmsData.eventDetails.bannerImageUrl || '/images/hero-building-right.png'}'), url('/images/hero-hospital.jpg')`,
-                      backgroundPosition: 'right center, right center',
-                      backgroundSize: 'contain, cover',
-                      backgroundRepeat: 'no-repeat',
-                    }}
-                  >
-                    <div
-                      className="absolute inset-0 pointer-events-none"
-                      style={{
-                        background: 'linear-gradient(90deg, #ffffff 0%, #ffffff 42%, rgba(255,255,255,0.95) 54%, rgba(255,255,255,0.35) 75%, rgba(255,255,255,0) 100%)',
-                      }}
-                    />
+                  {(() => {
+                    const ev = cmsData.eventDetails;
+                    const isBuildingOnly = ev.bannerImageUrl === '/images/hero-building-right.png';
+                    const mainBg = ev.heroBgImageUrl
+                      ? ev.heroBgImageUrl
+                      : (!isBuildingOnly && ev.bannerImageUrl ? ev.bannerImageUrl : '/images/hero-hospital.jpg');
+                    const showBld = ev.heroShowBuilding !== false;
+                    const bldImg = ev.heroBuildingImageUrl || (isBuildingOnly ? '/images/hero-building-right.png' : '');
+                    const bgFit = ev.heroBgFit || 'cover';
+
+                    let bgStyleImage: string;
+                    let bgStylePosition: string;
+                    let bgStyleSize: string;
+
+                    if (showBld && bldImg && bldImg !== mainBg) {
+                      bgStyleImage = `url('${bldImg}'), url('${mainBg}')`;
+                      bgStylePosition = 'right center, center center';
+                      bgStyleSize = `contain, ${bgFit}`;
+                    } else {
+                      bgStyleImage = `url('${mainBg}')`;
+                      bgStylePosition = bgFit === 'contain' ? 'center center' : 'right center';
+                      bgStyleSize = bgFit;
+                    }
+
+                    const overlayMode = ev.heroOverlayMode || 'gradient';
+                    let overlayGradient =
+                      'linear-gradient(90deg, #ffffff 0%, #ffffff 42%, rgba(255,255,255,0.95) 54%, rgba(255,255,255,0.35) 75%, rgba(255,255,255,0) 100%)';
+                    if (overlayMode === 'soft') {
+                      overlayGradient =
+                        'linear-gradient(90deg, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.80) 45%, rgba(255,255,255,0.2) 80%, rgba(255,255,255,0) 100%)';
+                    } else if (overlayMode === 'none') {
+                      overlayGradient = 'transparent';
+                    }
+
+                    return (
+                      <div 
+                        className="relative w-full rounded-2xl overflow-hidden bg-white text-slate-900 border border-slate-700/60 flex flex-col justify-between p-4 sm:p-6 transition-all"
+                        style={{
+                          minHeight: '260px',
+                          backgroundImage: bgStyleImage,
+                          backgroundPosition: bgStylePosition,
+                          backgroundSize: bgStyleSize,
+                          backgroundRepeat: 'no-repeat',
+                        }}
+                      >
+                        {overlayMode !== 'none' && (
+                          <div
+                            className="absolute inset-0 pointer-events-none"
+                            style={{
+                              background: overlayGradient,
+                            }}
+                          />
+                        )}
 
                     {/* Top Logos Preview */}
                     <div className="relative z-10 flex items-center gap-2.5">
@@ -852,7 +889,9 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                       </div>
                     </div>
                   </div>
-                </div>
+                );
+              })()}
+            </div>
 
                 {/* 2. CHỈNH SỬA TIÊU ĐỀ, SLOGAN & NÚT BẤM (TYPOGRAPHY & CTAS) */}
                 <div className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/90 shadow-xs space-y-4">
@@ -978,30 +1017,44 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                   </div>
                 </div>
 
-                {/* 3. HÌNH NỀN HERO BANNER PHẢI (BUILDING & HOSPITAL) */}
-                <div className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/90 shadow-xs space-y-4">
-                  <div className="flex items-center justify-between">
+                {/* 3. HÌNH NỀN HERO BANNER (BACKGROUND TOÀN PHẦN & TÒA NHÀ) */}
+                <div className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/90 shadow-xs space-y-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                       <h3 className="text-[15px] font-bold text-slate-900 flex items-center gap-2">
                         <ImageIcon className="w-4 h-4 text-[#c83271]" />
-                        <span>Hình Nền Tòa Nhà Hero Banner (Bên Phải)</span>
+                        <span>Ảnh Nền Hero Banner (Toàn Phần)</span>
                       </h3>
                       <p className="text-xs text-slate-500 mt-0.5">
-                        Tải ảnh tòa nhà / bệnh viện mới (PNG trong suốt hoặc JPG sắc nét) để hiển thị bên phải banner.
+                        Thay đổi ảnh nền chính cho Hero Banner trên trang chủ. Ảnh tải lên từ máy sẽ được tự động nén tối ưu (nhẹ &lt; 250KB) để lưu trữ vĩnh viễn và hiển thị tức thì.
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                       <input
                         type="file"
                         ref={bannerFileRef}
                         accept="image/*"
                         className="hidden"
-                        onChange={handleBannerUpload}
+                        onChange={async (e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            try {
+                              const url = await uploadImageFile(e.target.files[0]);
+                              updateEventDetails({
+                                bannerImageUrl: url,
+                                heroBgImageUrl: url,
+                              });
+                              showToast('Đã tải và áp dụng ảnh nền Hero Banner mới thành công!');
+                            } catch (err: any) {
+                              showToast(err.message || 'Lỗi khi tải ảnh');
+                            }
+                          }
+                        }}
                       />
                       <button
+                        type="button"
                         onClick={() => bannerFileRef.current?.click()}
-                        className="px-3.5 py-2 rounded-xl bg-[#c83271] hover:bg-[#b0225d] text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                        className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#d53774] to-[#c02663] hover:from-[#c02663] hover:to-[#a81a51] text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
                       >
                         <Upload className="w-3.5 h-3.5" />
                         <span>Tải ảnh mới từ máy tính</span>
@@ -1009,49 +1062,185 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center pt-2">
-                    <div className="md:col-span-4 aspect-video rounded-2xl border border-slate-200 overflow-hidden bg-slate-100 relative group shadow-2xs flex items-center justify-center p-2">
+                  {/* Main Background Image Selector & Preview */}
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80">
+                    <div className="md:col-span-4 aspect-video rounded-xl border border-slate-200 overflow-hidden bg-white relative group shadow-2xs flex items-center justify-center p-1">
                       <img
-                        src={cmsData.eventDetails.bannerImageUrl || '/images/hero-building-right.png'}
-                        alt="Hero Banner Building Preview"
-                        className="w-full h-full object-contain"
+                        src={
+                          cmsData.eventDetails.heroBgImageUrl ||
+                          (cmsData.eventDetails.bannerImageUrl !== '/images/hero-building-right.png' && cmsData.eventDetails.bannerImageUrl
+                            ? cmsData.eventDetails.bannerImageUrl
+                            : '/images/hero-hospital.jpg')
+                        }
+                        alt="Hero Banner Background Preview"
+                        className="w-full h-full object-cover rounded-lg"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/images/hero-hospital.jpg';
+                        }}
                       />
+                      <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-black/70 text-white text-[10px] font-mono">
+                        Xem trước ảnh nền
+                      </span>
                     </div>
 
                     <div className="md:col-span-8 space-y-3">
                       <div>
                         <label className="block text-xs font-bold text-slate-700 mb-1">
-                          Đường dẫn ảnh hoặc Base64 Data URL:
+                          Đường dẫn ảnh nền chính (URL hoặc Base64 Data):
                         </label>
-                        <input
-                          type="text"
-                          value={cmsData.eventDetails.bannerImageUrl}
-                          onChange={(e) => updateEventDetails({ bannerImageUrl: e.target.value })}
-                          placeholder="/images/hero-building-right.png hoặc https://..."
-                          className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-mono focus:border-[#174ea6] outline-none"
-                        />
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={cmsData.eventDetails.heroBgImageUrl || cmsData.eventDetails.bannerImageUrl || ''}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              updateEventDetails({
+                                bannerImageUrl: val,
+                                heroBgImageUrl: val,
+                              });
+                            }}
+                            placeholder="/images/hero-hospital.jpg hoặc /BG.png hoặc https://..."
+                            className="flex-1 px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-mono focus:border-[#d53774] outline-none bg-white"
+                          />
+                          {(cmsData.eventDetails.heroBgImageUrl || cmsData.eventDetails.bannerImageUrl) && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                updateEventDetails({
+                                  bannerImageUrl: '/images/hero-hospital.jpg',
+                                  heroBgImageUrl: '/images/hero-hospital.jpg',
+                                });
+                                showToast('Đã đặt lại ảnh nền Bệnh viện 108');
+                              }}
+                              className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                              title="Khôi phục ảnh nền mặc định"
+                            >
+                              Mặc định
+                            </button>
+                          )}
+                        </div>
                       </div>
 
                       <div>
                         <label className="block text-[11px] font-bold text-slate-500 mb-1.5">
-                          Preset nhanh:
+                          Preset ảnh nền sẵn có (Một chạm để áp dụng):
                         </label>
                         <div className="flex flex-wrap gap-2">
-                          {['/images/hero-building-right.png', '/BG.png', '/images/hero-hospital.jpg'].map((preset) => (
+                          {[
+                            { name: 'Bệnh viện TWQĐ 108', url: '/images/hero-hospital.jpg' },
+                            { name: 'Banner cũ Hội nghị', url: '/BG.png' },
+                            { name: 'Tòa nhà kết hợp', url: '/images/hero-building-right.png' },
+                            { name: 'Phòng mổ thẩm mỹ', url: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=1600&auto=format&fit=crop&q=80' },
+                            { name: 'Hội trường quốc tế', url: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1600&auto=format&fit=crop&q=80' },
+                          ].map((item) => (
                             <button
-                              key={preset}
+                              key={item.url}
                               type="button"
                               onClick={() => {
-                                updateEventDetails({ bannerImageUrl: preset });
-                                showToast(`Đã áp dụng ${preset}`);
+                                updateEventDetails({
+                                  bannerImageUrl: item.url,
+                                  heroBgImageUrl: item.url,
+                                });
+                                showToast(`Đã áp dụng ảnh nền: ${item.name}`);
                               }}
-                              className="px-2.5 py-1 rounded-lg text-xs font-mono bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer transition-colors border border-slate-200"
+                              className="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-white hover:bg-slate-100 text-slate-700 cursor-pointer transition-colors border border-slate-200 shadow-2xs hover:border-[#d53774]"
                             >
-                              {preset}
+                              {item.name}
                             </button>
                           ))}
                         </div>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Display Mode & Overlay Customization */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+                    {/* Mode 1: Kiểu hiển thị ảnh nền */}
+                    <div className="p-3.5 rounded-2xl border border-slate-200/80 bg-white space-y-2">
+                      <label className="block text-xs font-bold text-slate-700">
+                        Kiểu hiển thị ảnh nền:
+                      </label>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {[
+                          { id: 'cover', label: 'Phủ kín' },
+                          { id: 'contain', label: 'Vừa vặn' },
+                          { id: 'right', label: 'Lệch phải' },
+                        ].map((m) => {
+                          const active = (cmsData.eventDetails.heroBgFit || 'cover') === m.id;
+                          return (
+                            <button
+                              key={m.id}
+                              type="button"
+                              onClick={() => updateEventDetails({ heroBgFit: m.id as any })}
+                              className={`py-1.5 px-2 text-xs font-semibold rounded-lg border transition-all cursor-pointer text-center ${
+                                active
+                                  ? 'bg-[#d53774] text-white border-[#d53774] shadow-xs'
+                                  : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                              }`}
+                            >
+                              {m.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Mode 2: Lớp phủ mờ Gradient Overlay */}
+                    <div className="p-3.5 rounded-2xl border border-slate-200/80 bg-white space-y-2">
+                      <label className="block text-xs font-bold text-slate-700">
+                        Lớp phủ mờ chữ (Overlay):
+                      </label>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {[
+                          { id: 'gradient', label: 'Chuẩn' },
+                          { id: 'soft', label: 'Mờ nhẹ' },
+                          { id: 'none', label: 'Trong suốt' },
+                        ].map((m) => {
+                          const active = (cmsData.eventDetails.heroOverlayMode || 'gradient') === m.id;
+                          return (
+                            <button
+                              key={m.id}
+                              type="button"
+                              onClick={() => updateEventDetails({ heroOverlayMode: m.id as any })}
+                              className={`py-1.5 px-2 text-xs font-semibold rounded-lg border transition-all cursor-pointer text-center ${
+                                active
+                                  ? 'bg-[#d53774] text-white border-[#d53774] shadow-xs'
+                                  : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                              }`}
+                            >
+                              {m.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Mode 3: Họa tiết Tòa nhà BV 108 bên phải */}
+                    <div className="p-3.5 rounded-2xl border border-slate-200/80 bg-white space-y-2 flex flex-col justify-between">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          Họa tiết Tòa nhà bên phải:
+                        </label>
+                        <p className="text-[11px] text-slate-500 leading-snug">
+                          Hiển thị hình khối tòa nhà BV 108 đè nhẹ lên ảnh nền.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateEventDetails({
+                            heroShowBuilding: cmsData.eventDetails.heroShowBuilding === false ? true : false,
+                          })
+                        }
+                        className={`w-full py-1.5 px-3 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                          cmsData.eventDetails.heroShowBuilding !== false
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                            : 'bg-slate-100 text-slate-500 border-slate-200'
+                        }`}
+                      >
+                        <span className={`w-2 h-2 rounded-full ${cmsData.eventDetails.heroShowBuilding !== false ? 'bg-emerald-500' : 'bg-slate-400'}`}></span>
+                        <span>{cmsData.eventDetails.heroShowBuilding !== false ? 'Đang bật họa tiết' : 'Đã ẩn họa tiết'}</span>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -2239,7 +2428,9 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                 {/* Media Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {cmsData.mediaLibrary.map((imgUrl, index) => {
-                    const isCurrentBanner = cmsData.eventDetails.bannerImageUrl === imgUrl;
+                    const isCurrentBanner =
+                      cmsData.eventDetails.heroBgImageUrl === imgUrl ||
+                      cmsData.eventDetails.bannerImageUrl === imgUrl;
 
                     return (
                       <div
@@ -2266,8 +2457,11 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                           <div className="flex items-center justify-between gap-1">
                             <button
                               onClick={() => {
-                                updateEventDetails({ bannerImageUrl: imgUrl });
-                                showToast('Đã chọn làm ảnh nền Hero!');
+                                updateEventDetails({
+                                  bannerImageUrl: imgUrl,
+                                  heroBgImageUrl: imgUrl,
+                                });
+                                showToast('Đã chọn làm ảnh nền Hero Banner thành công!');
                               }}
                               className="text-[11px] font-bold text-[#174ea6] hover:underline cursor-pointer"
                             >
