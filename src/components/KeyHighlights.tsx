@@ -39,7 +39,7 @@ export const KeyHighlights: React.FC<KeyHighlightsProps> = () => {
           <div className="max-w-4xl mx-auto mb-10 sm:mb-14 text-center px-3 sm:px-6">
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-pink-50 border border-pink-200/70 text-[#d52b66] text-[11px] font-bold uppercase tracking-wider mb-3.5 shadow-2xs">
               <span className="w-1.5 h-1.5 rounded-full bg-[#d52b66]" />
-              Tổng quan sự kiện
+              <span>{cmsData.eventDetails.highlightsTag || 'Tổng quan sự kiện'}</span>
             </div>
             <p className="text-[14.5px] sm:text-[16px] md:text-[17px] leading-relaxed sm:leading-[1.8] text-slate-700 font-medium text-justify sm:text-center">
               {cmsData.eventDetails.highlightsDescription ||
@@ -90,13 +90,13 @@ export const KeyHighlights: React.FC<KeyHighlightsProps> = () => {
         <div className="mb-14 sm:mb-18">
           <div className="text-center max-w-2xl mx-auto mb-7 sm:mb-9">
             <span className="text-[11px] uppercase font-bold tracking-widest text-[#c83271] font-display">
-              CẤU TRÚC KHÔNG GIAN HỘI NGHỊ
+              {cmsData.eventDetails.hallsSectionTag || 'CẤU TRÚC KHÔNG GIAN HỘI NGHỊ'}
             </span>
             <h3 className="text-[22px] sm:text-[28px] font-black text-[#002045] font-display mt-1">
-              Khám Phá 4 Hội Trường Chuyên Đề Trong Cùng Một Sự Kiện
+              {cmsData.eventDetails.hallsSectionTitle || 'Khám Phá 4 Hội Trường Chuyên Đề Trong Cùng Một Sự Kiện'}
             </h3>
             <p className="text-[12.5px] sm:text-[13.5px] text-slate-600 mt-1.5 leading-relaxed">
-              Sau phiên khai mạc toàn thể, hội nghị được triển khai đồng thời tại 4 hội trường chuyên đề, giúp đại biểu chủ động lựa chọn nội dung phù hợp với lĩnh vực quan tâm.
+              {cmsData.eventDetails.hallsSectionDescription || 'Sau phiên khai mạc toàn thể, hội nghị được triển khai đồng thời tại 4 hội trường chuyên đề, giúp đại biểu chủ động lựa chọn nội dung phù hợp với lĩnh vực quan tâm.'}
             </p>
           </div>
 
@@ -185,15 +185,15 @@ export const KeyHighlights: React.FC<KeyHighlightsProps> = () => {
         <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-12">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#eff4ff] text-[#174ea6] text-[11px] uppercase font-bold tracking-wider mb-2">
             <Sparkles className="w-3.5 h-3.5 text-[#174ea6]" />
-            <span>ĐỘI NGŨ BÁO CÁO VIÊN &amp; CHUYÊN GIA HÀN QUỐC</span>
+            <span>{cmsData.eventDetails.expertsSectionTag || 'ĐỘI NGŨ BÁO CÁO VIÊN & CHUYÊN GIA HÀN QUỐC'}</span>
           </div>
 
           <h3 className="text-[26px] sm:text-[36px] font-black text-slate-900 font-display tracking-tight">
-            Gặp Gỡ Các Chuyên Gia Thẩm Mỹ Hàng Đầu
+            {cmsData.eventDetails.expertsSectionTitle || 'Gặp Gỡ Các Chuyên Gia Thẩm Mỹ Hàng Đầu'}
           </h3>
 
           <p className="text-[13.5px] sm:text-[15px] text-slate-600 mt-2 leading-relaxed max-w-2xl mx-auto">
-            Hội nghị quy tụ các giáo sư, bác sĩ giàu kinh nghiệm đến từ Hàn Quốc trực tiếp chia sẻ nghiên cứu mới, thị phạm lâm sàng và chuyển giao kỹ thuật chuyên sâu.
+            {cmsData.eventDetails.expertsSectionDescription || 'Hội nghị quy tụ các giáo sư, bác sĩ giàu kinh nghiệm đến từ Hàn Quốc trực tiếp chia sẻ nghiên cứu mới, thị phạm lâm sàng và chuyển giao kỹ thuật chuyên sâu.'}
           </p>
         </div>
 

@@ -67,6 +67,19 @@ export const EVENT_DETAILS: EventDetails = {
   venueSupportEmail: 'contact@viethan-aesthetic2026.com',
   venueSupportButtonText: 'Liên Hệ',
   mapButtonText: 'Mở Bản Đồ Chỉ Đường',
+  highlightsTag: 'Tổng quan sự kiện',
+  hallsSectionTag: 'CẤU TRÚC KHÔNG GIAN HỘI NGHỊ',
+  hallsSectionTitle: 'Khám Phá 4 Hội Trường Chuyên Đề Trong Cùng Một Sự Kiện',
+  hallsSectionDescription: 'Sau phiên khai mạc toàn thể, hội nghị được triển khai đồng thời tại 4 hội trường chuyên đề, giúp đại biểu chủ động lựa chọn nội dung phù hợp với lĩnh vực quan tâm.',
+  expertsSectionTag: 'ĐỘI NGŨ BÁO CÁO VIÊN & CHUYÊN GIA HÀN QUỐC',
+  expertsSectionTitle: 'Gặp Gỡ Các Chuyên Gia Thẩm Mỹ Hàng Đầu',
+  expertsSectionDescription: 'Hội nghị quy tụ các giáo sư, bác sĩ giàu kinh nghiệm đến từ Hàn Quốc trực tiếp chia sẻ nghiên cứu mới, thị phạm lâm sàng và chuyển giao kỹ thuật chuyên sâu.',
+  agendaSectionTag: 'LỊCH TRÌNH CHÍNH THỨC 2 NGÀY',
+  agendaSectionTitle: 'Chương Trình Hội Nghị Khoa Học Chi Tiết',
+  agendaSectionNote: '17–18/10/2026 (Thứ Bảy & Chủ Nhật)',
+  registrationSectionTag: 'CỔNG ĐĂNG KÝ THAM DỰ CHÍNH THỨC',
+  registrationSectionTitle: 'Đăng Ký Tham Dự Hội Thảo 2026',
+  registrationSectionDescription: 'Hội thảo Khoa học Thẩm mỹ Việt – Hàn và chuỗi chương trình liên kết. Vui lòng điền thông tin để nhận thẻ đại biểu tham dự hội thảo.',
 };
 
 export const KEY_HIGHLIGHTS: HighlightItem[] = [

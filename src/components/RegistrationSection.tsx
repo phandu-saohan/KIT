@@ -319,13 +319,13 @@ export const RegistrationSection: React.FC = () => {
         <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-10">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#c83271]/10 border border-[#c83271]/20 text-[#c83271] text-[11px] uppercase font-bold tracking-widest font-display mb-2.5">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>CỔNG ĐĂNG KÝ THAM DỰ CHÍNH THỨC</span>
+            <span>{cmsData.eventDetails.registrationSectionTag || 'CỔNG ĐĂNG KÝ THAM DỰ CHÍNH THỨC'}</span>
           </div>
           <h2 className="text-[26px] sm:text-[34px] font-extrabold text-[#002045] font-display leading-tight tracking-tight">
-            Đăng Ký Tham Dự Hội Thảo 2026
+            {cmsData.eventDetails.registrationSectionTitle || 'Đăng Ký Tham Dự Hội Thảo 2026'}
           </h2>
           <p className="mt-2 text-[13px] sm:text-[14.5px] text-slate-600 leading-relaxed">
-            Hội thảo Khoa học Thẩm mỹ Việt – Hàn và chuỗi chương trình liên kết. Vui lòng điền thông tin để nhận thẻ đại biểu tham dự hội thảo.
+            {cmsData.eventDetails.registrationSectionDescription || 'Hội thảo Khoa học Thẩm mỹ Việt – Hàn và chuỗi chương trình liên kết. Vui lòng điền thông tin để nhận thẻ đại biểu tham dự hội thảo.'}
           </p>
         </div>
 

@@ -167,6 +167,19 @@ export interface EventDetails {
   venueSupportEmail?: string;
   venueSupportButtonText?: string;
   mapButtonText?: string;
+  highlightsTag?: string;
+  hallsSectionTag?: string;
+  hallsSectionTitle?: string;
+  hallsSectionDescription?: string;
+  expertsSectionTag?: string;
+  expertsSectionTitle?: string;
+  expertsSectionDescription?: string;
+  agendaSectionTag?: string;
+  agendaSectionTitle?: string;
+  agendaSectionNote?: string;
+  registrationSectionTag?: string;
+  registrationSectionTitle?: string;
+  registrationSectionDescription?: string;
 }
 
 export interface FooterConfig {

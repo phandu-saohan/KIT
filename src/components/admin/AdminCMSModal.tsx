@@ -2417,6 +2417,336 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                   </div>
                 </div>
 
+                {/* =========================================================================
+                    TIÊU ĐỀ & PHỤ ĐỀ CÁC SECTION TRÊN TRANG CHỦ
+                   ========================================================================= */}
+                <div className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/90 shadow-xs space-y-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#c83271] to-[#174ea6] text-white flex items-center justify-center shadow-xs shrink-0">
+                        <Layers className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="text-[16px] font-bold text-slate-900">
+                          Quản Lý Tiêu Đề &amp; Phụ Đề Các Section Trang Chủ
+                        </h3>
+                        <p className="text-xs text-slate-500">
+                          Tùy biến linh hoạt nhãn nhỏ (Tag), tiêu đề lớn (Title) và đoạn mô tả phụ (Subtitle) cho tất cả các khối nội dung trên trang chủ.
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        updateEventDetails({
+                          highlightsTag: 'Tổng quan sự kiện',
+                          highlightsDescription: 'Quy mô và các con số ấn tượng tại Hội nghị Thẩm mỹ Khoa học Quốc tế Việt – Hàn 2026',
+                          hallsSectionTag: 'CẤU TRÚC KHÔNG GIAN HỘI NGHỊ',
+                          hallsSectionTitle: 'Khám Phá 4 Hội Trường Chuyên Đề Trong Cùng Một Sự Kiện',
+                          hallsSectionDescription: 'Sau phiên khai mạc toàn thể, hội nghị được triển khai đồng thời tại 4 hội trường chuyên đề, giúp đại biểu chủ động lựa chọn nội dung phù hợp với lĩnh vực quan tâm.',
+                          expertsSectionTag: 'ĐỘI NGŨ BÁO CÁO VIÊN & CHUYÊN GIA HÀN QUỐC',
+                          expertsSectionTitle: 'Gặp Gỡ Các Chuyên Gia Thẩm Mỹ Hàng Đầu',
+                          expertsSectionDescription: 'Hội nghị quy tụ các giáo sư, bác sĩ giàu kinh nghiệm đến từ Hàn Quốc trực tiếp chia sẻ nghiên cứu mới, thị phạm lâm sàng và chuyển giao kỹ thuật chuyên sâu.',
+                          agendaSectionTag: 'LỊCH TRÌNH CHÍNH THỨC 2 NGÀY',
+                          agendaSectionTitle: 'Chương Trình Hội Nghị Khoa Học Chi Tiết',
+                          agendaSectionNote: '17–18/10/2026 (Thứ Bảy & Chủ Nhật)',
+                          registrationSectionTag: 'CỔNG ĐĂNG KÝ THAM DỰ CHÍNH THỨC',
+                          registrationSectionTitle: 'Đăng Ký Tham Dự Hội Thảo 2026',
+                          registrationSectionDescription: 'Hội thảo Khoa học Thẩm mỹ Việt – Hàn và chuỗi chương trình liên kết. Vui lòng điền thông tin để nhận thẻ đại biểu tham dự hội thảo.',
+                          venueSectionTag: 'ĐỊA ĐIỂM TỔ CHỨC CHÍNH THỨC',
+                          venueSectionTitle: 'Hướng Dẫn Đến Bệnh Viện TWQĐ 108, Hà Nội',
+                          venueSectionDescription: 'Hội trường lớn Tầng 2 - Cụm công trình trung tâm. Vị trí đắc địa tại trung tâm Thủ đô, thuận tiện di chuyển cho các chuyên gia và đại biểu cả nước.',
+                        });
+                        showToast('Đã khôi phục tiêu đề & phụ đề mặc định của các section!');
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-600 transition-colors shrink-0 cursor-pointer"
+                      title="Khôi phục toàn bộ tiêu đề & phụ đề gốc của các section"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      Khôi phục mặc định
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    {/* Section 1: Tổng Quan Sự Kiện */}
+                    <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-lg bg-[#174ea6] text-white text-[11px] font-bold flex items-center justify-center">1</span>
+                        <span className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+                          Khối Tổng Quan Sự Kiện (Key Highlights)
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                            Nhãn nhỏ (Tagline):
+                          </label>
+                          <input
+                            type="text"
+                            value={cmsData.eventDetails.highlightsTag ?? 'Tổng quan sự kiện'}
+                            onChange={(e) => updateEventDetails({ highlightsTag: e.target.value })}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:border-[#174ea6] outline-none"
+                            placeholder="Tổng quan sự kiện"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                            Đoạn mô tả / Phụ đề:
+                          </label>
+                          <input
+                            type="text"
+                            value={cmsData.eventDetails.highlightsDescription ?? 'Quy mô và các con số ấn tượng tại Hội nghị Thẩm mỹ Khoa học Quốc tế Việt – Hàn 2026'}
+                            onChange={(e) => updateEventDetails({ highlightsDescription: e.target.value })}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:border-[#174ea6] outline-none"
+                            placeholder="Quy mô và các con số ấn tượng..."
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 2: Cấu Trúc 4 Hội Trường Chuyên Đề */}
+                    <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-lg bg-[#c83271] text-white text-[11px] font-bold flex items-center justify-center">2</span>
+                        <span className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+                          Khối Cấu Trúc 4 Hội Trường Chuyên Đề
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                            Nhãn nhỏ (Tagline):
+                          </label>
+                          <input
+                            type="text"
+                            value={cmsData.eventDetails.hallsSectionTag ?? 'CẤU TRÚC KHÔNG GIAN HỘI NGHỊ'}
+                            onChange={(e) => updateEventDetails({ hallsSectionTag: e.target.value })}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:border-[#174ea6] outline-none"
+                            placeholder="CẤU TRÚC KHÔNG GIAN HỘI NGHỊ"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                            Tiêu đề chính (Title):
+                          </label>
+                          <input
+                            type="text"
+                            value={cmsData.eventDetails.hallsSectionTitle ?? 'Khám Phá 4 Hội Trường Chuyên Đề Trong Cùng Một Sự Kiện'}
+                            onChange={(e) => updateEventDetails({ hallsSectionTitle: e.target.value })}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:border-[#174ea6] outline-none"
+                            placeholder="Khám Phá 4 Hội Trường Chuyên Đề Trong Cùng Một Sự Kiện"
+                          />
+                        </div>
+                        <div className="sm:col-span-2">
+                          <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                            Đoạn mô tả / Phụ đề (Description):
+                          </label>
+                          <textarea
+                            rows={2}
+                            value={cmsData.eventDetails.hallsSectionDescription ?? 'Sau phiên khai mạc toàn thể, hội nghị được triển khai đồng thời tại 4 hội trường chuyên đề, giúp đại biểu chủ động lựa chọn nội dung phù hợp với lĩnh vực quan tâm.'}
+                            onChange={(e) => updateEventDetails({ hallsSectionDescription: e.target.value })}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:border-[#174ea6] outline-none"
+                            placeholder="Sau phiên khai mạc toàn thể, hội nghị được triển khai đồng thời..."
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 3: Báo Cáo Viên & Chuyên Gia */}
+                    <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-lg bg-[#002045] text-white text-[11px] font-bold flex items-center justify-center">3</span>
+                        <span className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+                          Khối Đội Ngũ Báo Cáo Viên &amp; Chuyên Gia
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                            Nhãn nhỏ (Tagline):
+                          </label>
+                          <input
+                            type="text"
+                            value={cmsData.eventDetails.expertsSectionTag ?? 'ĐỘI NGŨ BÁO CÁO VIÊN & CHUYÊN GIA HÀN QUỐC'}
+                            onChange={(e) => updateEventDetails({ expertsSectionTag: e.target.value })}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:border-[#174ea6] outline-none"
+                            placeholder="ĐỘI NGŨ BÁO CÁO VIÊN & CHUYÊN GIA HÀN QUỐC"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                            Tiêu đề chính (Title):
+                          </label>
+                          <input
+                            type="text"
+                            value={cmsData.eventDetails.expertsSectionTitle ?? 'Gặp Gỡ Các Chuyên Gia Thẩm Mỹ Hàng Đầu'}
+                            onChange={(e) => updateEventDetails({ expertsSectionTitle: e.target.value })}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:border-[#174ea6] outline-none"
+                            placeholder="Gặp Gỡ Các Chuyên Gia Thẩm Mỹ Hàng Đầu"
+                          />
+                        </div>
+                        <div className="sm:col-span-2">
+                          <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                            Đoạn mô tả / Phụ đề (Description):
+                          </label>
+                          <textarea
+                            rows={2}
+                            value={cmsData.eventDetails.expertsSectionDescription ?? 'Hội nghị quy tụ các giáo sư, bác sĩ giàu kinh nghiệm đến từ Hàn Quốc trực tiếp chia sẻ nghiên cứu mới, thị phạm lâm sàng và chuyển giao kỹ thuật chuyên sâu.'}
+                            onChange={(e) => updateEventDetails({ expertsSectionDescription: e.target.value })}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:border-[#174ea6] outline-none"
+                            placeholder="Hội nghị quy tụ các giáo sư, bác sĩ giàu kinh nghiệm..."
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 4: Lịch Trình Hội Nghị Chi Tiết */}
+                    <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-lg bg-[#d52b66] text-white text-[11px] font-bold flex items-center justify-center">4</span>
+                        <span className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+                          Khối Lịch Trình Hội Nghị Chi Tiết (Agenda)
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                            Nhãn nhỏ (Tagline):
+                          </label>
+                          <input
+                            type="text"
+                            value={cmsData.eventDetails.agendaSectionTag ?? 'LỊCH TRÌNH CHÍNH THỨC 2 NGÀY'}
+                            onChange={(e) => updateEventDetails({ agendaSectionTag: e.target.value })}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:border-[#174ea6] outline-none"
+                            placeholder="LỊCH TRÌNH CHÍNH THỨC 2 NGÀY"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                            Tiêu đề chính (Title):
+                          </label>
+                          <input
+                            type="text"
+                            value={cmsData.eventDetails.agendaSectionTitle ?? 'Chương Trình Hội Nghị Khoa Học Chi Tiết'}
+                            onChange={(e) => updateEventDetails({ agendaSectionTitle: e.target.value })}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:border-[#174ea6] outline-none"
+                            placeholder="Chương Trình Hội Nghị Khoa Học Chi Tiết"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                            Thời gian / Phụ chú:
+                          </label>
+                          <input
+                            type="text"
+                            value={cmsData.eventDetails.agendaSectionNote ?? '17–18/10/2026 (Thứ Bảy & Chủ Nhật)'}
+                            onChange={(e) => updateEventDetails({ agendaSectionNote: e.target.value })}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:border-[#174ea6] outline-none"
+                            placeholder="17–18/10/2026 (Thứ Bảy & Chủ Nhật)"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 5: Cổng Đăng Ký Tham Dự */}
+                    <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-lg bg-emerald-600 text-white text-[11px] font-bold flex items-center justify-center">5</span>
+                        <span className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+                          Khối Cổng Đăng Ký Tham Dự (Registration)
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                            Nhãn nhỏ (Tagline):
+                          </label>
+                          <input
+                            type="text"
+                            value={cmsData.eventDetails.registrationSectionTag ?? 'CỔNG ĐĂNG KÝ THAM DỰ CHÍNH THỨC'}
+                            onChange={(e) => updateEventDetails({ registrationSectionTag: e.target.value })}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:border-[#174ea6] outline-none"
+                            placeholder="CỔNG ĐĂNG KÝ THAM DỰ CHÍNH THỨC"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                            Tiêu đề chính (Title):
+                          </label>
+                          <input
+                            type="text"
+                            value={cmsData.eventDetails.registrationSectionTitle ?? 'Đăng Ký Tham Dự Hội Thảo 2026'}
+                            onChange={(e) => updateEventDetails({ registrationSectionTitle: e.target.value })}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:border-[#174ea6] outline-none"
+                            placeholder="Đăng Ký Tham Dự Hội Thảo 2026"
+                          />
+                        </div>
+                        <div className="sm:col-span-2">
+                          <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                            Đoạn mô tả / Phụ đề (Description):
+                          </label>
+                          <textarea
+                            rows={2}
+                            value={cmsData.eventDetails.registrationSectionDescription ?? 'Hội thảo Khoa học Thẩm mỹ Việt – Hàn và chuỗi chương trình liên kết. Vui lòng điền thông tin để nhận thẻ đại biểu tham dự hội thảo.'}
+                            onChange={(e) => updateEventDetails({ registrationSectionDescription: e.target.value })}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:border-[#174ea6] outline-none"
+                            placeholder="Hội thảo Khoa học Thẩm mỹ Việt – Hàn và chuỗi chương trình..."
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 6: Địa Điểm & Bản Đồ */}
+                    <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-lg bg-blue-600 text-white text-[11px] font-bold flex items-center justify-center">6</span>
+                        <span className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+                          Khối Địa Điểm Tổ Chức &amp; Sơ Đồ Chỉ Đường (Venue)
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                            Nhãn nhỏ (Tagline):
+                          </label>
+                          <input
+                            type="text"
+                            value={cmsData.eventDetails.venueSectionTag ?? 'ĐỊA ĐIỂM TỔ CHỨC CHÍNH THỨC'}
+                            onChange={(e) => updateEventDetails({ venueSectionTag: e.target.value })}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:border-[#174ea6] outline-none"
+                            placeholder="ĐỊA ĐIỂM TỔ CHỨC CHÍNH THỨC"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                            Tiêu đề chính (Title):
+                          </label>
+                          <input
+                            type="text"
+                            value={cmsData.eventDetails.venueSectionTitle ?? 'Hướng Dẫn Đến Bệnh Viện TWQĐ 108, Hà Nội'}
+                            onChange={(e) => updateEventDetails({ venueSectionTitle: e.target.value })}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:border-[#174ea6] outline-none"
+                            placeholder="Hướng Dẫn Đến Bệnh Viện TWQĐ 108, Hà Nội"
+                          />
+                        </div>
+                        <div className="sm:col-span-2">
+                          <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                            Đoạn mô tả / Phụ đề (Description):
+                          </label>
+                          <textarea
+                            rows={2}
+                            value={cmsData.eventDetails.venueSectionDescription ?? 'Hội trường lớn Tầng 2 - Cụm công trình trung tâm. Vị trí đắc địa tại trung tâm Thủ đô, thuận tiện di chuyển cho các chuyên gia và đại biểu cả nước.'}
+                            onChange={(e) => updateEventDetails({ venueSectionDescription: e.target.value })}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:border-[#174ea6] outline-none"
+                            placeholder="Hội trường lớn Tầng 2 - Cụm công trình trung tâm..."
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Contact & Capacity */}
                 <div className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/90 shadow-xs space-y-4">
                   <h3 className="text-[15px] font-bold text-slate-900 border-b border-slate-100 pb-2">

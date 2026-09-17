@@ -158,13 +158,13 @@ export const ScientificAgenda: React.FC = () => {
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-50 border border-pink-200/70 text-[#d52b66] text-[11px] font-bold uppercase tracking-wider mb-2 shadow-2xs">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>LỊCH TRÌNH CHÍNH THỨC 2 NGÀY</span>
+              <span>{cmsData.eventDetails.agendaSectionTag || 'LỊCH TRÌNH CHÍNH THỨC 2 NGÀY'}</span>
             </div>
             <h2 className="text-[24px] sm:text-[34px] font-black text-[#002045] font-display tracking-tight leading-tight">
-              Chương Trình Hội Nghị Khoa Học Chi Tiết
+              {cmsData.eventDetails.agendaSectionTitle || 'Chương Trình Hội Nghị Khoa Học Chi Tiết'}
             </h2>
             <p className="text-[13px] sm:text-[14.5px] text-slate-600 mt-1.5 flex items-center gap-2 flex-wrap">
-              <span className="font-bold text-[#174ea6]">17–18/10/2026 (Thứ Bảy &amp; Chủ Nhật)</span>
+              <span className="font-bold text-[#174ea6]">{cmsData.eventDetails.agendaSectionNote || '17–18/10/2026 (Thứ Bảy & Chủ Nhật)'}</span>
               <span>•</span>
               <span className="flex items-center gap-1 font-medium text-slate-700">
                 <MapPin className="w-3.5 h-3.5 text-[#d52b66]" />
