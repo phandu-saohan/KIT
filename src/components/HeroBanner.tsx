@@ -102,13 +102,13 @@ export const HeroBanner: React.FC = () => {
 
       {/* Main Content Container constrained to banner height */}
       <div 
-        className="relative z-10 w-full max-w-[1360px] mx-auto px-3.5 sm:px-8 lg:px-14 py-3 sm:py-5 flex flex-col justify-center sm:justify-between items-center sm:items-start gap-3 sm:gap-0"
+        className="relative z-10 w-full max-w-[1360px] mx-auto px-3.5 sm:px-8 lg:px-14 py-2 sm:py-5 flex flex-col justify-between items-center sm:items-start"
         style={{
           minHeight: `${bannerHeight}px`,
         }}
       >
-        {/* TOP: Two Host Logos (VSAPS & KSAPS) - Centered & Pulled down closer on Mobile */}
-        <div className="flex items-center justify-center sm:justify-start gap-3 sm:gap-4 p-0 w-full mb-0 sm:mb-0">
+        {/* TOP: Two Host Logos (VSAPS & KSAPS) - Đưa lên 1 tý */}
+        <div className="flex items-center justify-center sm:justify-start gap-3 sm:gap-4 p-0 w-full pt-0.5 sm:pt-0 -mt-0.5 sm:mt-0">
           {/* Logo 1: VSAPS Circular Badge */}
           <img
             src={vsapsLogo}
@@ -125,7 +125,7 @@ export const HeroBanner: React.FC = () => {
         </div>
 
         {/* CENTER: Typography Matching 100% of User Banner - Centered on Mobile */}
-        <div className="w-full max-w-full sm:max-w-2xl lg:max-w-3xl my-0 sm:my-auto flex flex-col items-center sm:items-start text-center sm:text-left">
+        <div className="w-full max-w-full sm:max-w-2xl lg:max-w-3xl my-auto flex flex-col items-center sm:items-start text-center sm:text-left py-1 sm:py-0">
           {(() => {
             const sp = event.heroHeadingSpacing || 'relaxed';
             const gapClass =
@@ -146,40 +146,40 @@ export const HeroBanner: React.FC = () => {
             );
           })()}
 
-          <p className="text-[12.5px] xs:text-[14px] sm:text-[16px] text-slate-700 font-semibold mt-1.5 sm:mt-3.5 mb-2.5 sm:mb-5 text-center sm:text-left max-w-md sm:max-w-none">
+          <p className="text-[12.5px] xs:text-[14px] sm:text-[16px] text-slate-700 font-semibold mt-1.5 sm:mt-3 mb-2 sm:mb-4 text-center sm:text-left max-w-md sm:max-w-none">
             {venueText}
           </p>
 
-          {/* ACTION BUTTONS: Register & Date Pill - Centered on Mobile */}
-          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-4">
-            {/* CTA 1: Đăng ký tham dự */}
+          {/* ACTION BUTTONS: Register & Date Pill - Centered on Mobile, 1 DÒNG DUY NHẤT */}
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 xs:gap-2.5 sm:gap-4">
+            {/* CTA 1: Đăng ký tham dự - 1 DÒNG */}
             <a
               href={ctaLink}
-              className="inline-flex items-center gap-2 sm:gap-3 px-4 xs:px-5 sm:px-7 py-2 sm:py-2.5 rounded-full bg-[#d52b66] hover:bg-[#b81d51] text-white shadow-md hover:shadow-lg transition-all active:scale-[0.98] cursor-pointer group"
+              className="inline-flex items-center justify-center gap-1.5 xs:gap-2 px-3.5 xs:px-4.5 sm:px-6 py-2 sm:py-2.5 rounded-full bg-[#d52b66] hover:bg-[#b81d51] text-white shadow-md hover:shadow-lg transition-all active:scale-[0.98] cursor-pointer group whitespace-nowrap shrink-0"
             >
-              <div className="flex flex-col text-left leading-none">
-                <span className="text-[8px] sm:text-[9.5px] font-semibold text-pink-100 uppercase tracking-wider">
+              {ctaTag && (
+                <span className="text-[8.5px] xs:text-[9.5px] font-bold bg-white/20 px-1.5 py-0.5 rounded-full uppercase tracking-wider text-pink-100 shrink-0">
                   {ctaTag}
                 </span>
-                <span className="text-[13px] sm:text-[15px] font-black text-white mt-0.5 tracking-tight">
-                  {ctaText}
-                </span>
-              </div>
-              <ArrowRight className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 text-white group-hover:translate-x-1 transition-transform stroke-[2.5]" />
+              )}
+              <span className="text-[12px] xs:text-[13px] sm:text-[14.5px] font-black text-white tracking-tight">
+                {ctaText}
+              </span>
+              <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white group-hover:translate-x-1 transition-transform stroke-[2.5] shrink-0" />
             </a>
 
-            {/* CTA 2: Ngày tổ chức Date Pill */}
-            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3.5 xs:px-4 sm:px-6 py-2 sm:py-2.5 rounded-full bg-white/95 backdrop-blur-xs border sm:border-2 border-[#d52b66] text-[#d52b66] shadow-xs">
+            {/* CTA 2: Ngày tổ chức Date Pill - 1 DÒNG */}
+            <div className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 xs:px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-white/95 backdrop-blur-xs border border-[#d52b66] text-[#d52b66] shadow-xs whitespace-nowrap shrink-0">
               <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#d52b66] shrink-0" />
-              <span className="text-[12.5px] sm:text-[15px] font-black tracking-tight">
+              <span className="text-[12px] xs:text-[13px] sm:text-[14.5px] font-black tracking-tight">
                 {dateText}
               </span>
             </div>
           </div>
         </div>
 
-        {/* BOTTOM: Sponsors & Co-Organizers Logos - Centered and Pulled up closer on Mobile */}
-        <div className="flex flex-wrap items-center sm:items-end justify-center sm:justify-start gap-3 sm:gap-8 pb-1 sm:pb-1 pt-1.5 sm:pt-2 border-t border-slate-200/80 w-full text-center sm:text-left mt-1 sm:mt-0">
+        {/* BOTTOM: Sponsors & Co-Organizers Logos - Đưa xuống 1 tý */}
+        <div className="flex flex-wrap items-center sm:items-end justify-center sm:justify-start gap-3 sm:gap-8 pb-1.5 sm:pb-2 pt-2.5 sm:pt-3 border-t border-slate-200/80 w-full text-center sm:text-left mt-auto sm:mt-0 mb-0.5 sm:mb-0">
           {/* Column 1: Bảo trợ (MOHW Korea) */}
           <div className="flex flex-col items-center sm:items-start gap-0.5 sm:gap-1">
             <span className="text-[9.5px] sm:text-[11px] font-medium text-slate-500">
