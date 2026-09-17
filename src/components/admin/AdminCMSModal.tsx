@@ -72,6 +72,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
     updateFooterConfig,
     updateAdminAccount,
     resetToDefaults,
+    clearAllCacheAndReload,
     exportDataToJson,
     importDataFromJson,
     uploadImageFile,
@@ -616,6 +617,17 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
               onChange={handleJsonImport}
             />
           </label>
+
+          {/* XÓA TOÀN BỘ CACHE & LÀM MỚI 100% */}
+          <button
+            type="button"
+            onClick={clearAllCacheAndReload}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-bold transition-all cursor-pointer border border-amber-200"
+            title="Xóa toàn bộ Cache, LocalStorage và tải lại mới 100% trang web"
+          >
+            <RotateCcw className="w-3.5 h-3.5 text-amber-600" />
+            <span className="hidden md:inline">Xóa Cache Cũ</span>
+          </button>
 
           <button
             onClick={resetToDefaults}

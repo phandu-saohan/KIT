@@ -158,6 +158,7 @@ interface CMSContextType {
   updateFooterConfig: (updated: Partial<FooterConfig>) => void;
   updateAdminAccount: (updated: Partial<AdminAccountConfig>) => void;
   resetToDefaults: () => void;
+  clearAllCacheAndReload: () => void;
   exportDataToJson: () => void;
   importDataFromJson: (jsonStr: string) => boolean;
   addImageToLibrary: (imageUrl: string) => void;
@@ -667,6 +668,21 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const clearAllCacheAndReload = () => {
+    if (window.confirm('Bạn có muốn xóa toàn bộ Cache, bộ nhớ tạm trình duyệt và tải lại trang mới hoàn toàn 100% không?')) {
+      try {
+        localStorage.clear();
+        sessionStorage.clear();
+        if ('caches' in window) {
+          caches.keys().then((names) => {
+            names.forEach((name) => caches.delete(name));
+          });
+        }
+      } catch (e) {}
+      window.location.href = window.location.origin + window.location.pathname + '?refresh=' + Date.now();
+    }
+  };
+
   const exportDataToJson = () => {
     const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(cmsData, null, 2));
     const downloadAnchor = document.createElement('a');
@@ -718,6 +734,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateFooterConfig,
         updateAdminAccount,
         resetToDefaults,
+        clearAllCacheAndReload,
         exportDataToJson,
         importDataFromJson,
         addImageToLibrary,
