@@ -102,38 +102,38 @@ export const HeroBanner: React.FC = () => {
 
       {/* Main Content Container constrained to banner height */}
       <div 
-        className="relative z-10 w-full max-w-[1360px] mx-auto px-3.5 sm:px-8 lg:px-14 py-3 sm:py-5 flex flex-col justify-between items-center sm:items-start"
+        className="relative z-10 w-full max-w-[1360px] mx-auto px-3.5 sm:px-8 lg:px-14 py-3 sm:py-5 flex flex-col justify-center sm:justify-between items-center sm:items-start gap-3 sm:gap-0"
         style={{
           minHeight: `${bannerHeight}px`,
         }}
       >
-        {/* TOP: Two Host Logos (VSAPS & KSAPS) - Centered & Enlarged on Mobile */}
-        <div className="flex items-center justify-center sm:justify-start gap-3 sm:gap-4 p-0 w-full">
+        {/* TOP: Two Host Logos (VSAPS & KSAPS) - Centered & Pulled down closer on Mobile */}
+        <div className="flex items-center justify-center sm:justify-start gap-3 sm:gap-4 p-0 w-full mb-0 sm:mb-0">
           {/* Logo 1: VSAPS Circular Badge */}
           <img
             src={vsapsLogo}
             alt="Hội Phẫu thuật Tạo hình Thẩm mỹ Việt Nam (VSAPS)"
-            className="w-14 h-14 xs:w-16 xs:h-16 sm:w-16 sm:h-16 lg:w-18 lg:h-18 object-contain drop-shadow-xs transition-transform hover:scale-105 rounded-full mix-blend-multiply"
+            className="w-13 h-13 xs:w-15 xs:h-15 sm:w-16 sm:h-16 lg:w-18 lg:h-18 object-contain drop-shadow-xs transition-transform hover:scale-105 rounded-full mix-blend-multiply"
           />
 
           {/* Logo 2: KSAPS Circular Badge */}
           <img
             src={ksapsLogo}
             alt="Hội Phẫu thuật Tạo hình Thẩm mỹ Hàn Quốc (KSAPS)"
-            className="w-14 h-14 xs:w-16 xs:h-16 sm:w-16 sm:h-16 lg:w-18 lg:h-18 object-contain drop-shadow-xs transition-transform hover:scale-105 rounded-full mix-blend-multiply"
+            className="w-13 h-13 xs:w-15 xs:h-15 sm:w-16 sm:h-16 lg:w-18 lg:h-18 object-contain drop-shadow-xs transition-transform hover:scale-105 rounded-full mix-blend-multiply"
           />
         </div>
 
         {/* CENTER: Typography Matching 100% of User Banner - Centered on Mobile */}
-        <div className="w-full max-w-full sm:max-w-2xl lg:max-w-3xl my-2.5 sm:my-auto flex flex-col items-center sm:items-start text-center sm:text-left">
+        <div className="w-full max-w-full sm:max-w-2xl lg:max-w-3xl my-0 sm:my-auto flex flex-col items-center sm:items-start text-center sm:text-left">
           {(() => {
             const sp = event.heroHeadingSpacing || 'relaxed';
             const gapClass =
               sp === 'loose'
-                ? 'gap-1.5 sm:gap-4 lg:gap-5'
+                ? 'gap-1 sm:gap-4 lg:gap-5'
                 : sp === 'normal'
                 ? 'gap-0.5 sm:gap-1.5 lg:gap-2'
-                : 'gap-1 sm:gap-2.5 lg:gap-3.5';
+                : 'gap-0.5 sm:gap-2.5 lg:gap-3.5';
 
             return (
               <h1 className={`text-[25px] xs:text-[29px] sm:text-[40px] md:text-[46px] lg:text-[50px] font-black uppercase tracking-tight font-display flex flex-col ${gapClass} leading-[1.1] sm:leading-[1.12] items-center sm:items-start`}>
@@ -146,12 +146,12 @@ export const HeroBanner: React.FC = () => {
             );
           })()}
 
-          <p className="text-[12.5px] xs:text-[14px] sm:text-[16px] text-slate-700 font-semibold mt-2 sm:mt-3.5 mb-3.5 sm:mb-5 text-center sm:text-left max-w-md sm:max-w-none">
+          <p className="text-[12.5px] xs:text-[14px] sm:text-[16px] text-slate-700 font-semibold mt-1.5 sm:mt-3.5 mb-2.5 sm:mb-5 text-center sm:text-left max-w-md sm:max-w-none">
             {venueText}
           </p>
 
           {/* ACTION BUTTONS: Register & Date Pill - Centered on Mobile */}
-          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5 sm:gap-4">
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-4">
             {/* CTA 1: Đăng ký tham dự */}
             <a
               href={ctaLink}
@@ -178,8 +178,8 @@ export const HeroBanner: React.FC = () => {
           </div>
         </div>
 
-        {/* BOTTOM: Sponsors & Co-Organizers Logos - Centered on Mobile */}
-        <div className="flex flex-wrap items-center sm:items-end justify-center sm:justify-start gap-3.5 sm:gap-8 pb-1 sm:pb-1 pt-2 sm:pt-2 border-t border-slate-200/80 w-full text-center sm:text-left">
+        {/* BOTTOM: Sponsors & Co-Organizers Logos - Centered and Pulled up closer on Mobile */}
+        <div className="flex flex-wrap items-center sm:items-end justify-center sm:justify-start gap-3 sm:gap-8 pb-1 sm:pb-1 pt-1.5 sm:pt-2 border-t border-slate-200/80 w-full text-center sm:text-left mt-1 sm:mt-0">
           {/* Column 1: Bảo trợ (MOHW Korea) */}
           <div className="flex flex-col items-center sm:items-start gap-0.5 sm:gap-1">
             <span className="text-[9.5px] sm:text-[11px] font-medium text-slate-500">
