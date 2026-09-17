@@ -53,3 +53,17 @@ html, body {
   scrollbar-width: none;  /* Firefox */
 }
 
+/* Mobile Hero Banner Optimizations */
+@media (max-width: 640px) {
+  #hero-banner {
+    background-position: 72% center !important;
+  }
+  #hero-banner .hero-overlay-pink {
+    background: linear-gradient(90deg, rgba(255, 240, 245, 0.96) 0%, rgba(255, 242, 246, 0.76) 35%, rgba(255, 246, 250, 0.12) 62%, rgba(255, 255, 255, 0) 88%) !important;
+  }
+  #hero-banner .hero-overlay-soft,
+  #hero-banner .hero-overlay-gradient {
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.72) 35%, rgba(255, 255, 255, 0.10) 62%, rgba(255, 255, 255, 0) 88%) !important;
+  }
+}
+

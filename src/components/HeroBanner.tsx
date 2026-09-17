@@ -93,7 +93,7 @@ export const HeroBanner: React.FC = () => {
       {/* Soft left-to-right white wash gradient overlay ensuring pristine contrast */}
       {overlayMode !== 'none' && (
         <div
-          className="absolute inset-0 pointer-events-none"
+          className={`absolute inset-0 pointer-events-none hero-overlay-${overlayMode}`}
           style={{
             background: overlayGradient,
           }}
@@ -102,42 +102,42 @@ export const HeroBanner: React.FC = () => {
 
       {/* Main Content Container constrained to banner height */}
       <div 
-        className="relative z-10 w-full max-w-[1360px] mx-auto px-4 sm:px-8 lg:px-14 py-4 sm:py-5 flex flex-col justify-between"
+        className="relative z-10 w-full max-w-[1360px] mx-auto px-3.5 sm:px-8 lg:px-14 py-2.5 sm:py-5 flex flex-col justify-between"
         style={{
           minHeight: `${bannerHeight}px`,
           height: '100%',
         }}
       >
         {/* TOP: Two Host Logos (VSAPS & KSAPS) - Enlarged & Zero Padding */}
-        <div className="flex items-center gap-3.5 sm:gap-4 p-0">
+        <div className="flex items-center gap-2 sm:gap-4 p-0">
           {/* Logo 1: VSAPS Circular Badge */}
           <img
             src={vsapsLogo}
             alt="Hội Phẫu thuật Tạo hình Thẩm mỹ Việt Nam (VSAPS)"
-            className="w-14 h-14 sm:w-16 sm:h-16 lg:w-18 lg:h-18 object-contain drop-shadow-xs transition-transform hover:scale-105"
+            className="w-10 h-10 xs:w-12 xs:h-12 sm:w-16 sm:h-16 lg:w-18 lg:h-18 object-contain drop-shadow-xs transition-transform hover:scale-105"
           />
 
           {/* Logo 2: KSAPS Circular Badge */}
           <img
             src={ksapsLogo}
             alt="Hội Phẫu thuật Tạo hình Thẩm mỹ Hàn Quốc (KSAPS)"
-            className="w-14 h-14 sm:w-16 sm:h-16 lg:w-18 lg:h-18 object-contain drop-shadow-xs transition-transform hover:scale-105"
+            className="w-10 h-10 xs:w-12 xs:h-12 sm:w-16 sm:h-16 lg:w-18 lg:h-18 object-contain drop-shadow-xs transition-transform hover:scale-105"
           />
         </div>
 
         {/* CENTER: Typography Matching 100% of User Banner */}
-        <div className="max-w-2xl lg:max-w-3xl my-auto">
+        <div className="max-w-[85%] xs:max-w-[80%] sm:max-w-2xl lg:max-w-3xl my-1 sm:my-auto">
           {(() => {
             const sp = event.heroHeadingSpacing || 'relaxed';
             const gapClass =
               sp === 'loose'
-                ? 'gap-3 sm:gap-4 lg:gap-5'
+                ? 'gap-1.5 sm:gap-4 lg:gap-5'
                 : sp === 'normal'
-                ? 'gap-1 sm:gap-1.5 lg:gap-2'
-                : 'gap-2 sm:gap-2.5 lg:gap-3.5';
+                ? 'gap-0.5 sm:gap-1.5 lg:gap-2'
+                : 'gap-1 sm:gap-2.5 lg:gap-3.5';
 
             return (
-              <h1 className={`text-[28px] xs:text-[34px] sm:text-[42px] md:text-[46px] lg:text-[50px] font-black uppercase tracking-tight font-display flex flex-col ${gapClass} leading-[1.12]`}>
+              <h1 className={`text-[21px] xs:text-[25px] sm:text-[40px] md:text-[46px] lg:text-[50px] font-black uppercase tracking-tight font-display flex flex-col ${gapClass} leading-[1.08] sm:leading-[1.12]`}>
                 <span className="block text-[#d52b66]">{heading1}</span>
                 <span className="block text-[#d52b66]">{heading2}</span>
                 <span className="block text-[#d52b66]">
@@ -147,32 +147,32 @@ export const HeroBanner: React.FC = () => {
             );
           })()}
 
-          <p className="text-[14px] sm:text-[16px] text-slate-600 font-semibold mt-3 sm:mt-3.5 mb-4 sm:mb-5">
+          <p className="text-[11.5px] xs:text-[12.5px] sm:text-[16px] text-slate-600 font-semibold mt-1.5 sm:mt-3.5 mb-2.5 sm:mb-5 line-clamp-1 sm:line-clamp-none">
             {venueText}
           </p>
 
           {/* ACTION BUTTONS: Register & Date Pill */}
-          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4">
             {/* CTA 1: Đăng ký tham dự */}
             <a
               href={ctaLink}
-              className="inline-flex items-center gap-3 px-6 sm:px-7 py-2 sm:py-2.5 rounded-full bg-[#d52b66] hover:bg-[#b81d51] text-white shadow-md hover:shadow-lg transition-all active:scale-[0.98] cursor-pointer group"
+              className="inline-flex items-center gap-2 sm:gap-3 px-3.5 xs:px-4.5 sm:px-7 py-1.5 sm:py-2.5 rounded-full bg-[#d52b66] hover:bg-[#b81d51] text-white shadow-md hover:shadow-lg transition-all active:scale-[0.98] cursor-pointer group"
             >
               <div className="flex flex-col text-left leading-none">
-                <span className="text-[9px] sm:text-[9.5px] font-semibold text-pink-100 uppercase tracking-wider">
+                <span className="text-[7.5px] sm:text-[9.5px] font-semibold text-pink-100 uppercase tracking-wider">
                   {ctaTag}
                 </span>
-                <span className="text-[13.5px] sm:text-[15px] font-black text-white mt-0.5 tracking-tight">
+                <span className="text-[12px] sm:text-[15px] font-black text-white mt-0.5 tracking-tight">
                   {ctaText}
                 </span>
               </div>
-              <ArrowRight className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-white group-hover:translate-x-1 transition-transform stroke-[2.5]" />
+              <ArrowRight className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 text-white group-hover:translate-x-1 transition-transform stroke-[2.5]" />
             </a>
 
             {/* CTA 2: Ngày tổ chức Date Pill */}
-            <div className="inline-flex items-center gap-2 px-5 sm:px-6 py-2 sm:py-2.5 rounded-full bg-white border-2 border-[#d52b66] text-[#d52b66] shadow-xs">
-              <Calendar className="w-4 h-4 text-[#d52b66] shrink-0" />
-              <span className="text-[13.5px] sm:text-[15px] font-black tracking-tight">
+            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 xs:px-3.5 sm:px-6 py-1.5 sm:py-2.5 rounded-full bg-white/95 backdrop-blur-xs border sm:border-2 border-[#d52b66] text-[#d52b66] shadow-xs">
+              <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#d52b66] shrink-0" />
+              <span className="text-[12px] sm:text-[15px] font-black tracking-tight">
                 {dateText}
               </span>
             </div>
@@ -180,13 +180,13 @@ export const HeroBanner: React.FC = () => {
         </div>
 
         {/* BOTTOM: Sponsors & Co-Organizers Logos matching 100% of User Banner */}
-        <div className="flex flex-wrap items-end gap-6 sm:gap-8 pb-1 pt-2 border-t border-slate-100/80">
+        <div className="flex flex-wrap items-end gap-3 sm:gap-8 pb-0.5 sm:pb-1 pt-1.5 sm:pt-2 border-t border-slate-100/80">
           {/* Column 1: Bảo trợ (MOHW Korea) */}
-          <div className="flex flex-col gap-1">
-            <span className="text-[10.5px] sm:text-[11px] font-medium text-slate-500">
+          <div className="flex flex-col gap-0.5 sm:gap-1">
+            <span className="text-[9px] sm:text-[11px] font-medium text-slate-500">
               {patronLabel}
             </span>
-            <div className="flex items-center h-6 sm:h-7">
+            <div className="flex items-center h-5 sm:h-7">
               <img
                 src={patronLogo}
                 alt="Bộ Y tế & Phúc lợi Hàn Quốc (보건복지부)"
@@ -196,37 +196,37 @@ export const HeroBanner: React.FC = () => {
           </div>
 
           {/* Column 2: Đơn vị tổ chức (KHIDI, BV 108, SNUBH, KBIT) */}
-          <div className="flex flex-col gap-1">
-            <span className="text-[10.5px] sm:text-[11px] font-medium text-slate-500">
+          <div className="flex flex-col gap-0.5 sm:gap-1">
+            <span className="text-[9px] sm:text-[11px] font-medium text-slate-500">
               {orgLabel}
             </span>
-            <div className="flex items-center gap-3 sm:gap-4 md:gap-5 h-6 sm:h-7">
+            <div className="flex items-center gap-2.5 sm:gap-4 md:gap-5 h-5 sm:h-7">
               {/* KHIDI */}
               <img
                 src={khidiLogo}
                 alt="Viện KHIDI Hàn Quốc"
-                className="h-full object-contain max-w-[65px] sm:max-w-[75px]"
+                className="h-full object-contain max-w-[46px] sm:max-w-[75px]"
               />
 
               {/* BV 108 */}
               <img
                 src={bv108Logo}
                 alt="Bệnh viện Trung ương Quân đội 108"
-                className="h-full object-contain max-w-[28px] sm:max-w-[32px]"
+                className="h-full object-contain max-w-[20px] sm:max-w-[32px]"
               />
 
               {/* SNUBH */}
               <img
                 src={snubhLogo}
                 alt="Bệnh viện Bundang ĐHQG Seoul (SNUBH)"
-                className="h-full object-contain max-w-[70px] sm:max-w-[80px]"
+                className="h-full object-contain max-w-[50px] sm:max-w-[80px]"
               />
 
               {/* KBIT */}
               <img
                 src={kbitLogo}
                 alt="Hiệp hội KBIT"
-                className="h-full object-contain max-w-[60px] sm:max-w-[70px]"
+                className="h-full object-contain max-w-[42px] sm:max-w-[70px]"
               />
             </div>
           </div>
