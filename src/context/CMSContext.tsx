@@ -254,13 +254,22 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       } catch {}
 
+      // Check dedicated resilient Event Details & Banner storage
+      let localEventDetails: Partial<EventDetails> | null = null;
+      try {
+        const savedEvRaw = localStorage.getItem('kbit_event_details');
+        if (savedEvRaw) {
+          localEventDetails = JSON.parse(savedEvRaw);
+        }
+      } catch {}
+
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         // ensure missing fields get merged with defaults
         return {
           ...INITIAL_CMS_DATA,
-          eventDetails: { ...DEFAULT_EVENT_DETAILS, ...(parsed.eventDetails || {}) },
+          eventDetails: { ...DEFAULT_EVENT_DETAILS, ...(parsed.eventDetails || {}), ...(localEventDetails || {}) },
           agenda: parsed.agenda && parsed.agenda.length >= DEFAULT_AGENDA.length ? parsed.agenda : DEFAULT_AGENDA,
           experts: parsed.experts && parsed.experts.length > 0
             ? parsed.experts.map((exp: any) => {
@@ -321,10 +330,11 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             };
           })(),
         };
-      } else if (localSeoConfig) {
+      } else if (localSeoConfig || localEventDetails) {
         return {
           ...INITIAL_CMS_DATA,
-          seoConfig: { ...DEFAULT_SEO_CONFIG, ...localSeoConfig },
+          eventDetails: { ...DEFAULT_EVENT_DETAILS, ...(localEventDetails || {}) },
+          seoConfig: { ...DEFAULT_SEO_CONFIG, ...(localSeoConfig || {}) },
         };
       }
     } catch (e) {
@@ -380,6 +390,12 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 if (s) localSeoConfig = JSON.parse(s);
               } catch {}
 
+              let localEventDetails: Partial<EventDetails> | null = null;
+              try {
+                const evRaw = localStorage.getItem('kbit_event_details');
+                if (evRaw) localEventDetails = JSON.parse(evRaw);
+              } catch {}
+
               setCmsData((prev) => {
                 const mergedSeo = {
                   ...DEFAULT_SEO_CONFIG,
@@ -387,16 +403,22 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                   ...(prev.seoConfig || {}),
                   ...(localSeoConfig || {}),
                 };
+                const mergedEvent = {
+                  ...DEFAULT_EVENT_DETAILS,
+                  ...(parsedData.eventDetails || {}),
+                  ...(prev.eventDetails || {}),
+                  ...(localEventDetails || {}),
+                };
                 return {
                   ...prev,
                   ...parsedData,
                   seoConfig: mergedSeo,
                   registrations: cloudRegistrations || parsedData.registrations || prev.registrations,
                   eventDetails: {
-                    ...parsedData.eventDetails,
+                    ...mergedEvent,
                     initialRegistered: cloudRegistrations
-                      ? Math.max(parsedData.eventDetails?.initialRegistered || 0, cloudRegistrations.length)
-                      : (parsedData.eventDetails?.initialRegistered || prev.eventDetails.initialRegistered),
+                      ? Math.max(mergedEvent.initialRegistered || 0, cloudRegistrations.length)
+                      : (mergedEvent.initialRegistered || prev.eventDetails.initialRegistered),
                   },
                 };
               });
@@ -423,9 +445,18 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       } catch {}
 
+      let currentEvent = source.eventDetails;
+      try {
+        const savedEvRaw = localStorage.getItem('kbit_event_details');
+        if (savedEvRaw) {
+          currentEvent = { ...DEFAULT_EVENT_DETAILS, ...(currentEvent || {}), ...JSON.parse(savedEvRaw) };
+        }
+      } catch {}
+
       const payload = {
         ...source,
         seoConfig: currentSeo,
+        eventDetails: currentEvent,
         mediaLibrary: (source.mediaLibrary || []).slice(0, 20),
       };
 
@@ -538,6 +569,11 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             localStorage.setItem('kbit_seo_config', JSON.stringify(cmsData.seoConfig));
           } catch {}
         }
+        if (cmsData.eventDetails) {
+          try {
+            localStorage.setItem('kbit_event_details', JSON.stringify(cmsData.eventDetails));
+          } catch {}
+        }
         const json = JSON.stringify(cmsData);
         if (json !== lastSavedJsonRef.current) {
           lastSavedJsonRef.current = json;
@@ -552,6 +588,11 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           if (cmsData.seoConfig) {
             try {
               localStorage.setItem('kbit_seo_config', JSON.stringify(cmsData.seoConfig));
+            } catch {}
+          }
+          if (cmsData.eventDetails) {
+            try {
+              localStorage.setItem('kbit_event_details', JSON.stringify(cmsData.eventDetails));
             } catch {}
           }
           const safeData = {
@@ -595,10 +636,18 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   const updateEventDetails = (details: Partial<EventDetails>) => {
-    setCmsData((prev) => ({
-      ...prev,
-      eventDetails: { ...prev.eventDetails, ...details },
-    }));
+    setCmsData((prev) => {
+      const merged = { ...prev.eventDetails, ...details };
+      try {
+        localStorage.setItem('kbit_event_details', JSON.stringify(merged));
+      } catch (e) {
+        console.warn('Failed to persist kbit_event_details:', e);
+      }
+      return {
+        ...prev,
+        eventDetails: merged,
+      };
+    });
   };
 
   const updateExpert = (id: string, updated: Partial<ExpertSpeaker>) => {
@@ -1180,6 +1229,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem('custom_hero_bg');
       localStorage.removeItem('kbit_seo_config');
+      localStorage.removeItem('kbit_event_details');
       setCmsData(INITIAL_CMS_DATA);
     }
   };

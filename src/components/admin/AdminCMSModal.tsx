@@ -268,12 +268,19 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
   const handleManualSave = async (showFeedback = true): Promise<boolean> => {
     setIsSaving(true);
     try {
-      // 1. Force save SEO to dedicated key first
+      // 1. Force save SEO & Event Details to dedicated resilient keys first
       if (cmsData.seoConfig) {
         try {
           localStorage.setItem('kbit_seo_config', JSON.stringify(cmsData.seoConfig));
         } catch (e) {
           console.warn('kbit_seo_config save warning:', e);
+        }
+      }
+      if (cmsData.eventDetails) {
+        try {
+          localStorage.setItem('kbit_event_details', JSON.stringify(cmsData.eventDetails));
+        } catch (e) {
+          console.warn('kbit_event_details save warning:', e);
         }
       }
 
@@ -322,6 +329,30 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
     }
   };
 
+  const handleSaveGeneralSettings = async () => {
+    setIsSaving(true);
+    try {
+      const currentEv = cmsData.eventDetails || DEFAULT_EVENT_DETAILS;
+      try {
+        localStorage.setItem('kbit_event_details', JSON.stringify(currentEv));
+      } catch (e) {
+        console.warn('kbit_event_details save error:', e);
+      }
+      const cloudSuccess = await handleManualSave(false);
+      setSaveSuccessTick(true);
+      setTimeout(() => setSaveSuccessTick(false), 3500);
+      if (cloudSuccess) {
+        showToast('✅ Đã lưu Cài đặt chung & Hero Banner và đồng bộ Cloud thành công!');
+      } else {
+        showToast('✅ Đã lưu Cài đặt chung & Hero Banner vào trình duyệt thành công! Hiệu lực ngay.');
+      }
+    } catch (err: any) {
+      showToast('❌ Lỗi khi lưu Cài đặt chung: ' + (err?.message || 'Thử lại'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleSaveSEO = async () => {
     setIsSaving(true);
     try {
@@ -349,11 +380,27 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
   const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       try {
-        const url = await uploadImageFile(e.target.files[0]);
-        updateEventDetails({ bannerImageUrl: url });
-        showToast('Đã tải ảnh nền Hero thành công!');
+        setIsSaving(true);
+        const file = e.target.files[0];
+        const url = await uploadImageFile(file, {
+          maxWidth: 1920,
+          maxHeight: 1080,
+          quality: 0.82,
+          forceJpeg: true,
+          addToLibrary: true,
+        });
+        updateEventDetails({ bannerImageUrl: url, heroBgImageUrl: url });
+        try {
+          const cur = cmsData.eventDetails || DEFAULT_EVENT_DETAILS;
+          localStorage.setItem('kbit_event_details', JSON.stringify({ ...cur, bannerImageUrl: url, heroBgImageUrl: url }));
+        } catch {}
+        await handleManualSave(false);
+        showToast('✅ Đã tải và áp dụng ảnh nền Hero Banner mới thành công!');
       } catch (err: any) {
         alert(err.message || 'Lỗi tải ảnh');
+      } finally {
+        setIsSaving(false);
+        e.target.value = '';
       }
     }
   };
@@ -361,12 +408,26 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
   const handleMapImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       try {
-        const url = await uploadImageFile(e.target.files[0]);
+        setIsSaving(true);
+        const file = e.target.files[0];
+        const url = await uploadImageFile(file, {
+          maxWidth: 1400,
+          maxHeight: 900,
+          quality: 0.82,
+          forceJpeg: true,
+          addToLibrary: true,
+        });
         updateEventDetails({ mapImageUrl: url });
-        showToast('Đã tải ảnh sơ đồ / bản đồ địa điểm thành công!');
+        try {
+          const cur = cmsData.eventDetails || DEFAULT_EVENT_DETAILS;
+          localStorage.setItem('kbit_event_details', JSON.stringify({ ...cur, mapImageUrl: url }));
+        } catch {}
+        await handleManualSave(false);
+        showToast('✅ Đã tải ảnh sơ đồ / bản đồ địa điểm thành công!');
       } catch (err: any) {
         alert(err.message || 'Lỗi tải ảnh bản đồ');
       } finally {
+        setIsSaving(false);
         e.target.value = '';
       }
     }
@@ -462,14 +523,25 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
   const handlePartnerLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>, partnerId: string) => {
     if (e.target.files && e.target.files[0]) {
       try {
-        const url = await uploadImageFile(e.target.files[0]);
+        setIsSaving(true);
+        const url = await uploadImageFile(e.target.files[0], {
+          maxWidth: 400,
+          maxHeight: 400,
+          quality: 0.85,
+          forceJpeg: false,
+          addToLibrary: true,
+        });
         updatePartner(partnerId, { logoUrl: url });
         if (partnerId === 'ksaps') updateEventDetails({ heroKsapsLogoUrl: url });
         if (partnerId === 'vsaps') updateEventDetails({ heroVsapsLogoUrl: url });
         if (partnerId === 'bv175' || partnerId === 'bv108') { updateEventDetails({ heroBv108LogoUrl: url, heroBv175LogoUrl: url }); }
-        showToast('Đã tải lên và cập nhật logo đối tác thành công!');
+        await handleManualSave(false);
+        showToast('✅ Đã tải lên và cập nhật logo đối tác thành công!');
       } catch (err: any) {
         alert(err.message || 'Lỗi tải ảnh logo');
+      } finally {
+        setIsSaving(false);
+        e.target.value = '';
       }
     }
   };
@@ -477,12 +549,21 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
   const handleHeroSponsorUpload = async (e: React.ChangeEvent<HTMLInputElement>, fieldKey: keyof typeof cmsData.eventDetails) => {
     if (e.target.files && e.target.files[0]) {
       try {
-        const url = await uploadImageFile(e.target.files[0]);
+        setIsSaving(true);
+        const url = await uploadImageFile(e.target.files[0], {
+          maxWidth: 400,
+          maxHeight: 400,
+          quality: 0.85,
+          forceJpeg: false,
+          addToLibrary: true,
+        });
         updateEventDetails({ [fieldKey]: url });
-        showToast('Đã tải lên & áp dụng logo mới cho Hero Banner!');
+        await handleManualSave(false);
+        showToast('✅ Đã tải lên & áp dụng logo mới cho Hero Banner!');
       } catch (err: any) {
         alert(err.message || 'Lỗi tải ảnh logo');
       } finally {
+        setIsSaving(false);
         e.target.value = '';
       }
     }
@@ -491,7 +572,14 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
   const handleHeroHostLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>, hostId: 'ksaps' | 'vsaps' | 'bv175' | 'bv108') => {
     if (e.target.files && e.target.files[0]) {
       try {
-        const url = await uploadImageFile(e.target.files[0]);
+        setIsSaving(true);
+        const url = await uploadImageFile(e.target.files[0], {
+          maxWidth: 400,
+          maxHeight: 400,
+          quality: 0.85,
+          forceJpeg: false,
+          addToLibrary: true,
+        });
         if (hostId === 'ksaps') {
           updateEventDetails({ heroKsapsLogoUrl: url });
           updatePartner('ksaps', { logoUrl: url });
@@ -502,9 +590,13 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
           updateEventDetails({ heroBv175LogoUrl: url });
           updatePartner('bv175', { logoUrl: url });
         }
-        showToast(`Đã tải lên & đồng bộ logo ${hostId.toUpperCase()} thành công!`);
+        await handleManualSave(false);
+        showToast(`✅ Đã tải lên & đồng bộ logo ${hostId.toUpperCase()} thành công!`);
       } catch (err: any) {
         alert(err.message || 'Lỗi tải ảnh logo');
+      } finally {
+        setIsSaving(false);
+        e.target.value = '';
       }
     }
   };
@@ -1071,6 +1163,16 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                       />
                       <span className="text-[11px] font-bold text-slate-400">px</span>
                     </div>
+
+                    <button
+                      type="button"
+                      onClick={handleSaveGeneralSettings}
+                      disabled={isSaving}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#d53774] to-[#b0225d] hover:from-[#c02663] hover:to-[#961a4c] text-white text-xs font-bold shadow-sm hover:shadow-md transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      {saveSuccessTick ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+                      <span>{isSaving ? 'Đang lưu...' : 'Lưu Cài Đặt Chung'}</span>
+                    </button>
                   </div>
                 </div>
 
@@ -1395,20 +1497,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                         ref={bannerFileRef}
                         accept="image/*"
                         className="hidden"
-                        onChange={async (e) => {
-                          if (e.target.files && e.target.files[0]) {
-                            try {
-                              const url = await uploadImageFile(e.target.files[0]);
-                              updateEventDetails({
-                                bannerImageUrl: url,
-                                heroBgImageUrl: url,
-                              });
-                              showToast('Đã tải và áp dụng ảnh nền Hero Banner mới thành công!');
-                            } catch (err: any) {
-                              showToast(err.message || 'Lỗi khi tải ảnh');
-                            }
-                          }
-                        }}
+                        onChange={handleBannerUpload}
                       />
                       <button
                         type="button"
@@ -1681,11 +1770,11 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
 
                     <button
                       type="button"
-                      onClick={() => handleManualSave(true)}
+                      onClick={handleSaveGeneralSettings}
                       disabled={isSaving}
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#d53774] to-[#b0225d] hover:from-[#c02663] hover:to-[#961a4c] text-white text-xs font-black shadow-sm hover:shadow-md transition-all cursor-pointer active:scale-95"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#d53774] to-[#b0225d] hover:from-[#c02663] hover:to-[#961a4c] text-white text-xs font-black shadow-sm hover:shadow-md transition-all cursor-pointer active:scale-95 disabled:opacity-50"
                     >
-                      <Save className="w-4 h-4" />
+                      {saveSuccessTick ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
                       <span>{isSaving ? 'Đang lưu...' : 'LƯU THAY ĐỔI HERO BANNER'}</span>
                     </button>
                   </div>
@@ -2948,6 +3037,47 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                         className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:border-[#174ea6] outline-none"
                       />
                     </div>
+                  </div>
+                </div>
+
+                {/* Bottom Action Bar for General Settings & Hero Banner */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-pink-50 via-rose-50 to-pink-100/60 border border-pink-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-[#c83271]" />
+                      <span>Hoàn tất chỉnh sửa Cài đặt chung &amp; Hero Banner</span>
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Lưu trữ trực tiếp vào bộ nhớ trình duyệt và đồng bộ ngay lên cơ sở dữ liệu Vercel Postgres / Neon.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (confirm('Bạn có chắc muốn khôi phục thông tin sự kiện và banner về mặc định ban đầu?')) {
+                          updateEventDetails(DEFAULT_EVENT_DETAILS);
+                          try {
+                            localStorage.removeItem('kbit_event_details');
+                          } catch {}
+                          showToast('Đã khôi phục cài đặt chung về mặc định!');
+                        }
+                      }}
+                      className="px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-600 transition-colors cursor-pointer"
+                    >
+                      Khôi phục mặc định
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleSaveGeneralSettings}
+                      disabled={isSaving}
+                      className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#d53774] to-[#b0225d] hover:from-[#c02663] hover:to-[#961a4c] text-white text-xs font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95"
+                    >
+                      {saveSuccessTick ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+                      <span>{isSaving ? 'Đang lưu...' : 'Lưu Cài Đặt Chung & Banner Ngay'}</span>
+                    </button>
                   </div>
                 </div>
 
