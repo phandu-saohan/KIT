@@ -1,4 +1,4 @@
-import { AgendaItem, Partner, ExpertSpeaker, EventDetails, HighlightItem, SEOConfig, EmailCampaignConfig, EmailRecipient, EmailTemplate, GmailSenderAccount, HostingerSenderAccount } from '../types';
+import { AgendaItem, Partner, ExpertSpeaker, EventDetails, HighlightItem, SEOConfig, EmailCampaignConfig, EmailRecipient, EmailTemplate, GmailSenderAccount, HostingerSenderAccount, ConfirmEmailTemplate } from '../types';
 import { PARTNER_LOGOS } from './partnerLogos';
 
 export const EVENT_DETAILS: EventDetails = {
@@ -982,6 +982,20 @@ export const DEFAULT_EMAIL_CAMPAIGN: EmailCampaignConfig = {
   recipients: INITIAL_EMAIL_RECIPIENTS,
   templates: DEFAULT_EMAIL_TEMPLATES,
   selectedTemplateId: 'tpl-doctor',
+};
+
+export const DEFAULT_CONFIRM_EMAIL_TEMPLATE: ConfirmEmailTemplate = {
+  enabled: true,
+  senderName: 'Ban Tổ Chức Hội Nghị Thẩm Mỹ Việt – Hàn 2026',
+  subject: '[Xác nhận đăng ký] Hội Nghị Thẩm Mỹ Việt – Hàn 2026 – Mã thẻ: {{code}}',
+  greetingLine: 'Kính gửi Quý Đại biểu: {{name}},',
+  customIntroText:
+    'Ban Tổ Chức Hội Nghị Khoa Học Thẩm Mỹ Việt – Hàn 2026 trân trọng xác nhận đăng ký tham dự thành công của Quý vị. Thông tin thẻ đại biểu và chi tiết sự kiện được đính kèm bên dưới. Vui lòng lưu lại email này để check-in tại sự kiện.',
+  showBadgeCard: true,
+  showCheckinGuide: true,
+  footerSignature:
+    'BAN THƯ KÝ HỘI NGHỊ KHOA HỌC THẨM MỸ VIỆT – HÀN 2026\nHotline / Zalo: +82-10-4159-8777 | Email: secretary@kbitassociation.com\nĐịa điểm: Bệnh viện Trung ương Quân đội 108, Hà Nội',
+  replyTo: 'secretary@kbitassociation.com',
 };
 
 

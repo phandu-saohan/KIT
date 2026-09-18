@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { CMSData, EventDetails, ExpertSpeaker, AgendaItem, HighlightItem, Partner, AttendeeBadge, FooterConfig, AdminAccountConfig, SEOConfig, EmailCampaignConfig, EmailRecipient, EmailTemplate, GmailSenderAccount, HostingerSenderAccount } from '../types';
+import { CMSData, EventDetails, ExpertSpeaker, AgendaItem, HighlightItem, Partner, AttendeeBadge, FooterConfig, AdminAccountConfig, SEOConfig, EmailCampaignConfig, EmailRecipient, EmailTemplate, GmailSenderAccount, HostingerSenderAccount, ConfirmEmailTemplate } from '../types';
 import {
   EVENT_DETAILS as DEFAULT_EVENT_DETAILS,
   LEADING_EXPERTS as DEFAULT_EXPERTS,
@@ -8,6 +8,7 @@ import {
   PARTNERS as DEFAULT_PARTNERS,
   DEFAULT_SEO_CONFIG,
   DEFAULT_EMAIL_CAMPAIGN,
+  DEFAULT_CONFIRM_EMAIL_TEMPLATE,
 } from '../data/symposiumData';
 
 export const STORAGE_KEY = 'viet_han_aesthetic_cms_data_v9';
@@ -146,6 +147,7 @@ const INITIAL_CMS_DATA: CMSData = {
   adminAccount: DEFAULT_ADMIN_ACCOUNT,
   seoConfig: DEFAULT_SEO_CONFIG,
   emailCampaignConfig: DEFAULT_EMAIL_CAMPAIGN,
+  confirmEmailTemplate: DEFAULT_CONFIRM_EMAIL_TEMPLATE,
 };
 
 interface CMSContextType {
@@ -176,6 +178,7 @@ interface CMSContextType {
   updateAdminAccount: (updated: Partial<AdminAccountConfig>) => void;
   updateSEOConfig: (updated: Partial<SEOConfig>) => void;
   updateEmailCampaignConfig: (updated: Partial<EmailCampaignConfig>) => void;
+  updateConfirmEmailTemplate: (updated: Partial<ConfirmEmailTemplate>) => void;
   addEmailRecipient: (recipient: EmailRecipient) => void;
   removeEmailRecipient: (id: string) => void;
   updateEmailRecipientStatus: (id: string, status: EmailRecipient['status'], error?: string, resendEmailId?: string) => void;
@@ -331,6 +334,9 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               hostingerPool: hostingerList,
             };
           })(),
+          confirmEmailTemplate: parsed.confirmEmailTemplate
+            ? { ...DEFAULT_CONFIRM_EMAIL_TEMPLATE, ...parsed.confirmEmailTemplate }
+            : DEFAULT_CONFIRM_EMAIL_TEMPLATE,
         };
       } else if (localSeoConfig || localEventDetails) {
         return {
@@ -926,6 +932,17 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   };
 
+  const updateConfirmEmailTemplate = (updated: Partial<ConfirmEmailTemplate>) => {
+    setCmsData((prev) => ({
+      ...prev,
+      confirmEmailTemplate: {
+        ...(prev.confirmEmailTemplate || DEFAULT_CONFIRM_EMAIL_TEMPLATE),
+        ...updated,
+        lastUpdated: new Date().toISOString(),
+      },
+    }));
+  };
+
   const addEmailRecipient = (recipient: EmailRecipient) => {
     setCmsData((prev) => {
       const cfg = prev.emailCampaignConfig || DEFAULT_EMAIL_CAMPAIGN;
@@ -1372,6 +1389,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateAdminAccount,
         updateSEOConfig,
         updateEmailCampaignConfig,
+        updateConfirmEmailTemplate,
         addEmailRecipient,
         removeEmailRecipient,
         updateEmailRecipientStatus,

@@ -1,12 +1,38 @@
-import { AttendeeBadge, EmailCampaignConfig } from '../types';
+import { AttendeeBadge, EmailCampaignConfig, ConfirmEmailTemplate } from '../types';
 
-export function generateRegistrationConfirmationHtml(badge: AttendeeBadge): string {
+export function generateRegistrationConfirmationHtml(
+  badge: AttendeeBadge,
+  template?: ConfirmEmailTemplate
+): string {
   const isDoctor = badge.attendeeType === 'doctor';
   const cmeText = badge.wantsCme
     ? 'Có đăng ký (3 giờ tín chỉ CME do Bệnh viện TWQĐ 108 cấp)'
     : 'Không đăng ký';
 
   const attendeeGroupText = isDoctor ? 'Bác sĩ & Chuyên gia Y tế' : 'Doanh nghiệp & Spa';
+
+  const replacePlaceholders = (text: string) =>
+    text
+      .replace(/\{\{name\}\}/g, badge.fullName)
+      .replace(/\{\{code\}\}/g, badge.registrationCode)
+      .replace(/\{\{institution\}\}/g, badge.institution || 'Bệnh viện Trung ương Quân đội 108');
+
+  const introText = template?.customIntroText
+    ? replacePlaceholders(template.customIntroText)
+    : 'Ban Tổ Chức trân trọng cảm ơn Quý Đại biểu đã hoàn tất thủ tục đăng ký. Dưới đây là thông tin vé & thẻ đại biểu chính thức của Quý vị.';
+
+  const greetingLine = template?.greetingLine
+    ? replacePlaceholders(template.greetingLine)
+    : `Kính gửi Quý Đại biểu: <strong style="color: #002045; font-size: 16px;">${badge.fullName}</strong>,`;
+
+  const showBadge = template ? template.showBadgeCard : true;
+  const showGuide = template ? template.showCheckinGuide : true;
+
+  const signatureText = template?.footerSignature
+    ? template.footerSignature.replace(/\n/g, '<br/>')
+    : `BAN THƯ KÝ HỘI NGHỊ KHOA HỌC THẨM MỸ VIỆT – HÀN 2026<br/>
+Hotline / Zalo: <strong style="color: #002045;">+82-10-4159-8777</strong> | Email: <a href="mailto:secretary@kbitassociation.com" style="color: #c83271; text-decoration: none; font-weight: 600;">secretary@kbitassociation.com</a><br/>
+Địa điểm: Bệnh viện Trung ương Quân đội 108, Hà Nội`;
 
   return `
 <!DOCTYPE html>
@@ -46,7 +72,7 @@ export function generateRegistrationConfirmationHtml(badge: AttendeeBadge): stri
                   ✓ Đăng ký tham dự thành công!
                 </p>
                 <p style="margin: 4px 0 0 0; color: #047857; font-size: 12.5px; line-height: 1.5;">
-                  Ban Tổ Chức trân trọng cảm ơn Quý Đại biểu đã hoàn tất thủ tục đăng ký. Dưới đây là thông tin vé & thẻ đại biểu chính thức của Quý vị.
+                  ${introText}
                 </p>
               </div>
             </td>
@@ -56,9 +82,10 @@ export function generateRegistrationConfirmationHtml(badge: AttendeeBadge): stri
           <tr>
             <td style="padding: 10px 28px 24px 28px;">
               <p style="font-size: 15px; color: #0f172a; margin: 0 0 16px 0; line-height: 1.6;">
-                Kính gửi Quý Đại biểu: <strong style="color: #002045; font-size: 16px;">${badge.fullName}</strong>,
+                ${greetingLine}
               </p>
 
+              ${showBadge ? `
               <!-- E-Badge Visual Card -->
               <div style="background: linear-gradient(135deg, #002045 0%, #15325b 70%, #c83271 100%); border-radius: 16px; padding: 22px; color: #ffffff; box-shadow: 0 8px 20px rgba(0,32,69,0.15); margin-bottom: 24px;">
                 <table width="100%" border="0" cellspacing="0" cellpadding="0">
@@ -93,6 +120,7 @@ export function generateRegistrationConfirmationHtml(badge: AttendeeBadge): stri
                   </tr>
                 </table>
               </div>
+              ` : ''}
 
               <!-- Registration Details Table -->
               <h3 style="font-size: 14px; font-weight: 700; color: #002045; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e2eaf8; padding-bottom: 6px;">
@@ -151,6 +179,7 @@ export function generateRegistrationConfirmationHtml(badge: AttendeeBadge): stri
                 </tr>
               </table>
 
+              ${showGuide ? `
               <!-- Notice Box / Check-in guide -->
               <div style="margin-top: 22px; background-color: #f8faff; border: 1px dashed #cbdcf7; border-radius: 12px; padding: 14px 16px;">
                 <h4 style="margin: 0 0 6px 0; color: #002045; font-size: 12.5px; font-weight: 700;">
@@ -162,6 +191,7 @@ export function generateRegistrationConfirmationHtml(badge: AttendeeBadge): stri
                   <li>Ban Tổ Chức sẽ cung cấp tài liệu hội thảo và thẻ đeo chính thức tại bàn check-in từ 07:30 sáng ngày 17/10/2026.</li>
                 </ul>
               </div>
+              ` : ''}
 
             </td>
           </tr>
@@ -173,11 +203,7 @@ export function generateRegistrationConfirmationHtml(badge: AttendeeBadge): stri
                 <tr>
                   <td>
                     <p style="margin: 0 0 4px 0; color: #002045; font-size: 12.5px; font-weight: 700;">
-                      BAN THƯ KÝ HỘI NGHỊ KHOA HỌC THẨM MỸ VIỆT – HÀN 2026
-                    </p>
-                    <p style="margin: 0; color: #64748b; font-size: 11.5px; line-height: 1.5;">
-                      Hotline / Zalo: <strong style="color: #002045;">+82-10-4159-8777</strong> | Email: <a href="mailto:secretary@kbitassociation.com" style="color: #c83271; text-decoration: none; font-weight: 600;">secretary@kbitassociation.com</a><br/>
-                      Địa điểm: Bệnh viện Trung ương Quân đội 108, Hà Nội
+                      ${signatureText}
                     </p>
                   </td>
                 </tr>
@@ -220,7 +246,8 @@ export interface SendEmailResult {
  */
 export async function sendRegistrationConfirmationEmail(
   badge: AttendeeBadge,
-  campaignConfig?: EmailCampaignConfig
+  campaignConfig?: EmailCampaignConfig,
+  confirmTemplate?: ConfirmEmailTemplate
 ): Promise<SendEmailResult> {
   if (!badge.email || !badge.email.includes('@')) {
     return {
@@ -229,10 +256,23 @@ export async function sendRegistrationConfirmationEmail(
     };
   }
 
-  const htmlContent = generateRegistrationConfirmationHtml(badge);
-  const subject = `[Xác nhận đăng ký] Hội Nghị Thẩm Mỹ Việt – Hàn 2026 - Mã thẻ: ${badge.registrationCode}`;
-  const senderName = campaignConfig?.senderName || 'Ban Tổ Chức Hội Thảo Thẩm Mỹ Việt – Hàn 2026';
-  const replyToEmail = campaignConfig?.replyToEmail || 'secretary@kbitassociation.com';
+  const htmlContent = generateRegistrationConfirmationHtml(badge, confirmTemplate);
+
+  // Use custom template subject if provided, else default
+  const defaultSubject = `[Xác nhận đăng ký] Hội Nghị Thẩm Mỹ Việt – Hàn 2026 - Mã thẻ: ${badge.registrationCode}`;
+  const rawSubject = confirmTemplate?.subject || defaultSubject;
+  const subject = rawSubject
+    .replace(/\{\{name\}\}/g, badge.fullName)
+    .replace(/\{\{code\}\}/g, badge.registrationCode);
+
+  const senderName =
+    confirmTemplate?.senderName ||
+    campaignConfig?.senderName ||
+    'Ban Tổ Chức Hội Thảo Thẩm Mỹ Việt – Hàn 2026';
+  const replyToEmail =
+    confirmTemplate?.replyTo ||
+    campaignConfig?.replyToEmail ||
+    'secretary@kbitassociation.com';
 
   const sendProvider = campaignConfig?.sendProvider || 'hostinger';
 

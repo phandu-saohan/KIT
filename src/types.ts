@@ -297,6 +297,19 @@ export interface EmailCampaignConfig {
   selectedTemplateId: string;
 }
 
+export interface ConfirmEmailTemplate {
+  enabled: boolean;           // Bật/tắt tự động gửi email xác nhận
+  senderName: string;         // Tên hiển thị người gửi
+  subject: string;            // Tiêu đề email (hỗ trợ {{name}}, {{code}})
+  greetingLine: string;       // Lời chào đầu email
+  customIntroText: string;    // Đoạn văn mở đầu tùy chỉnh
+  showBadgeCard: boolean;     // Hiển thị thẻ đại biểu điện tử trong email
+  showCheckinGuide: boolean;  // Hiển thị hướng dẫn check-in
+  footerSignature: string;    // Chữ ký cuối email
+  replyTo: string;            // Reply-to email
+  lastUpdated?: string;
+}
+
 export interface CMSData {
   eventDetails: EventDetails;
   experts: ExpertSpeaker[];
@@ -309,6 +322,7 @@ export interface CMSData {
   adminAccount?: AdminAccountConfig;
   seoConfig?: SEOConfig;
   emailCampaignConfig?: EmailCampaignConfig;
+  confirmEmailTemplate?: ConfirmEmailTemplate;
 }
 
 

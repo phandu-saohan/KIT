@@ -44,12 +44,14 @@ import {
   Share2,
   Code2,
   BarChart2,
+  Bell,
 } from 'lucide-react';
 import { useCMS, STORAGE_KEY } from '../../context/CMSContext';
 import { ExpertSpeaker, AgendaItem, Partner, HighlightItem, AttendeeBadge, SEOConfig } from '../../types';
 import { PARTNER_LOGOS } from '../../data/partnerLogos';
 import { DEFAULT_SEO_CONFIG } from '../../data/symposiumData';
 import { EmailCampaignTab } from './EmailCampaignTab';
+import { NotificationsTab } from './NotificationsTab';
 
 interface AdminCMSModalProps {
   onLogout?: () => void;
@@ -1063,6 +1065,23 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
               </div>
               <span className={`px-2 py-0.5 rounded-full text-[10.5px] font-extrabold ${activeAdminTab === 'email' ? 'bg-white/25 text-white' : 'bg-indigo-100 text-indigo-800'}`}>
                 {cmsData.emailCampaignConfig?.recipients?.length || 0}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveAdminTab('notifications')}
+              className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left text-[13px] font-bold transition-all cursor-pointer shrink-0 ${
+                activeAdminTab === 'notifications'
+                  ? 'bg-gradient-to-r from-[#c83271] to-pink-700 text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Bell className="w-4 h-4 shrink-0" />
+                <span>Thông Báo &amp; Xác Nhận</span>
+              </div>
+              <span className={`px-2 py-0.5 rounded-full text-[10.5px] font-bold ${activeAdminTab === 'notifications' ? 'bg-white/20 text-white' : 'bg-pink-100 text-pink-700'}`}>
+                {cmsData.confirmEmailTemplate?.enabled ? 'BẬT' : 'TẮT'}
               </span>
             </button>
 
@@ -6088,7 +6107,14 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
             )}
 
             {/* =========================================================================
-                TAB 8: QUẢN TRỊ CHÂN TRANG (FOOTER)
+                TAB 8: QUẢN TRỊ THÔNG BÁO (NOTIFICATIONS)
+               ========================================================================= */}
+            {activeAdminTab === 'notifications' && (
+              <NotificationsTab showToast={showToast} />
+            )}
+
+            {/* =========================================================================
+                TAB 9: QUẢN TRỊ CHÂN TRANG (FOOTER)
                ========================================================================= */}
             {activeAdminTab === 'footer' && (
               <div className="space-y-6 max-w-4xl">

@@ -322,11 +322,16 @@ export const RegistrationSection: React.FC = () => {
         });
       }
 
-      // Automatically dispatch confirmation email to attendee
-      if (formData.email && formData.email.includes('@')) {
+      // Automatically dispatch confirmation email to attendee if enabled
+      const isAutoSendEnabled = cmsData.confirmEmailTemplate ? cmsData.confirmEmailTemplate.enabled : true;
+      if (isAutoSendEnabled && formData.email && formData.email.includes('@')) {
         setEmailSendingStatus({ status: 'sending' });
         try {
-          const res = await sendRegistrationConfirmationEmail(newBadge, cmsData.emailCampaignConfig);
+          const res = await sendRegistrationConfirmationEmail(
+            newBadge,
+            cmsData.emailCampaignConfig,
+            cmsData.confirmEmailTemplate
+          );
           if (res.success) {
             setEmailSendingStatus({
               status: 'sent',
@@ -350,6 +355,10 @@ export const RegistrationSection: React.FC = () => {
             message: err?.message || 'Lỗi mạng khi gửi email.',
           });
         }
+      } else if (!isAutoSendEnabled) {
+        setEmailSendingStatus({
+          status: 'idle',
+        });
       }
     }, 450);
   };
@@ -358,7 +367,11 @@ export const RegistrationSection: React.FC = () => {
     if (!registeredBadge || !registeredBadge.email) return;
     setEmailSendingStatus({ status: 'sending' });
     try {
-      const res = await sendRegistrationConfirmationEmail(registeredBadge, cmsData.emailCampaignConfig);
+      const res = await sendRegistrationConfirmationEmail(
+        registeredBadge,
+        cmsData.emailCampaignConfig,
+        cmsData.confirmEmailTemplate
+      );
       if (res.success) {
         setEmailSendingStatus({
           status: 'sent',
