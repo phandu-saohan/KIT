@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { CMSData, EventDetails, ExpertSpeaker, AgendaItem, HighlightItem, Partner, AttendeeBadge, FooterConfig, AdminAccountConfig, SEOConfig, EmailCampaignConfig, EmailRecipient, EmailTemplate, GmailSenderAccount } from '../types';
+import { CMSData, EventDetails, ExpertSpeaker, AgendaItem, HighlightItem, Partner, AttendeeBadge, FooterConfig, AdminAccountConfig, SEOConfig, EmailCampaignConfig, EmailRecipient, EmailTemplate, GmailSenderAccount, HostingerSenderAccount } from '../types';
 import {
   EVENT_DETAILS as DEFAULT_EVENT_DETAILS,
   LEADING_EXPERTS as DEFAULT_EXPERTS,
@@ -186,6 +186,11 @@ interface CMSContextType {
   removeGmailSenderAccount: (id: string) => void;
   incrementGmailSentToday: (id: string) => void;
   resetGmailDailyQuotas: () => void;
+  updateHostingerSenderAccount: (id: string, updated: Partial<HostingerSenderAccount>) => void;
+  addHostingerSenderAccount: (acc: HostingerSenderAccount) => void;
+  removeHostingerSenderAccount: (id: string) => void;
+  incrementHostingerSentToday: (id: string) => void;
+  resetHostingerDailyQuotas: () => void;
   resetToDefaults: () => void;
   clearAllCacheAndReload: () => void;
   exportDataToJson: () => void;
@@ -269,6 +274,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             const today = new Date().toISOString().slice(0, 10);
             const savedCfg = parsed.emailCampaignConfig ? { ...DEFAULT_EMAIL_CAMPAIGN, ...parsed.emailCampaignConfig } : DEFAULT_EMAIL_CAMPAIGN;
             let pool: GmailSenderAccount[] = savedCfg.gmailPool && savedCfg.gmailPool.length > 0 ? savedCfg.gmailPool : DEFAULT_EMAIL_CAMPAIGN.gmailPool || [];
+            let hostingerList: HostingerSenderAccount[] = savedCfg.hostingerPool && savedCfg.hostingerPool.length > 0 ? savedCfg.hostingerPool : DEFAULT_EMAIL_CAMPAIGN.hostingerPool || [];
 
             // If new day, automatically reset daily quota counters for all Gmail accounts
             if (savedCfg.gmailQuotaResetDate !== today) {
@@ -280,9 +286,20 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               savedCfg.gmailQuotaResetDate = today;
             }
 
+            // If new day, automatically reset daily quota counters for Hostinger accounts
+            if (savedCfg.hostingerQuotaResetDate !== today) {
+              hostingerList = hostingerList.map((acc: HostingerSenderAccount) => ({
+                ...acc,
+                sentToday: 0,
+                status: acc.status === 'quota_reached' ? 'ready' : acc.status,
+              }));
+              savedCfg.hostingerQuotaResetDate = today;
+            }
+
             return {
               ...savedCfg,
               gmailPool: pool,
+              hostingerPool: hostingerList,
             };
           })(),
         };
@@ -863,6 +880,94 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
+  const updateHostingerSenderAccount = (id: string, updated: Partial<HostingerSenderAccount>) => {
+    setCmsData((prev) => {
+      const cfg = prev.emailCampaignConfig || DEFAULT_EMAIL_CAMPAIGN;
+      const pool = cfg.hostingerPool || DEFAULT_EMAIL_CAMPAIGN.hostingerPool || [];
+      return {
+        ...prev,
+        emailCampaignConfig: {
+          ...cfg,
+          hostingerPool: pool.map((acc) => (acc.id === id ? { ...acc, ...updated } : acc)),
+        },
+      };
+    });
+  };
+
+  const addHostingerSenderAccount = (acc: HostingerSenderAccount) => {
+    setCmsData((prev) => {
+      const cfg = prev.emailCampaignConfig || DEFAULT_EMAIL_CAMPAIGN;
+      const pool = cfg.hostingerPool || DEFAULT_EMAIL_CAMPAIGN.hostingerPool || [];
+      return {
+        ...prev,
+        emailCampaignConfig: {
+          ...cfg,
+          hostingerPool: [...pool, acc],
+        },
+      };
+    });
+  };
+
+  const removeHostingerSenderAccount = (id: string) => {
+    setCmsData((prev) => {
+      const cfg = prev.emailCampaignConfig || DEFAULT_EMAIL_CAMPAIGN;
+      const pool = cfg.hostingerPool || DEFAULT_EMAIL_CAMPAIGN.hostingerPool || [];
+      return {
+        ...prev,
+        emailCampaignConfig: {
+          ...cfg,
+          hostingerPool: pool.filter((acc) => acc.id !== id),
+        },
+      };
+    });
+  };
+
+  const incrementHostingerSentToday = (id: string) => {
+    setCmsData((prev) => {
+      const cfg = prev.emailCampaignConfig || DEFAULT_EMAIL_CAMPAIGN;
+      const pool = cfg.hostingerPool || DEFAULT_EMAIL_CAMPAIGN.hostingerPool || [];
+      return {
+        ...prev,
+        emailCampaignConfig: {
+          ...cfg,
+          hostingerPool: pool.map((acc) => {
+            if (acc.id === id) {
+              const nextSent = (acc.sentToday || 0) + 1;
+              const quota = acc.dailyQuota || 1000;
+              return {
+                ...acc,
+                sentToday: nextSent,
+                status: nextSent >= quota ? 'quota_reached' : acc.status,
+                lastUsedAt: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+              };
+            }
+            return acc;
+          }),
+        },
+      };
+    });
+  };
+
+  const resetHostingerDailyQuotas = () => {
+    const today = new Date().toISOString().slice(0, 10);
+    setCmsData((prev) => {
+      const cfg = prev.emailCampaignConfig || DEFAULT_EMAIL_CAMPAIGN;
+      const pool = cfg.hostingerPool || DEFAULT_EMAIL_CAMPAIGN.hostingerPool || [];
+      return {
+        ...prev,
+        emailCampaignConfig: {
+          ...cfg,
+          hostingerQuotaResetDate: today,
+          hostingerPool: pool.map((acc) => ({
+            ...acc,
+            sentToday: 0,
+            status: acc.status === 'quota_reached' ? 'ready' : acc.status,
+          })),
+        },
+      };
+    });
+  };
+
   const addImageToLibrary = (imageUrl: string) => {
     if (!imageUrl) return;
     setCmsData((prev) => {
@@ -1027,6 +1132,11 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         removeGmailSenderAccount,
         incrementGmailSentToday,
         resetGmailDailyQuotas,
+        updateHostingerSenderAccount,
+        addHostingerSenderAccount,
+        removeHostingerSenderAccount,
+        incrementHostingerSentToday,
+        resetHostingerDailyQuotas,
         resetToDefaults,
         clearAllCacheAndReload,
         exportDataToJson,

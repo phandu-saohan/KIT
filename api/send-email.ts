@@ -63,7 +63,59 @@ export default async function handler(req: any, res: any) {
       }
     }
 
-    // 2. Verify Resend API Key
+    // 2. Verify Hostinger SMTP credentials
+    if (action === 'verify_hostinger') {
+      const user = url.searchParams.get('user');
+      const pass = url.searchParams.get('pass');
+      const host = url.searchParams.get('host') || 'smtp.hostinger.com';
+      const port = Number(url.searchParams.get('port') || 465);
+      const secure = port === 465;
+
+      if (!user || !pass) {
+        return res.status(200).json({
+          success: false,
+          valid: false,
+          message: 'Vui lòng cung cấp đầy đủ Email Hostinger và Mật khẩu.',
+        });
+      }
+
+      try {
+        const transporter = nodemailer.createTransport({
+          host: host.trim(),
+          port: port,
+          secure: secure,
+          auth: {
+            user: user.trim(),
+            pass: pass.trim(),
+          },
+          tls: {
+            rejectUnauthorized: false,
+          },
+        });
+
+        await transporter.verify();
+        return res.status(200).json({
+          success: true,
+          valid: true,
+          message: `Xác thực thành công! Máy chủ Hostinger [${host}:${port}] với tài khoản [${user}] đã sẵn sàng gửi thư.`,
+        });
+      } catch (err: any) {
+        let msg = err?.message || 'Lỗi xác thực Hostinger';
+        if (msg.includes('Invalid login') || msg.includes('BadCredentials') || msg.includes('Username and Password not accepted') || msg.includes('535 5.7.8')) {
+          msg = 'Mật khẩu hòm thư Hostinger hoặc địa chỉ email không chính xác.';
+        } else if (msg.includes('ETIMEDOUT') || msg.includes('ENOTFOUND')) {
+          msg = `Không thể kết nối tới máy chủ SMTP Hostinger (${host}:${port}). Hãy kiểm tra lại thông tin máy chủ và cổng kết nối.`;
+        }
+        return res.status(200).json({
+          success: false,
+          valid: false,
+          message: msg,
+          rawError: err?.message,
+        });
+      }
+    }
+
+    // 3. Verify Resend API Key
     if (action === 'verify') {
       const apiKey = url.searchParams.get('apiKey') || process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY;
       if (!apiKey) {
@@ -123,8 +175,9 @@ export default async function handler(req: any, res: any) {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
     const {
       action,
-      provider = 'gmail', // 'gmail' | 'resend' | 'simulation'
+      provider = 'hostinger', // 'hostinger' | 'gmail' | 'resend' | 'simulation'
       gmailAuth, // { user, pass }
+      hostingerAuth, // { user, pass, host, port, secure }
       resendApiKey,
       to,
       toName,
@@ -168,6 +221,58 @@ export default async function handler(req: any, res: any) {
         let msg = err?.message || 'Lỗi xác thực Gmail';
         if (msg.includes('Invalid login') || msg.includes('BadCredentials') || msg.includes('Username and Password not accepted')) {
           msg = 'Mật khẩu ứng dụng (App Password) không chính xác hoặc chưa bật Xác minh 2 bước trên tài khoản Google.';
+        }
+        return res.status(200).json({
+          success: false,
+          valid: false,
+          message: msg,
+          rawError: err?.message,
+        });
+      }
+    }
+
+    // 2. Verify Hostinger action via POST
+    if (action === 'verify_hostinger') {
+      const user = hostingerAuth?.user;
+      const pass = hostingerAuth?.pass;
+      const host = hostingerAuth?.host || 'smtp.hostinger.com';
+      const port = Number(hostingerAuth?.port || 465);
+      const secure = port === 465;
+
+      if (!user || !pass) {
+        return res.status(200).json({
+          success: false,
+          valid: false,
+          message: 'Vui lòng cung cấp đầy đủ Email Hostinger và Mật khẩu.',
+        });
+      }
+
+      try {
+        const transporter = nodemailer.createTransport({
+          host: host.trim(),
+          port: port,
+          secure: secure,
+          auth: {
+            user: user.trim(),
+            pass: pass.trim(),
+          },
+          tls: {
+            rejectUnauthorized: false,
+          },
+        });
+
+        await transporter.verify();
+        return res.status(200).json({
+          success: true,
+          valid: true,
+          message: `Xác thực thành công! Máy chủ Hostinger [${host}:${port}] với hòm thư [${user}] đã sẵn sàng.`,
+        });
+      } catch (err: any) {
+        let msg = err?.message || 'Lỗi xác thực Hostinger';
+        if (msg.includes('Invalid login') || msg.includes('BadCredentials') || msg.includes('Username and Password not accepted') || msg.includes('535 5.7.8')) {
+          msg = 'Mật khẩu hòm thư Hostinger hoặc địa chỉ email không chính xác.';
+        } else if (msg.includes('ETIMEDOUT') || msg.includes('ENOTFOUND')) {
+          msg = `Không thể kết nối tới máy chủ SMTP Hostinger (${host}:${port}). Vui lòng kiểm tra lại cấu hình cổng (465 SSL hoặc 587 TLS).`;
         }
         return res.status(200).json({
           success: false,
@@ -285,7 +390,68 @@ export default async function handler(req: any, res: any) {
       }
     }
 
-    // DISPATCH METHOD 2: RESEND API
+    // DISPATCH METHOD 2: HOSTINGER SMTP (NodeMailer)
+    if (provider === 'hostinger' && hostingerAuth?.user && hostingerAuth?.pass) {
+      try {
+        const host = hostingerAuth.host || 'smtp.hostinger.com';
+        const port = Number(hostingerAuth.port || 465);
+        const secure = port === 465;
+
+        const transporter = nodemailer.createTransport({
+          host: host.trim(),
+          port: port,
+          secure: secure,
+          auth: {
+            user: hostingerAuth.user.trim(),
+            pass: hostingerAuth.pass.trim(),
+          },
+          tls: {
+            rejectUnauthorized: false,
+          },
+        });
+
+        const fromAddress = `"${senderName}" <${hostingerAuth.user.trim()}>`;
+
+        const mailOptions: Record<string, any> = {
+          from: fromAddress,
+          to: to.trim(),
+          subject: subject.trim(),
+          html: html,
+        };
+
+        if (replyToEmail) {
+          mailOptions.replyTo = replyToEmail.trim();
+        }
+
+        const info = await transporter.sendMail(mailOptions);
+
+        return res.status(200).json({
+          success: true,
+          provider: 'hostinger',
+          sentBy: hostingerAuth.user.trim(),
+          messageId: info.messageId,
+          message: `Đã gửi thành công qua Hostinger [${hostingerAuth.user.trim()}] tới ${to}`,
+          sentAt: new Date().toISOString(),
+        });
+      } catch (hostingerErr: any) {
+        let msg = hostingerErr?.message || 'Lỗi gửi qua Hostinger SMTP';
+        if (msg.includes('535 5.7.8') || msg.includes('Invalid login') || msg.includes('Username and Password not accepted')) {
+          msg = `Lỗi xác thực hòm thư Hostinger [${hostingerAuth.user}]. Hãy kiểm tra lại mật khẩu hòm thư.`;
+        } else if (msg.includes('quota') || msg.includes('limit exceeded')) {
+          msg = `Hòm thư Hostinger [${hostingerAuth.user}] đã đạt giới hạn gửi trong ngày.`;
+        }
+
+        return res.status(200).json({
+          success: false,
+          provider: 'hostinger',
+          sentBy: hostingerAuth.user,
+          message: msg,
+          rawError: hostingerErr?.message,
+        });
+      }
+    }
+
+    // DISPATCH METHOD 3: RESEND API
     const apiKey = resendApiKey || process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY;
     if (provider === 'resend' && apiKey) {
       try {

@@ -239,6 +239,22 @@ export interface GmailSenderAccount {
   lastError?: string;
 }
 
+export interface HostingerSenderAccount {
+  id: string;
+  email: string;
+  password: string;
+  smtpHost?: string; // Default: 'smtp.hostinger.com'
+  smtpPort?: number; // Default: 465 (SSL) hoặc 587 (TLS)
+  secure?: boolean; // Default: true
+  senderDisplayName?: string;
+  dailyQuota: number; // Default: 1000 emails/day
+  sentToday: number;
+  lastUsedAt?: string;
+  isActive: boolean;
+  status: 'ready' | 'quota_reached' | 'error' | 'disabled';
+  lastError?: string;
+}
+
 export interface EmailRecipient {
   id: string;
   name: string;
@@ -265,11 +281,13 @@ export interface EmailCampaignConfig {
   senderName: string;
   senderEmail: string;
   replyToEmail: string;
-  sendProvider?: 'gmail_pool' | 'resend' | 'simulation';
+  sendProvider?: 'hostinger' | 'gmail_pool' | 'resend' | 'simulation';
   resendApiKey?: string;
   resendDomain?: string;
   gmailPool?: GmailSenderAccount[];
   gmailQuotaResetDate?: string; // YYYY-MM-DD
+  hostingerPool?: HostingerSenderAccount[];
+  hostingerQuotaResetDate?: string; // YYYY-MM-DD
   smtpHost?: string;
   smtpPort?: number;
   smtpUser?: string;

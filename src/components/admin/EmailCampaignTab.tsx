@@ -41,7 +41,8 @@ import {
   FileDown,
 } from 'lucide-react';
 import { useCMS } from '../../context/CMSContext';
-import { EmailRecipient, EmailTemplate, GmailSenderAccount } from '../../types';
+import { EmailRecipient, EmailTemplate, GmailSenderAccount, HostingerSenderAccount } from '../../types';
+import { DEFAULT_HOSTINGER_POOL } from '../../data/symposiumData';
 
 interface EmailCampaignTabProps {
   showToast: (msg: string) => void;
@@ -61,16 +62,22 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
     removeGmailSenderAccount,
     incrementGmailSentToday,
     resetGmailDailyQuotas,
+    updateHostingerSenderAccount,
+    addHostingerSenderAccount,
+    removeHostingerSenderAccount,
+    incrementHostingerSentToday,
+    resetHostingerDailyQuotas,
   } = useCMS();
 
   const campaign = cmsData.emailCampaignConfig || {
     senderName: 'Ban Tổ Chức Hội Thảo Thẩm Mỹ Việt – Hàn 2026',
-    senderEmail: 'onboarding@resend.dev',
+    senderEmail: 'bantin@kbit-symposium.com',
     replyToEmail: 'support@kbitassociation.com',
-    sendProvider: 'gmail_pool',
+    sendProvider: 'hostinger',
     resendApiKey: '',
     resendDomain: '',
     gmailPool: [],
+    hostingerPool: DEFAULT_HOSTINGER_POOL,
     recipients: [],
     templates: [],
     selectedTemplateId: '',
@@ -80,9 +87,10 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
   const recipients = campaign.recipients || [];
   const selectedTemplate = templates.find((t) => t.id === campaign.selectedTemplateId) || templates[0];
   const gmailPool = campaign.gmailPool || [];
+  const hostingerPool = campaign.hostingerPool && campaign.hostingerPool.length > 0 ? campaign.hostingerPool : DEFAULT_HOSTINGER_POOL;
 
-  // Provider mode: 'gmail_pool' (Cụm 5 Gmail xoay vòng 2500 email/ngày) | 'resend' | 'simulation'
-  const sendProvider = campaign.sendProvider || 'gmail_pool';
+  // Provider mode: 'hostinger' | 'gmail_pool' | 'resend' | 'simulation'
+  const sendProvider = campaign.sendProvider || 'hostinger';
 
   // UI state
   const [searchTerm, setSearchTerm] = useState('');
@@ -115,6 +123,16 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
   const [testingGmailId, setTestingGmailId] = useState<string | null>(null);
   const [testingAllGmail, setTestingAllGmail] = useState(false);
   const [gmailTestResults, setGmailTestResults] = useState<Record<string, { valid: boolean; message: string }>>({});
+
+  // Hostinger testing states
+  const [testingHostingerId, setTestingHostingerId] = useState<string | null>(null);
+  const [testingAllHostinger, setTestingAllHostinger] = useState(false);
+  const [hostingerTestResults, setHostingerTestResults] = useState<Record<string, { valid: boolean; message: string }>>({});
+  const [showHostingerPasswordMap, setShowHostingerPasswordMap] = useState<Record<string, boolean>>({});
+  const [showHostingerHelpModal, setShowHostingerHelpModal] = useState(false);
+  const toggleShowHostingerPassword = (id: string) => {
+    setShowHostingerPasswordMap((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
 
   // Resend API Key verification test state
   const [isVerifyingResendKey, setIsVerifyingResendKey] = useState(false);
@@ -187,6 +205,13 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
   const activeGmailAccounts = gmailPool.filter((g) => g.isActive && g.email && g.appPassword);
   const readyGmailAccounts = activeGmailAccounts.filter((g) => (g.sentToday || 0) < (g.dailyQuota || 500));
   const poolUsagePercent = totalPoolCapacity > 0 ? Math.round((totalPoolSentToday / totalPoolCapacity) * 100) : 0;
+
+  // Hostinger Pool Statistics
+  const totalHostingerCapacity = hostingerPool.reduce((acc, h) => acc + (h.isActive ? (h.dailyQuota || 1000) : 0), 0);
+  const totalHostingerSentToday = hostingerPool.reduce((acc, h) => acc + (h.sentToday || 0), 0);
+  const activeHostingerAccounts = hostingerPool.filter((h) => h.isActive && h.email && h.password);
+  const readyHostingerAccounts = activeHostingerAccounts.filter((h) => (h.sentToday || 0) < (h.dailyQuota || 1000));
+  const hostingerUsagePercent = totalHostingerCapacity > 0 ? Math.round((totalHostingerSentToday / totalHostingerCapacity) * 100) : 0;
 
   // Filtered Recipients
   const filteredRecipients = recipients.filter((r) => {
@@ -478,16 +503,114 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
     showToast(`Đã kiểm tra xong: ${successCount}/${activeGmailAccounts.length} tài khoản Gmail hoạt động tốt!`);
   };
 
+  // Test Hostinger account
+  const testHostingerAccount = async (account: HostingerSenderAccount): Promise<boolean> => {
+    if (!account.email || !account.password) {
+      setHostingerTestResults((prev) => ({
+        ...prev,
+        [account.id]: { valid: false, message: 'Chưa điền email hoặc mật khẩu hòm thư Hostinger.' },
+      }));
+      return false;
+    }
+
+    setTestingHostingerId(account.id);
+    try {
+      const res = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'verify_hostinger',
+          hostingerAuth: {
+            user: account.email.trim(),
+            pass: account.password.trim(),
+            host: account.smtpHost?.trim() || 'smtp.hostinger.com',
+            port: account.smtpPort || 465,
+          },
+        }),
+      });
+
+      const data = await res.json();
+      setTestingHostingerId(null);
+      setHostingerTestResults((prev) => ({
+        ...prev,
+        [account.id]: { valid: data.valid, message: data.message },
+      }));
+
+      if (data.valid) {
+        updateHostingerSenderAccount(account.id, {
+          status: (account.sentToday || 0) >= (account.dailyQuota || 1000) ? 'quota_reached' : 'ready',
+          lastError: undefined,
+        });
+        showToast(`✅ [${account.email}] Kết nối Hostinger SMTP thành công!`);
+        return true;
+      } else {
+        updateHostingerSenderAccount(account.id, { status: 'error', lastError: data.message });
+        showToast(`❌ [${account.email}] Lỗi kết nối: ${data.message}`);
+        return false;
+      }
+    } catch (e: any) {
+      setTestingHostingerId(null);
+      setHostingerTestResults((prev) => ({
+        ...prev,
+        [account.id]: { valid: false, message: 'Lỗi mạng: ' + (e?.message || String(e)) },
+      }));
+      return false;
+    }
+  };
+
+  // Test all Hostinger accounts
+  const testAllHostingerAccounts = async () => {
+    setTestingAllHostinger(true);
+    addLog('🔍 Đang kiểm tra kết nối các hòm thư Hostinger SMTP...', 'info');
+
+    let successCount = 0;
+    for (const acc of hostingerPool) {
+      if (acc.isActive && acc.email && acc.password) {
+        const ok = await testHostingerAccount(acc);
+        if (ok) successCount++;
+      }
+    }
+
+    setTestingAllHostinger(false);
+    showToast(`Đã kiểm tra xong: ${successCount}/${activeHostingerAccounts.length} tài khoản Hostinger sẵn sàng!`);
+  };
+
+  // Add Hostinger account
+  const handleAddHostingerAccount = () => {
+    const newId = `hostinger-${Date.now()}`;
+    const newAccount: HostingerSenderAccount = {
+      id: newId,
+      email: '',
+      password: '',
+      smtpHost: 'smtp.hostinger.com',
+      smtpPort: 465,
+      secure: true,
+      senderDisplayName: campaign.senderName || 'Ban Tổ Chức Hội Thảo Thẩm Mỹ Việt – Hàn',
+      dailyQuota: 1000,
+      sentToday: 0,
+      isActive: true,
+      status: 'ready',
+    };
+    addHostingerSenderAccount(newAccount);
+    showToast('Đã thêm hòm thư Hostinger mới. Vui lòng nhập email và mật khẩu!');
+  };
+
   // Dispatch single email with specific account or method
   const sendEmailToRecipient = async (
     recip: EmailRecipient,
     template: EmailTemplate,
-    chosenGmail?: GmailSenderAccount
+    chosenGmail?: GmailSenderAccount,
+    chosenHostinger?: HostingerSenderAccount
   ): Promise<{ success: boolean; sentBy?: string; error?: string }> => {
     const finalSubject = replacePlaceholders(template.subject, recip);
     const finalContent = replacePlaceholders(template.content, recip);
 
-    const providerToUse = sendProvider === 'gmail_pool' && chosenGmail ? 'gmail' : sendProvider;
+    let providerToUse = sendProvider;
+    if (sendProvider === 'hostinger' && chosenHostinger) {
+      providerToUse = 'hostinger';
+    } else if (sendProvider === 'gmail_pool' && chosenGmail) {
+      providerToUse = 'gmail';
+    }
 
     try {
       const payload: Record<string, any> = {
@@ -496,11 +619,18 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
         toName: recip.name,
         subject: finalSubject,
         html: finalContent,
-        senderName: chosenGmail?.senderDisplayName || campaign.senderName || 'Ban Tổ Chức Hội Thảo Thẩm Mỹ Việt – Hàn 2026',
+        senderName: chosenHostinger?.senderDisplayName || chosenGmail?.senderDisplayName || campaign.senderName || 'Ban Tổ Chức Hội Thảo Thẩm Mỹ Việt – Hàn 2026',
         replyToEmail: campaign.replyToEmail || 'support@kbitassociation.com',
       };
 
-      if (providerToUse === 'gmail' && chosenGmail) {
+      if (providerToUse === 'hostinger' && chosenHostinger) {
+        payload.hostingerAuth = {
+          user: chosenHostinger.email.trim(),
+          pass: chosenHostinger.password.trim(),
+          host: chosenHostinger.smtpHost?.trim() || 'smtp.hostinger.com',
+          port: chosenHostinger.smtpPort || 465,
+        };
+      } else if (providerToUse === 'gmail' && chosenGmail) {
         payload.gmailAuth = {
           user: chosenGmail.email.trim(),
           pass: chosenGmail.appPassword.trim(),
@@ -518,15 +648,18 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
 
       const resData = await response.json();
       if (response.ok && resData.success) {
-        const sentBy = resData.sentBy || (providerToUse === 'gmail' ? chosenGmail?.email : 'Resend');
+        const sentBy = resData.sentBy || (providerToUse === 'hostinger' ? chosenHostinger?.email : (providerToUse === 'gmail' ? chosenGmail?.email : 'Resend'));
         updateEmailRecipientStatus(recip.id, 'sent', undefined, resData.resendId);
         
-        // If sent via Gmail account, increment sentToday for this account
-        if (providerToUse === 'gmail' && chosenGmail) {
+        if (providerToUse === 'hostinger' && chosenHostinger) {
+          incrementHostingerSentToday(chosenHostinger.id);
+        } else if (providerToUse === 'gmail' && chosenGmail) {
           incrementGmailSentToday(chosenGmail.id);
         }
 
-        const logMsg = providerToUse === 'gmail'
+        const logMsg = providerToUse === 'hostinger'
+          ? `[Hostinger: ${sentBy}] Đã gửi thành công tới ${recip.name} <${recip.email}>`
+          : providerToUse === 'gmail'
           ? `[Gmail: ${sentBy}] Đã gửi thành công tới ${recip.name} <${recip.email}>`
           : `[Resend] Đã gửi thành công tới ${recip.name} <${recip.email}> (ID: ${resData.resendId || 'OK'})`;
 
@@ -535,7 +668,7 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
       } else {
         const errMsg = resData.message || 'Lỗi gửi email máy chủ';
         updateEmailRecipientStatus(recip.id, 'failed', errMsg);
-        addLog(`[Lỗi] Không thể gửi tới ${recip.name} (${recip.email}): ${errMsg}`, 'error', chosenGmail?.email);
+        addLog(`[Lỗi] Không thể gửi tới ${recip.name} (${recip.email}): ${errMsg}`, 'error', (chosenHostinger?.email || chosenGmail?.email));
         return { success: false, error: errMsg };
       }
     } catch (err: any) {
@@ -572,7 +705,8 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
     };
 
     const testGmail = sendProvider === 'gmail_pool' ? (readyGmailAccounts[0] || gmailPool[0]) : undefined;
-    const result = await sendEmailToRecipient(testRecipient, selectedTemplate, testGmail);
+    const testHostinger = sendProvider === 'hostinger' ? (readyHostingerAccounts[0] || hostingerPool[0]) : undefined;
+    const result = await sendEmailToRecipient(testRecipient, selectedTemplate, testGmail, testHostinger);
     setIsSendingTest(false);
 
     if (result.success) {
@@ -582,7 +716,7 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
     }
   };
 
-  // Start Bulk Campaign with Round-Robin Rotation over 5 Gmail Accounts
+  // Start Bulk Campaign with Round-Robin Rotation
   const handleStartCampaign = async () => {
     if (!selectedTemplate) {
       alert('Vui lòng chọn mẫu thư mời cần gửi!');
@@ -595,7 +729,14 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
       return;
     }
 
-    if (sendProvider === 'gmail_pool') {
+    if (sendProvider === 'hostinger') {
+      if (readyHostingerAccounts.length === 0) {
+        alert(
+          'Không có tài khoản Hostinger nào sẵn sàng! Vui lòng kiểm tra:\n1. Đã điền email và mật khẩu hòm thư Hostinger\n2. Tài khoản đã bật hoạt động (Active)\n3. Chưa vượt quá hạn mức gửi hôm nay (1.000 email/ngày).'
+        );
+        return;
+      }
+    } else if (sendProvider === 'gmail_pool') {
       if (readyGmailAccounts.length === 0) {
         alert(
           'Không có tài khoản Gmail nào sẵn sàng trong cụm! Vui lòng kiểm tra:\n1. Đã điền email và App Password (Mật khẩu ứng dụng)\n2. Tài khoản đã bật hoạt động (Active)\n3. Tài khoản chưa vượt quá hạn ngạch 500 email hôm nay.'
@@ -604,10 +745,15 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
       }
     }
 
+    const providerTitle =
+      sendProvider === 'hostinger'
+        ? `HOSTINGER SMTP (${readyHostingerAccounts.length} hòm thư tên miền riêng, tối đa 1.000 email/hòm thư/ngày)`
+        : sendProvider === 'gmail_pool'
+        ? `CỤM XOAY VÒNG ${readyGmailAccounts.length} TÀI KHOẢN GMAIL (Tối đa 500 email/tài khoản/ngày)`
+        : 'Resend API';
+
     const confirmSend = window.confirm(
-      sendProvider === 'gmail_pool'
-        ? `Xác nhận bắt đầu gửi hàng loạt tới ${pendingList.length} người nhận?\n\nCơ chế: CỤM XOAY VÒNG ${readyGmailAccounts.length} TÀI KHOẢN GMAIL (Tối đa 500 email/tài khoản/ngày).\nKhoảng cách điều phối: ${throttleMs}ms/email.`
-        : `Xác nhận gửi hàng loạt qua Resend API tới ${pendingList.length} người nhận?`
+      `Xác nhận bắt đầu gửi hàng loạt tới ${pendingList.length} người nhận?\n\nCơ chế: ${providerTitle}.\nKhoảng cách điều phối an toàn: ${throttleMs}ms/email.`
     );
     if (!confirmSend) return;
 
@@ -616,7 +762,14 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
     setTotalToSend(pendingList.length);
     setCurrentIndex(0);
 
-    addLog(`🚀 Bắt đầu chiến dịch gửi hàng loạt cho ${pendingList.length} người nhận qua ${sendProvider === 'gmail_pool' ? `Cụm ${readyGmailAccounts.length} Gmail` : 'Resend'}...`, 'info');
+    const logProviderName =
+      sendProvider === 'hostinger'
+        ? `Hostinger SMTP (${readyHostingerAccounts.length} hòm thư)`
+        : sendProvider === 'gmail_pool'
+        ? `Cụm ${readyGmailAccounts.length} Gmail`
+        : 'Resend';
+
+    addLog(`🚀 Bắt đầu chiến dịch gửi hàng loạt cho ${pendingList.length} người nhận qua ${logProviderName}...`, 'info');
 
     let processed = 0;
     let roundRobinPointer = 0;
@@ -632,8 +785,21 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
       updateEmailRecipientStatus(recip.id, 'sending');
 
       let chosenGmail: GmailSenderAccount | undefined = undefined;
+      let chosenHostinger: HostingerSenderAccount | undefined = undefined;
 
-      if (sendProvider === 'gmail_pool') {
+      if (sendProvider === 'hostinger') {
+        const currentPool = cmsData.emailCampaignConfig?.hostingerPool || hostingerPool;
+        const availableAccounts = currentPool.filter((h) => h.isActive && h.email && h.password && (h.sentToday || 0) < (h.dailyQuota || 1000));
+
+        if (availableAccounts.length === 0) {
+          addLog('⚠️ Toàn bộ tài khoản Hostinger đã đạt hạn mức hôm nay! Tạm dừng chiến dịch.', 'error');
+          alert('Tất cả các tài khoản Hostinger đã đạt giới hạn gửi hôm nay. Hệ thống tạm dừng để bảo vệ tài khoản.');
+          break;
+        }
+
+        chosenHostinger = availableAccounts[roundRobinPointer % availableAccounts.length];
+        roundRobinPointer++;
+      } else if (sendProvider === 'gmail_pool') {
         const currentPool = cmsData.emailCampaignConfig?.gmailPool || gmailPool;
         const availableAccounts = currentPool.filter((g) => g.isActive && g.email && g.appPassword && (g.sentToday || 0) < (g.dailyQuota || 500));
 
@@ -643,12 +809,11 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
           break;
         }
 
-        // Round-Robin selection
         chosenGmail = availableAccounts[roundRobinPointer % availableAccounts.length];
         roundRobinPointer++;
       }
 
-      await sendEmailToRecipient(recip, selectedTemplate, chosenGmail);
+      await sendEmailToRecipient(recip, selectedTemplate, chosenGmail, chosenHostinger);
       processed++;
 
       // Throttle delay between emails
@@ -874,7 +1039,12 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
                 <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
                   Chiến Dịch Gửi Thư Mời Hàng Loạt
                 </h2>
-                {sendProvider === 'gmail_pool' ? (
+                {sendProvider === 'hostinger' ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-purple-500/30 text-purple-200 text-xs font-bold border border-purple-400/40">
+                    <span className="w-2 h-2 rounded-full bg-purple-300 animate-pulse" />
+                    <span>Hostinger SMTP (Tên Miền Riêng)</span>
+                  </span>
+                ) : sendProvider === 'gmail_pool' ? (
                   <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-500/25 text-emerald-300 text-xs font-bold border border-emerald-400/40">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                     <span>Cụm 5 Gmail Xoay Vòng: 2,500 email/ngày</span>
@@ -887,7 +1057,7 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
                 )}
               </div>
               <p className="text-xs sm:text-sm text-blue-100/90 font-medium">
-                Hỗ trợ tải lên file CSV 3 cột (Tên, Email, SĐT), xoay vòng 5 tài khoản Gmail hoặc Resend đám mây
+                Hỗ trợ tải file CSV 3 cột (Tên, Email, SĐT), gửi qua Email Hostinger tên miền riêng, Cụm 5 Gmail hoặc Resend
               </p>
             </div>
           </div>
@@ -895,14 +1065,26 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
 
         {/* Action buttons on header */}
         <div className="relative z-10 flex items-center gap-2 flex-wrap">
-          <button
-            type="button"
-            onClick={() => setShowGmailHelpModal(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold border border-white/20 transition-all cursor-pointer shadow-xs"
-          >
-            <HelpCircle className="w-4 h-4 text-amber-300" />
-            <span>Cách Lấy Mật Khẩu Gmail</span>
-          </button>
+          {sendProvider === 'hostinger' ? (
+            <button
+              type="button"
+              onClick={() => setShowHostingerHelpModal(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-purple-600/40 hover:bg-purple-600/60 text-white text-xs font-bold border border-purple-300/30 transition-all cursor-pointer shadow-xs"
+            >
+              <HelpCircle className="w-4 h-4 text-purple-200" />
+              <span>Hướng Dẫn Hostinger</span>
+            </button>
+          ) : sendProvider === 'gmail_pool' ? (
+            <button
+              type="button"
+              onClick={() => setShowGmailHelpModal(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold border border-white/20 transition-all cursor-pointer shadow-xs"
+            >
+              <HelpCircle className="w-4 h-4 text-amber-300" />
+              <span>Cách Lấy Mật Khẩu Gmail</span>
+            </button>
+          ) : null}
+
           <button
             type="button"
             onClick={() => setShowConfigModal(true)}
@@ -923,26 +1105,38 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
       </div>
 
       {/* Provider Selector Switcher Bar */}
-      <div className="p-2 bg-white rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <span className="text-xs font-bold text-slate-700 px-3">Cổng gửi email:</span>
-          <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 rounded-xl w-full sm:w-auto">
+      <div className="p-2 bg-white rounded-2xl border border-slate-200 shadow-xs flex flex-col xl:flex-row items-center justify-between gap-3">
+        <div className="flex items-center gap-2 w-full xl:w-auto flex-wrap sm:flex-nowrap">
+          <span className="text-xs font-bold text-slate-700 px-3 shrink-0">Cổng gửi email:</span>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 p-1 bg-slate-100 rounded-xl w-full xl:w-auto">
+            <button
+              type="button"
+              onClick={() => updateEmailCampaignConfig({ sendProvider: 'hostinger' })}
+              className={`flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                sendProvider === 'hostinger'
+                  ? 'bg-white text-purple-700 shadow-xs border border-purple-300'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Server className="w-3.5 h-3.5 text-purple-600" />
+              <span>Email Hostinger (Tên Miền Riêng)</span>
+            </button>
             <button
               type="button"
               onClick={() => updateEmailCampaignConfig({ sendProvider: 'gmail_pool' })}
-              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-black transition-all cursor-pointer ${
+              className={`flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-xs font-black transition-all cursor-pointer ${
                 sendProvider === 'gmail_pool'
                   ? 'bg-white text-emerald-700 shadow-xs border border-emerald-200'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <Zap className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Cụm 5 Gmail Xoay Vòng (2,500/ngày)</span>
+              <span>Cụm 5 Gmail (2,500/ngày)</span>
             </button>
             <button
               type="button"
               onClick={() => updateEmailCampaignConfig({ sendProvider: 'resend' })}
-              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-black transition-all cursor-pointer ${
+              className={`flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-xs font-black transition-all cursor-pointer ${
                 sendProvider === 'resend'
                   ? 'bg-white text-indigo-700 shadow-xs border border-indigo-200'
                   : 'text-slate-600 hover:text-slate-900'
@@ -954,14 +1148,287 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
           </div>
         </div>
 
+        {sendProvider === 'hostinger' && (
+          <div className="flex items-center gap-2 px-3 text-xs text-slate-600 flex-wrap">
+            <span>Hôm nay đã gửi: <strong className="text-purple-700 font-mono">{totalHostingerSentToday}</strong> / {totalHostingerCapacity}</span>
+            <span>•</span>
+            <span>Sẵn sàng: <strong className="text-emerald-700 font-bold">{readyHostingerAccounts.length}/{hostingerPool.length}</strong> hòm thư</span>
+          </div>
+        )}
+
         {sendProvider === 'gmail_pool' && (
-          <div className="flex items-center gap-2 px-3 text-xs text-slate-600">
+          <div className="flex items-center gap-2 px-3 text-xs text-slate-600 flex-wrap">
             <span>Hôm nay đã gửi: <strong className="text-emerald-700 font-mono">{totalPoolSentToday}</strong> / {totalPoolCapacity}</span>
             <span>•</span>
             <span>Sẵn sàng: <strong className="text-indigo-700">{readyGmailAccounts.length}/{gmailPool.length}</strong> tài khoản</span>
           </div>
         )}
       </div>
+
+      {/* SECTION: QUẢN LÝ TÀI KHOẢN EMAIL HOSTINGER (TÊN MIỀN RIÊNG) */}
+      {sendProvider === 'hostinger' && (
+        <div className="p-5 sm:p-6 rounded-3xl bg-white border border-purple-200 shadow-xs space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-md bg-purple-100 text-purple-800 text-[11px] font-black uppercase tracking-wider">
+                  Khuyên Dùng
+                </span>
+                <h3 className="text-[16px] font-black text-slate-900 flex items-center gap-2">
+                  <Server className="w-5 h-5 text-purple-600" />
+                  <span>Hòm Thư Doanh Nghiệp Hostinger (Tên Miền Riêng)</span>
+                </h3>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                Gửi qua máy chủ <strong>Hostinger SMTP</strong> (ví dụ: <code className="text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded font-mono">bantin@kbit-symposium.com</code>). Hạn mức cao (<strong>1.000 email/ngày</strong> mỗi hòm thư), tỷ lệ vào Hộp thư đến (Inbox) cao nhất nhờ có tên miền hội thảo.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={testAllHostingerAccounts}
+                disabled={testingAllHostinger}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-bold border border-purple-200 transition-colors cursor-pointer shadow-2xs"
+              >
+                {testingAllHostinger ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5" />}
+                <span>Kiểm Tra Tất Cả Hòm Thư</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleAddHostingerAccount}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold border border-emerald-200 transition-colors cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Thêm Hòm Thư Mới</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const conf = window.confirm('Đặt lại số lượng đã gửi hôm nay về 0 cho tất cả hòm thư Hostinger?');
+                  if (conf) {
+                    resetHostingerDailyQuotas();
+                    showToast('Đã đặt lại hạn mức gửi hôm nay của Hostinger về 0!');
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
+                title="Đặt lại bộ đếm gửi hôm nay về 0"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>Đặt Lại Hạn Ngạch</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Hostinger Account Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            {hostingerPool.map((account, index) => {
+              const isPasswordVisible = !!showHostingerPasswordMap[account.id];
+              const isTesting = testingHostingerId === account.id;
+              const testRes = hostingerTestResults[account.id];
+              const isQuotaReached = (account.sentToday || 0) >= (account.dailyQuota || 1000);
+              const percent = Math.min(100, Math.round(((account.sentToday || 0) / (account.dailyQuota || 1000)) * 100));
+
+              return (
+                <div
+                  key={account.id}
+                  className={`p-4 rounded-2xl border transition-all space-y-3 ${
+                    !account.isActive
+                      ? 'bg-slate-50 border-slate-200 opacity-60'
+                      : isQuotaReached
+                      ? 'bg-amber-50/70 border-amber-300 ring-1 ring-amber-200'
+                      : account.status === 'error'
+                      ? 'bg-rose-50/70 border-rose-300'
+                      : 'bg-white border-slate-200 hover:border-purple-300 hover:shadow-xs'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-lg bg-purple-700 text-white font-black text-xs flex items-center justify-center">
+                        #{index + 1}
+                      </span>
+                      <input
+                        type="text"
+                        value={account.senderDisplayName || `Hòm Thư Hostinger ${index + 1}`}
+                        onChange={(e) => updateHostingerSenderAccount(account.id, { senderDisplayName: e.target.value })}
+                        className="text-xs font-black text-slate-800 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-purple-600 outline-none px-1"
+                        placeholder="Tên hiển thị người gửi..."
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => updateHostingerSenderAccount(account.id, { isActive: !account.isActive })}
+                        className="text-xs font-bold flex items-center gap-1 cursor-pointer"
+                      >
+                        {account.isActive ? (
+                          <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10.5px]">Đang bật</span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-md bg-slate-200 text-slate-600 text-[10.5px]">Đã tắt</span>
+                        )}
+                      </button>
+                      {hostingerPool.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (window.confirm(`Xóa hòm thư Hostinger #${index + 1}?`)) {
+                              removeHostingerSenderAccount(account.id);
+                            }
+                          }}
+                          className="text-slate-400 hover:text-rose-600 p-1 cursor-pointer"
+                          title="Xóa hòm thư này"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 mb-0.5">
+                        Địa chỉ Email Hostinger (Tên miền riêng):
+                      </label>
+                      <input
+                        type="email"
+                        placeholder="info@tenmiencuaban.com"
+                        value={account.email || ''}
+                        onChange={(e) => updateHostingerSenderAccount(account.id, { email: e.target.value.trim() })}
+                        className="w-full px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-mono outline-none focus:border-purple-600 bg-white"
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-0.5">
+                        <label className="block text-[11px] font-bold text-slate-600">
+                          Mật khẩu hòm thư Hostinger:
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => toggleShowHostingerPassword(account.id)}
+                          className="text-[10.5px] text-purple-600 hover:text-purple-800 font-medium cursor-pointer"
+                        >
+                          {isPasswordVisible ? 'Ẩn' : 'Hiện'}
+                        </button>
+                      </div>
+                      <input
+                        type={isPasswordVisible ? 'text' : 'password'}
+                        placeholder="Mật khẩu bạn tạo trên Hostinger..."
+                        value={account.password || ''}
+                        onChange={(e) => updateHostingerSenderAccount(account.id, { password: e.target.value })}
+                        className="w-full px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-mono outline-none focus:border-purple-600 bg-white"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      <div>
+                        <label className="block text-[10.5px] font-semibold text-slate-500 mb-0.5">
+                          Máy chủ SMTP:
+                        </label>
+                        <input
+                          type="text"
+                          value={account.smtpHost || 'smtp.hostinger.com'}
+                          onChange={(e) => updateHostingerSenderAccount(account.id, { smtpHost: e.target.value.trim() })}
+                          className="w-full px-2.5 py-1 rounded-lg border border-slate-200 text-[11px] font-mono outline-none focus:border-purple-600 bg-slate-50"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10.5px] font-semibold text-slate-500 mb-0.5">
+                          Cổng (Port):
+                        </label>
+                        <select
+                          value={account.smtpPort || 465}
+                          onChange={(e) => updateHostingerSenderAccount(account.id, { smtpPort: Number(e.target.value), secure: Number(e.target.value) === 465 })}
+                          className="w-full px-2.5 py-1 rounded-lg border border-slate-200 text-[11px] font-mono outline-none focus:border-purple-600 bg-white"
+                        >
+                          <option value={465}>465 (SSL - Khuyên dùng)</option>
+                          <option value={587}>587 (TLS / STARTTLS)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Quota tracker */}
+                    <div className="pt-1">
+                      <div className="flex items-center justify-between text-[11px] text-slate-600 mb-1">
+                        <span>Hạn mức hôm nay:</span>
+                        <span className="font-mono font-bold">
+                          <strong className={isQuotaReached ? 'text-amber-700' : 'text-purple-700'}>
+                            {account.sentToday || 0}
+                          </strong>{' '}
+                          / {account.dailyQuota || 1000} thư
+                        </span>
+                      </div>
+                      <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full transition-all duration-300 ${
+                            isQuotaReached ? 'bg-amber-500' : percent > 80 ? 'bg-rose-500' : 'bg-purple-600'
+                          }`}
+                          style={{ width: `${percent}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Test Result Message */}
+                  {testRes && (
+                    <div
+                      className={`p-2 rounded-xl text-[11px] font-medium leading-relaxed ${
+                        testRes.valid
+                          ? 'bg-emerald-50 text-emerald-900 border border-emerald-200'
+                          : 'bg-rose-50 text-rose-900 border border-rose-200'
+                      }`}
+                    >
+                      {testRes.valid ? '🟢 ' : '🔴 '}
+                      {testRes.message}
+                    </div>
+                  )}
+
+                  {/* Card Actions */}
+                  <div className="pt-1 flex items-center justify-between gap-2 border-t border-slate-100">
+                    <span className="text-[10.5px] text-slate-400">
+                      {account.lastUsedAt ? `Gửi lúc: ${account.lastUsedAt}` : 'Chưa gửi hôm nay'}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() => testHostingerAccount(account)}
+                      disabled={isTesting}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 text-[11px] font-bold border border-purple-200 transition-colors cursor-pointer"
+                    >
+                      {isTesting ? <RefreshCw className="w-3 h-3 animate-spin" /> : <ShieldCheck className="w-3 h-3" />}
+                      <span>{isTesting ? 'Đang thử...' : 'Kiểm tra'}</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Quick Hostinger Configuration Reference */}
+          <div className="p-4 rounded-2xl bg-purple-50/70 border border-purple-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div className="flex items-start gap-2.5">
+              <Info className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-purple-950">Thông số SMTP Hostinger chuẩn: </span>
+                <span className="text-slate-700">
+                  Outgoing Server: <strong className="font-mono text-purple-800">smtp.hostinger.com</strong> • Port:{' '}
+                  <strong className="font-mono text-purple-800">465 (SSL)</strong> • Username: Email Hostinger của bạn • Password: Mật khẩu email đó.
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowHostingerHelpModal(true)}
+              className="text-xs font-bold text-purple-700 hover:text-purple-900 underline shrink-0 cursor-pointer"
+            >
+              Xem hướng dẫn chi tiết &raquo;
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* SECTION: QUẢN LÝ CỤM 5 TÀI KHOẢN GMAIL */}
       {sendProvider === 'gmail_pool' && (
@@ -1209,7 +1676,7 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
             <p className="text-xs text-slate-500 flex items-center gap-2 flex-wrap">
               <span>Đang chọn mẫu: <strong className="text-indigo-700">{selectedTemplate?.name || 'Chưa chọn'}</strong></span>
               <span>•</span>
-              <span>Cổng: <strong className="text-emerald-700 font-bold">{sendProvider === 'gmail_pool' ? `Cụm ${readyGmailAccounts.length} Gmail` : 'Resend'}</strong></span>
+              <span>Cổng: <strong className="text-purple-700 font-bold">{sendProvider === 'hostinger' ? `Hostinger (${readyHostingerAccounts.length} hòm thư)` : sendProvider === 'gmail_pool' ? `Cụm ${readyGmailAccounts.length} Gmail` : 'Resend'}</strong></span>
               <span>•</span>
               <span>Khoảng cách: <strong>{throttleMs}ms/email</strong></span>
             </p>
@@ -1486,7 +1953,13 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
                     <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5 flex-wrap">
                       <span>{campaign.senderName}</span>
                       <span className="text-[10px] font-normal text-slate-400">
-                        &lt;{sendProvider === 'gmail_pool' && readyGmailAccounts[0]?.email ? readyGmailAccounts[0].email : (campaign.senderEmail || 'onboarding@resend.dev')}&gt;
+                        &lt;{
+                          sendProvider === 'hostinger' && readyHostingerAccounts[0]?.email
+                            ? readyHostingerAccounts[0].email
+                            : sendProvider === 'gmail_pool' && readyGmailAccounts[0]?.email
+                            ? readyGmailAccounts[0].email
+                            : (campaign.senderEmail || 'bantin@kbit-symposium.com')
+                        }&gt;
                       </span>
                     </div>
                     <div className="text-[11px] text-slate-500">
@@ -2176,6 +2649,92 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
                 className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer shadow-xs"
               >
                 Bóc Tách &amp; Thêm Vào Danh Sách
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Hướng dẫn cấu hình Hostinger SMTP */}
+      {showHostingerHelpModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-2xl rounded-3xl p-6 sm:p-7 shadow-2xl border border-purple-200 space-y-5 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="text-lg font-black text-slate-900 flex items-center gap-2.5">
+                <Server className="w-5 h-5 text-purple-600" />
+                <span>Hướng Dẫn Cấu Hình Email Doanh Nghiệp Hostinger</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowHostingerHelpModal(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer text-lg"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs text-slate-700 leading-relaxed">
+              <div className="p-3.5 rounded-2xl bg-purple-50 border border-purple-200 flex items-start gap-2.5">
+                <Sparkles className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-purple-900 font-bold block mb-0.5">Ưu điểm tuyệt đối của Email Hostinger:</strong>
+                  Email gửi đi mang đuôi tên miền hội thảo (ví dụ: <span className="font-mono font-bold text-purple-800">contact@kbit2026.vn</span>), tạo sự chuyên nghiệp và uy tín cao nhất cho khách mời bác sĩ & đối tác. Hạn mức gửi cao (1.000 email/ngày/tài khoản).
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex gap-3 items-start">
+                  <span className="w-6 h-6 rounded-full bg-purple-600 text-white font-black text-xs flex items-center justify-center shrink-0">1</span>
+                  <div>
+                    <h5 className="font-black text-slate-900 mb-0.5">Đăng nhập tài khoản Hostinger</h5>
+                    <p className="text-slate-600">
+                      Truy cập bảng điều khiển <strong className="text-purple-700">Hostinger hPanel</strong> (<a href="https://hpanel.hostinger.com" target="_blank" rel="noreferrer" className="underline font-bold">hpanel.hostinger.com</a>) và chọn mục <strong>Emails</strong> trên thanh menu.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 items-start">
+                  <span className="w-6 h-6 rounded-full bg-purple-600 text-white font-black text-xs flex items-center justify-center shrink-0">2</span>
+                  <div>
+                    <h5 className="font-black text-slate-900 mb-0.5">Tạo hoặc kiểm tra hòm thư email tên miền</h5>
+                    <p className="text-slate-600">
+                      Chọn tên miền của bạn (ví dụ: <span className="font-mono">kbit2026.vn</span>) &gt; Nhấn nút <strong>Create email account</strong> (hoặc chọn tài khoản email đã tạo sẵn).
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 items-start">
+                  <span className="w-6 h-6 rounded-full bg-purple-600 text-white font-black text-xs flex items-center justify-center shrink-0">3</span>
+                  <div>
+                    <h5 className="font-black text-slate-900 mb-0.5">Lấy thông số SMTP chuẩn của Hostinger</h5>
+                    <div className="mt-1.5 p-3 rounded-xl bg-slate-50 border border-slate-200 font-mono text-[11.5px] space-y-1">
+                      <div>• <strong>SMTP Outgoing Host:</strong> <span className="text-purple-700 font-bold">smtp.hostinger.com</span></div>
+                      <div>• <strong>Port (Cổng bảo mật):</strong> <span className="text-purple-700 font-bold">465 (SSL)</span> hoặc 587 (TLS)</div>
+                      <div>• <strong>Username (Tài khoản):</strong> Địa chỉ email đầy đủ (VD: <span className="text-slate-900 font-bold">bantin@kbit-symposium.com</span>)</div>
+                      <div>• <strong>Password (Mật khẩu):</strong> Mật khẩu hòm thư bạn đã đặt ở Bước 2.</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 items-start">
+                  <span className="w-6 h-6 rounded-full bg-purple-600 text-white font-black text-xs flex items-center justify-center shrink-0">4</span>
+                  <div>
+                    <h5 className="font-black text-slate-900 mb-0.5">Nhập vào CMS &amp; Bấm "Kiểm Tra"</h5>
+                    <p className="text-slate-600">
+                      Điền email và mật khẩu vào thẻ tài khoản Hostinger bên trên &gt; Bấm nút <strong>Kiểm tra</strong>. Hệ thống sẽ kết nối trực tiếp đến máy chủ Hostinger để kiểm tra đăng nhập. Nếu hiện dấu tích xanh 🟢 là đã sẵn sàng gửi thư!
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => setShowHostingerHelpModal(false)}
+                className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold cursor-pointer shadow-xs"
+              >
+                Đã Hiểu &amp; Đóng
               </button>
             </div>
           </div>

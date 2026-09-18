@@ -1,4 +1,4 @@
-import { AgendaItem, Partner, ExpertSpeaker, EventDetails, HighlightItem, SEOConfig, EmailCampaignConfig, EmailRecipient, EmailTemplate, GmailSenderAccount } from '../types';
+import { AgendaItem, Partner, ExpertSpeaker, EventDetails, HighlightItem, SEOConfig, EmailCampaignConfig, EmailRecipient, EmailTemplate, GmailSenderAccount, HostingerSenderAccount } from '../types';
 import { PARTNER_LOGOS } from './partnerLogos';
 
 export const EVENT_DETAILS: EventDetails = {
@@ -948,17 +948,35 @@ export const DEFAULT_GMAIL_POOL: GmailSenderAccount[] = [
   },
 ];
 
+export const DEFAULT_HOSTINGER_POOL: HostingerSenderAccount[] = [
+  {
+    id: 'hostinger-1',
+    email: 'bantin@kbit-symposium.com',
+    password: '',
+    smtpHost: 'smtp.hostinger.com',
+    smtpPort: 465,
+    secure: true,
+    senderDisplayName: 'Ban Tổ Chức Hội Nghị Thẩm Mỹ Việt – Hàn',
+    dailyQuota: 1000,
+    sentToday: 0,
+    isActive: true,
+    status: 'ready',
+  },
+];
+
 export const DEFAULT_EMAIL_CAMPAIGN: EmailCampaignConfig = {
   senderName: 'Ban Tổ Chức Hội Nghị Thẩm Mỹ Việt – Hàn 2026',
-  senderEmail: 'onboarding@resend.dev',
+  senderEmail: 'bantin@kbit-symposium.com',
   replyToEmail: 'support@kbitassociation.com',
-  sendProvider: 'gmail_pool',
+  sendProvider: 'hostinger',
   resendApiKey: '',
   resendDomain: '',
   gmailPool: DEFAULT_GMAIL_POOL,
   gmailQuotaResetDate: new Date().toISOString().slice(0, 10),
-  smtpHost: 'smtp.gmail.com',
-  smtpPort: 587,
+  hostingerPool: DEFAULT_HOSTINGER_POOL,
+  hostingerQuotaResetDate: new Date().toISOString().slice(0, 10),
+  smtpHost: 'smtp.hostinger.com',
+  smtpPort: 465,
   smtpUser: '',
   smtpPassword: '',
   recipients: INITIAL_EMAIL_RECIPIENTS,
