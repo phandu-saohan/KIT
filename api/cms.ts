@@ -65,6 +65,40 @@ export default async function handler(req: any, res: any) {
         return res.status(400).json({ success: false, error: 'Thiếu dữ liệu CMS.' });
       }
 
+      // If specific sub-section update requested (e.g. { type: 'seo', data: seoConfig })
+      if (cmsPayload.type === 'seo' && cmsPayload.data) {
+        const seoJson = JSON.stringify(cmsPayload.data);
+        await sql`
+          INSERT INTO cms_data (key, data, updated_at)
+          VALUES ('main', jsonb_build_object('seoConfig', ${seoJson}::jsonb), CURRENT_TIMESTAMP)
+          ON CONFLICT (key) DO UPDATE SET
+            data = jsonb_set(COALESCE(cms_data.data, '{}'::jsonb), '{seoConfig}', ${seoJson}::jsonb, true),
+            updated_at = CURRENT_TIMESTAMP;
+        `;
+        return res.status(200).json({
+          success: true,
+          message: 'Lưu cấu hình SEO vào Vercel Postgres thành công.',
+          updatedAt: new Date().toISOString(),
+        });
+      }
+
+      // If specific sub-section update requested for eventDetails / banner
+      if ((cmsPayload.type === 'eventDetails' || cmsPayload.type === 'general') && cmsPayload.data) {
+        const eventJson = JSON.stringify(cmsPayload.data);
+        await sql`
+          INSERT INTO cms_data (key, data, updated_at)
+          VALUES ('main', jsonb_build_object('eventDetails', ${eventJson}::jsonb), CURRENT_TIMESTAMP)
+          ON CONFLICT (key) DO UPDATE SET
+            data = jsonb_set(COALESCE(cms_data.data, '{}'::jsonb), '{eventDetails}', ${eventJson}::jsonb, true),
+            updated_at = CURRENT_TIMESTAMP;
+        `;
+        return res.status(200).json({
+          success: true,
+          message: 'Lưu cài đặt sự kiện & banner vào Vercel Postgres thành công.',
+          updatedAt: new Date().toISOString(),
+        });
+      }
+
       const jsonStr = JSON.stringify(cmsPayload);
 
       await sql`

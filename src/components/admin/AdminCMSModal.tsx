@@ -92,6 +92,8 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
     isCloudDbConnected,
     refreshFromCloud,
     saveCmsToCloud,
+    saveSeoToCloud,
+    saveEventDetailsToCloud,
   } = useCMS();
 
   // Local feedback states
@@ -332,13 +334,16 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
   const handleSaveGeneralSettings = async () => {
     setIsSaving(true);
     try {
-      const currentEv = cmsData.eventDetails || DEFAULT_EVENT_DETAILS;
+      const currentEv = { ...(cmsData.eventDetails || DEFAULT_EVENT_DETAILS) };
       try {
         localStorage.setItem('kbit_event_details', JSON.stringify(currentEv));
       } catch (e) {
         console.warn('kbit_event_details save error:', e);
       }
-      const cloudSuccess = await handleManualSave(false);
+      const eventCloudSuccess = await saveEventDetailsToCloud(currentEv);
+      const manualSuccess = await handleManualSave(false);
+      const cloudSuccess = eventCloudSuccess || manualSuccess;
+
       setSaveSuccessTick(true);
       setTimeout(() => setSaveSuccessTick(false), 3500);
       if (cloudSuccess) {
@@ -356,13 +361,16 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
   const handleSaveSEO = async () => {
     setIsSaving(true);
     try {
-      const currentSeo = cmsData.seoConfig || DEFAULT_SEO_CONFIG;
+      const currentSeo = { ...(cmsData.seoConfig || DEFAULT_SEO_CONFIG) };
       try {
         localStorage.setItem('kbit_seo_config', JSON.stringify(currentSeo));
       } catch (e) {
         console.warn('kbit_seo_config save error:', e);
       }
-      const cloudSuccess = await handleManualSave(false);
+      const seoCloudSuccess = await saveSeoToCloud(currentSeo);
+      const manualSuccess = await handleManualSave(false);
+      const cloudSuccess = seoCloudSuccess || manualSuccess;
+
       setSaveSuccessTick(true);
       setTimeout(() => setSaveSuccessTick(false), 3500);
       if (cloudSuccess) {
@@ -438,12 +446,12 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
       try {
         setIsSaving(true);
         const file = e.target.files[0];
-        // Standard OpenGraph dimensions (1200x630) with optimized compression
+        // Standard OpenGraph dimensions (1200x630) with optimized JPEG compression (< 120KB)
         const url = await uploadImageFile(file, {
           maxWidth: 1200,
           maxHeight: 630,
-          quality: 0.80,
-          forceJpeg: false,
+          quality: 0.82,
+          forceJpeg: true,
           addToLibrary: true,
         });
         updateSEOConfig({ ogImageUrl: url });
@@ -451,6 +459,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
         try {
           localStorage.setItem('kbit_seo_config', JSON.stringify(updatedSeo));
         } catch {}
+        await saveSeoToCloud(updatedSeo);
         await handleManualSave(false);
         showToast('✅ Đã tải và lưu ảnh đại diện mạng xã hội (OG Image) thành công!');
       } catch (err: any) {
@@ -480,6 +489,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
         try {
           localStorage.setItem('kbit_seo_config', JSON.stringify(updatedSeo));
         } catch {}
+        await saveSeoToCloud(updatedSeo);
         await handleManualSave(false);
         showToast('✅ Đã tải và lưu biểu tượng Favicon website thành công!');
       } catch (err: any) {
@@ -3197,11 +3207,12 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                   <div className="flex items-center gap-2 shrink-0">
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={async () => {
                         updateSEOConfig(DEFAULT_SEO_CONFIG);
                         try {
                           localStorage.setItem('kbit_seo_config', JSON.stringify(DEFAULT_SEO_CONFIG));
                         } catch {}
+                        await saveSeoToCloud(DEFAULT_SEO_CONFIG);
                         showToast('Đã khôi phục toàn bộ cấu hình SEO về chuẩn mặc định!');
                       }}
                       className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-600 transition-colors cursor-pointer"
@@ -3648,12 +3659,13 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                           <button
                             key={opt.name}
                             type="button"
-                            onClick={() => {
+                            onClick={async () => {
                               updateSEOConfig({ faviconUrl: opt.url });
+                              const next = { ...(cmsData.seoConfig || DEFAULT_SEO_CONFIG), faviconUrl: opt.url };
                               try {
-                                const current = cmsData.seoConfig || DEFAULT_SEO_CONFIG;
-                                localStorage.setItem('kbit_seo_config', JSON.stringify({ ...current, faviconUrl: opt.url }));
+                                localStorage.setItem('kbit_seo_config', JSON.stringify(next));
                               } catch {}
+                              await saveSeoToCloud(next);
                               showToast(`Đã chọn Favicon: ${opt.name}`);
                             }}
                             className={`px-2.5 py-1 rounded-lg border text-[10.5px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
@@ -3690,12 +3702,13 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                           <button
                             key={i}
                             type="button"
-                            onClick={() => {
+                            onClick={async () => {
                               updateSEOConfig({ faviconUrl: imgUrl });
+                              const next = { ...(cmsData.seoConfig || DEFAULT_SEO_CONFIG), faviconUrl: imgUrl };
                               try {
-                                const current = cmsData.seoConfig || DEFAULT_SEO_CONFIG;
-                                localStorage.setItem('kbit_seo_config', JSON.stringify({ ...current, faviconUrl: imgUrl }));
+                                localStorage.setItem('kbit_seo_config', JSON.stringify(next));
                               } catch {}
+                              await saveSeoToCloud(next);
                               showToast('Đã chọn Favicon từ thư viện ảnh!');
                             }}
                             className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all cursor-pointer p-1 bg-white group ${
@@ -3811,12 +3824,13 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                           <button
                             key={i}
                             type="button"
-                            onClick={() => {
+                            onClick={async () => {
                               updateSEOConfig({ ogImageUrl: imgUrl });
+                              const next = { ...(cmsData.seoConfig || DEFAULT_SEO_CONFIG), ogImageUrl: imgUrl };
                               try {
-                                const current = cmsData.seoConfig || DEFAULT_SEO_CONFIG;
-                                localStorage.setItem('kbit_seo_config', JSON.stringify({ ...current, ogImageUrl: imgUrl }));
+                                localStorage.setItem('kbit_seo_config', JSON.stringify(next));
                               } catch {}
+                              await saveSeoToCloud(next);
                               showToast('Đã chọn ảnh đại diện mạng xã hội từ thư viện!');
                             }}
                             className={`relative aspect-[1.91/1] rounded-xl overflow-hidden border-2 transition-all cursor-pointer group ${
@@ -4025,11 +4039,12 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                   <div className="flex items-center gap-3 shrink-0">
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={async () => {
                         updateSEOConfig(DEFAULT_SEO_CONFIG);
                         try {
                           localStorage.setItem('kbit_seo_config', JSON.stringify(DEFAULT_SEO_CONFIG));
                         } catch {}
+                        await saveSeoToCloud(DEFAULT_SEO_CONFIG);
                         showToast('Đã khôi phục toàn bộ cấu hình SEO về chuẩn mặc định!');
                       }}
                       className="px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition-colors cursor-pointer"

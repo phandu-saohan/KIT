@@ -209,6 +209,8 @@ interface CMSContextType {
   isCloudDbConnected: boolean;
   refreshFromCloud: () => Promise<void>;
   saveCmsToCloud: (dataToSave?: CMSData) => Promise<boolean>;
+  saveSeoToCloud: (seoConfig?: Partial<SEOConfig>) => Promise<boolean>;
+  saveEventDetailsToCloud: (eventDetails?: Partial<EventDetails>) => Promise<boolean>;
 }
 
 export const isPathAdmin = (): boolean => {
@@ -396,19 +398,27 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 if (evRaw) localEventDetails = JSON.parse(evRaw);
               } catch {}
 
+              // Cloud is the single source of truth across all devices/sessions
+              const mergedSeo = {
+                ...DEFAULT_SEO_CONFIG,
+                ...(localSeoConfig || {}),
+                ...(parsedData.seoConfig || {}),
+              };
+              const mergedEvent = {
+                ...DEFAULT_EVENT_DETAILS,
+                ...(localEventDetails || {}),
+                ...(parsedData.eventDetails || {}),
+              };
+
+              // Keep dedicated local keys in sync with the cloud so refreshes always show latest data
+              try {
+                localStorage.setItem('kbit_seo_config', JSON.stringify(mergedSeo));
+              } catch {}
+              try {
+                localStorage.setItem('kbit_event_details', JSON.stringify(mergedEvent));
+              } catch {}
+
               setCmsData((prev) => {
-                const mergedSeo = {
-                  ...DEFAULT_SEO_CONFIG,
-                  ...(parsedData.seoConfig || {}),
-                  ...(prev.seoConfig || {}),
-                  ...(localSeoConfig || {}),
-                };
-                const mergedEvent = {
-                  ...DEFAULT_EVENT_DETAILS,
-                  ...(parsedData.eventDetails || {}),
-                  ...(prev.eventDetails || {}),
-                  ...(localEventDetails || {}),
-                };
                 return {
                   ...prev,
                   ...parsedData,
@@ -434,6 +444,64 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  // Dedicated lightweight cloud sync for SEO (resilient against payload size limits)
+  const saveSeoToCloud = async (customSeo?: Partial<SEOConfig>): Promise<boolean> => {
+    try {
+      let targetSeo = customSeo || cmsDataRef.current.seoConfig;
+      try {
+        const savedSeoRaw = localStorage.getItem('kbit_seo_config');
+        if (savedSeoRaw) {
+          targetSeo = { ...DEFAULT_SEO_CONFIG, ...(targetSeo || {}), ...JSON.parse(savedSeoRaw) };
+        }
+      } catch {}
+
+      const res = await fetch('/api/cms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'seo', data: targetSeo }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success) {
+          setIsCloudDbConnected(true);
+          return true;
+        }
+      }
+    } catch (err) {
+      console.warn('Could not sync SEO to Vercel Postgres:', err);
+    }
+    return false;
+  };
+
+  // Dedicated lightweight cloud sync for Event Details & Banner
+  const saveEventDetailsToCloud = async (customDetails?: Partial<EventDetails>): Promise<boolean> => {
+    try {
+      let targetEv = customDetails || cmsDataRef.current.eventDetails;
+      try {
+        const savedEvRaw = localStorage.getItem('kbit_event_details');
+        if (savedEvRaw) {
+          targetEv = { ...DEFAULT_EVENT_DETAILS, ...(targetEv || {}), ...JSON.parse(savedEvRaw) };
+        }
+      } catch {}
+
+      const res = await fetch('/api/cms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'eventDetails', data: targetEv }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success) {
+          setIsCloudDbConnected(true);
+          return true;
+        }
+      }
+    } catch (err) {
+      console.warn('Could not sync EventDetails to Vercel Postgres:', err);
+    }
+    return false;
+  };
+
   const saveCmsToCloud = async (dataToSave?: CMSData): Promise<boolean> => {
     try {
       const source = dataToSave || cmsDataRef.current;
@@ -453,11 +521,12 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       } catch {}
 
+      // Keep payload lightweight (under 2MB) to stay safely within Vercel 4.5MB Serverless Function limits
       const payload = {
         ...source,
         seoConfig: currentSeo,
         eventDetails: currentEvent,
-        mediaLibrary: (source.mediaLibrary || []).slice(0, 20),
+        mediaLibrary: (source.mediaLibrary || []).slice(0, 6),
       };
 
       const res = await fetch('/api/cms', {
@@ -1327,6 +1396,8 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isCloudDbConnected,
         refreshFromCloud,
         saveCmsToCloud,
+        saveSeoToCloud,
+        saveEventDetailsToCloud,
       }}
     >
       {children}
