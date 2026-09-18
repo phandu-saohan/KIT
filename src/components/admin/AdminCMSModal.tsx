@@ -49,6 +49,7 @@ import { useCMS, STORAGE_KEY } from '../../context/CMSContext';
 import { ExpertSpeaker, AgendaItem, Partner, HighlightItem, AttendeeBadge, SEOConfig } from '../../types';
 import { PARTNER_LOGOS } from '../../data/partnerLogos';
 import { DEFAULT_SEO_CONFIG } from '../../data/symposiumData';
+import { EmailCampaignTab } from './EmailCampaignTab';
 
 interface AdminCMSModalProps {
   onLogout?: () => void;
@@ -871,6 +872,23 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
               </div>
               <span className={`px-2 py-0.5 rounded-full text-[10.5px] font-extrabold ${activeAdminTab === 'registrations' ? 'bg-white/25 text-white' : 'bg-emerald-100 text-emerald-800'}`}>
                 {cmsData.registrations.length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveAdminTab('email')}
+              className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left text-[13px] font-bold transition-all cursor-pointer shrink-0 ${
+                activeAdminTab === 'email'
+                  ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Mail className="w-4 h-4 shrink-0" />
+                <span>Gửi Email Thư Mời</span>
+              </div>
+              <span className={`px-2 py-0.5 rounded-full text-[10.5px] font-extrabold ${activeAdminTab === 'email' ? 'bg-white/25 text-white' : 'bg-indigo-100 text-indigo-800'}`}>
+                {cmsData.emailCampaignConfig?.recipients?.length || 0}
               </span>
             </button>
 
@@ -6100,6 +6118,11 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                 </div>
               </div>
             )}
+
+            {/* =========================================================================
+                TAB: GỬI EMAIL THƯ MỜI HÀNG LOẠT (BULK INVITATION)
+               ========================================================================= */}
+            {activeAdminTab === 'email' && <EmailCampaignTab showToast={showToast} />}
           </main>
         </div>
 

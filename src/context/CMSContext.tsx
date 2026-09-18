@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { CMSData, EventDetails, ExpertSpeaker, AgendaItem, HighlightItem, Partner, AttendeeBadge, FooterConfig, AdminAccountConfig, SEOConfig } from '../types';
+import { CMSData, EventDetails, ExpertSpeaker, AgendaItem, HighlightItem, Partner, AttendeeBadge, FooterConfig, AdminAccountConfig, SEOConfig, EmailCampaignConfig, EmailRecipient, EmailTemplate } from '../types';
 import {
   EVENT_DETAILS as DEFAULT_EVENT_DETAILS,
   LEADING_EXPERTS as DEFAULT_EXPERTS,
@@ -7,6 +7,7 @@ import {
   KEY_HIGHLIGHTS as DEFAULT_HIGHLIGHTS,
   PARTNERS as DEFAULT_PARTNERS,
   DEFAULT_SEO_CONFIG,
+  DEFAULT_EMAIL_CAMPAIGN,
 } from '../data/symposiumData';
 
 export const STORAGE_KEY = 'viet_han_aesthetic_cms_data_v9';
@@ -144,6 +145,7 @@ const INITIAL_CMS_DATA: CMSData = {
   footerConfig: DEFAULT_FOOTER_CONFIG,
   adminAccount: DEFAULT_ADMIN_ACCOUNT,
   seoConfig: DEFAULT_SEO_CONFIG,
+  emailCampaignConfig: DEFAULT_EMAIL_CAMPAIGN,
 };
 
 interface CMSContextType {
@@ -173,6 +175,12 @@ interface CMSContextType {
   updateFooterConfig: (updated: Partial<FooterConfig>) => void;
   updateAdminAccount: (updated: Partial<AdminAccountConfig>) => void;
   updateSEOConfig: (updated: Partial<SEOConfig>) => void;
+  updateEmailCampaignConfig: (updated: Partial<EmailCampaignConfig>) => void;
+  addEmailRecipient: (recipient: EmailRecipient) => void;
+  removeEmailRecipient: (id: string) => void;
+  updateEmailRecipientStatus: (id: string, status: EmailRecipient['status'], error?: string) => void;
+  bulkAddEmailRecipients: (recipients: EmailRecipient[]) => void;
+  resetEmailRecipientsStatus: () => void;
   resetToDefaults: () => void;
   clearAllCacheAndReload: () => void;
   exportDataToJson: () => void;
@@ -206,7 +214,7 @@ export const getInitialAdminTab = (): string => {
   const tabParam = search.get('tab');
   if (tabParam) return tabParam;
   const hash = window.location.hash.replace(/^#\/?admin\/?/, '').replace(/^#/, '');
-  const validTabs = ['general', 'seo', 'speakers', 'agenda', 'media', 'partners', 'highlights', 'registrations', 'footer'];
+  const validTabs = ['general', 'seo', 'speakers', 'agenda', 'media', 'partners', 'highlights', 'registrations', 'email', 'footer'];
   if (validTabs.includes(hash)) {
     return hash;
   }
@@ -252,6 +260,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           footerConfig: { ...DEFAULT_FOOTER_CONFIG, ...(parsed.footerConfig || {}) },
           adminAccount: { ...DEFAULT_ADMIN_ACCOUNT, ...(parsed.adminAccount || {}) },
           seoConfig: { ...DEFAULT_SEO_CONFIG, ...(parsed.seoConfig || {}) },
+          emailCampaignConfig: { ...DEFAULT_EMAIL_CAMPAIGN, ...(parsed.emailCampaignConfig || {}) },
         };
       }
     } catch (e) {
@@ -655,6 +664,92 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   };
 
+  const updateEmailCampaignConfig = (updated: Partial<EmailCampaignConfig>) => {
+    setCmsData((prev) => ({
+      ...prev,
+      emailCampaignConfig: {
+        ...(prev.emailCampaignConfig || DEFAULT_EMAIL_CAMPAIGN),
+        ...updated,
+      },
+    }));
+  };
+
+  const addEmailRecipient = (recipient: EmailRecipient) => {
+    setCmsData((prev) => {
+      const cfg = prev.emailCampaignConfig || DEFAULT_EMAIL_CAMPAIGN;
+      return {
+        ...prev,
+        emailCampaignConfig: {
+          ...cfg,
+          recipients: [recipient, ...cfg.recipients],
+        },
+      };
+    });
+  };
+
+  const removeEmailRecipient = (id: string) => {
+    setCmsData((prev) => {
+      const cfg = prev.emailCampaignConfig || DEFAULT_EMAIL_CAMPAIGN;
+      return {
+        ...prev,
+        emailCampaignConfig: {
+          ...cfg,
+          recipients: cfg.recipients.filter((r) => r.id !== id),
+        },
+      };
+    });
+  };
+
+  const updateEmailRecipientStatus = (id: string, status: EmailRecipient['status'], error?: string) => {
+    setCmsData((prev) => {
+      const cfg = prev.emailCampaignConfig || DEFAULT_EMAIL_CAMPAIGN;
+      return {
+        ...prev,
+        emailCampaignConfig: {
+          ...cfg,
+          recipients: cfg.recipients.map((r) =>
+            r.id === id
+              ? {
+                  ...r,
+                  status,
+                  sentAt: status === 'sent' ? new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : r.sentAt,
+                  errorMessage: error,
+                }
+              : r
+          ),
+        },
+      };
+    });
+  };
+
+  const bulkAddEmailRecipients = (recipients: EmailRecipient[]) => {
+    setCmsData((prev) => {
+      const cfg = prev.emailCampaignConfig || DEFAULT_EMAIL_CAMPAIGN;
+      const existingEmails = new Set(cfg.recipients.map((r) => r.email.toLowerCase()));
+      const newRecipients = recipients.filter((r) => !existingEmails.has(r.email.toLowerCase()));
+      return {
+        ...prev,
+        emailCampaignConfig: {
+          ...cfg,
+          recipients: [...newRecipients, ...cfg.recipients],
+        },
+      };
+    });
+  };
+
+  const resetEmailRecipientsStatus = () => {
+    setCmsData((prev) => {
+      const cfg = prev.emailCampaignConfig || DEFAULT_EMAIL_CAMPAIGN;
+      return {
+        ...prev,
+        emailCampaignConfig: {
+          ...cfg,
+          recipients: cfg.recipients.map((r) => ({ ...r, status: 'pending', errorMessage: undefined })),
+        },
+      };
+    });
+  };
+
   const addImageToLibrary = (imageUrl: string) => {
     if (!imageUrl) return;
     setCmsData((prev) => {
@@ -808,6 +903,12 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateFooterConfig,
         updateAdminAccount,
         updateSEOConfig,
+        updateEmailCampaignConfig,
+        addEmailRecipient,
+        removeEmailRecipient,
+        updateEmailRecipientStatus,
+        bulkAddEmailRecipients,
+        resetEmailRecipientsStatus,
         resetToDefaults,
         clearAllCacheAndReload,
         exportDataToJson,

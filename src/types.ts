@@ -226,6 +226,39 @@ export interface SEOConfig {
   customHeadTags?: string;
 }
 
+export interface EmailRecipient {
+  id: string;
+  name: string;
+  email: string;
+  organization?: string;
+  recipientType?: 'doctor' | 'business' | 'vip' | 'general';
+  status: 'pending' | 'sending' | 'sent' | 'failed';
+  sentAt?: string;
+  errorMessage?: string;
+}
+
+export interface EmailTemplate {
+  id: string;
+  name: string;
+  subject: string;
+  content: string;
+  targetAudience: 'doctor' | 'business' | 'all';
+}
+
+export interface EmailCampaignConfig {
+  senderName: string;
+  senderEmail: string;
+  replyToEmail: string;
+  smtpHost?: string;
+  smtpPort?: number;
+  smtpUser?: string;
+  smtpPassword?: string;
+  resendApiKey?: string;
+  recipients: EmailRecipient[];
+  templates: EmailTemplate[];
+  selectedTemplateId: string;
+}
+
 export interface CMSData {
   eventDetails: EventDetails;
   experts: ExpertSpeaker[];
@@ -237,5 +270,7 @@ export interface CMSData {
   footerConfig?: FooterConfig;
   adminAccount?: AdminAccountConfig;
   seoConfig?: SEOConfig;
+  emailCampaignConfig?: EmailCampaignConfig;
 }
+
 

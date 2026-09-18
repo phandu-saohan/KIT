@@ -1,4 +1,4 @@
-import { AgendaItem, Partner, ExpertSpeaker, EventDetails, HighlightItem, SEOConfig } from '../types';
+import { AgendaItem, Partner, ExpertSpeaker, EventDetails, HighlightItem, SEOConfig, EmailCampaignConfig, EmailRecipient, EmailTemplate } from '../types';
 import { PARTNER_LOGOS } from './partnerLogos';
 
 export const EVENT_DETAILS: EventDetails = {
@@ -812,4 +812,101 @@ export const DEFAULT_SEO_CONFIG: SEOConfig = {
   structuredDataEnabled: true,
   customHeadTags: '',
 };
+
+export const INITIAL_EMAIL_RECIPIENTS: EmailRecipient[] = [
+  { id: 'rec-1', name: 'BS. CKII. Nguyễn Hoàng Nam', email: 'dr.nam.nguyen@gmail.com', organization: 'BV Da Liễu Trung Ương', recipientType: 'doctor', status: 'pending' },
+  { id: 'rec-2', name: 'ThS.BS. Lê Thị Mai Anh', email: 'maianh.le@bv108.vn', organization: 'Khoa Phẫu Thuật Tạo Hình - BV 108', recipientType: 'doctor', status: 'pending' },
+  { id: 'rec-3', name: 'TS.BS. Trần Quốc Bảo', email: 'dr.baotran@gmail.com', organization: 'Phòng khám Thẩm mỹ Quốc tế Saigon', recipientType: 'doctor', status: 'pending' },
+  { id: 'rec-4', name: 'BS.CKI. Đỗ Thị Thu Trang', email: 'thutrang.do@vinmec.com', organization: 'Bệnh viện ĐKQT Vinmec Times City', recipientType: 'doctor', status: 'pending' },
+  { id: 'rec-5', name: 'Ông Phạm Minh Đức', email: 'duc.pham@kbeautycorp.vn', organization: 'Công ty Thiết bị Y tế K-Beauty Tech', recipientType: 'business', status: 'pending' },
+  { id: 'rec-6', name: 'Bà Hoàng Kim Oanh', email: 'kimoanh@aestheticgroup.vn', organization: 'Viện Thẩm Mỹ Quốc Tế Royal', recipientType: 'business', status: 'pending' },
+  { id: 'rec-7', name: 'TS.BS. Vũ Đình Hùng', email: 'hung.vd@hmu.edu.vn', organization: 'Đại Học Y Hà Nội', recipientType: 'vip', status: 'pending' },
+  { id: 'rec-8', name: 'BS. Nguyễn Phương Thảo', email: 'phuongthao.clinic@gmail.com', organization: 'Thảo Beauty Clinic Đà Nẵng', recipientType: 'doctor', status: 'pending' },
+];
+
+export const DEFAULT_EMAIL_TEMPLATES: EmailTemplate[] = [
+  {
+    id: 'tpl-doctor',
+    name: 'Thư Mời Danh Dự (Bác Sĩ & Chuyên Gia Y Khoa)',
+    subject: '[Thư Mời Danh Dự] Tham dự Hội nghị Khoa học Thẩm mỹ Việt – Hàn 2026 tại BV TWQĐ 108',
+    targetAudience: 'doctor',
+    content: `<p>Kính gửi Quý Bác sĩ / Quý Đồng nghiệp <strong>{{name}}</strong> ({{organization}}),</p>
+
+<p>Ban Tổ chức trân trọng kính mời Quý Bác sĩ tham dự <strong>{{event_name}}</strong> – Đại hội chuyên môn thẩm mỹ y khoa song phương lớn nhất trong năm 2026 do Bệnh viện Trung ương Quân đội 108 phối hợp cùng Hiệp hội KBIT (Hàn Quốc), Hội Phẫu thuật Thẩm mỹ Tái tạo Hàn Quốc (KSAPS) và Hội Phẫu thuật Thẩm mỹ Việt Nam (VSAPS) đồng tổ chức.</p>
+
+<div style="background-color: #f0f4f8; padding: 16px; border-left: 4px solid #174ea6; margin: 18px 0; border-radius: 8px;">
+  <p style="margin: 0 0 8px 0; color: #002045; font-size: 14px;"><strong>📅 Thời gian:</strong> {{event_date}} (08:00 – 17:30)</p>
+  <p style="margin: 0 0 8px 0; color: #002045; font-size: 14px;"><strong>📍 Địa điểm:</strong> {{event_venue}}</p>
+  <p style="margin: 0; color: #174ea6; font-size: 13.5px;"><strong>⭐ Đặc quyền chuyên môn:</strong> 4 Hội trường chuyên đề song song, 15+ Giáo sư đầu ngành trực tiếp từ Hàn Quốc, xem mổ thị phạm trực tiếp (Live Surgery) từ phòng mổ BV 108 và cấp Chứng nhận đào tạo liên tục (CME Y khoa).</p>
+</div>
+
+<p>Để Ban Thư ký hoàn tất công tác hậu cần và chuẩn bị chu đáo thẻ đại biểu danh dự, kính mong Quý Bác sĩ dành 1 phút bấm vào nút đăng ký xác nhận dưới đây:</p>
+
+<p style="text-align: center; margin: 28px 0;">
+  <a href="{{invitation_link}}" style="background: linear-gradient(135deg, #002045, #174ea6); color: #ffffff; padding: 13px 32px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 14px; display: inline-block; box-shadow: 0 4px 12px rgba(23, 78, 166, 0.25);">👉 XÁC NHẬN ĐĂNG KÝ THAM DỰ</a>
+</p>
+
+<p>Mọi thắc mắc cần hỗ trợ, xin vui lòng liên hệ Ban Thư ký: <strong>090 123 4567</strong> hoặc email <strong>support@kbitassociation.com</strong>.</p>
+
+<p>Trân trọng cảm ơn và rất hân hạnh được đón tiếp Quý Bác sĩ tại hội nghị!</p>
+<p><em>Ban Tổ chức Hội nghị Khoa học Thẩm mỹ Việt – Hàn 2026</em></p>`,
+  },
+  {
+    id: 'tpl-business',
+    name: 'Thư Mời Giao Thương B2B (Doanh Nghiệp & Nhà Phân Phối)',
+    subject: '[Thư Mời Giao Thương B2B] Cơ hội kết nối 22+ Doanh nghiệp Thẩm mỹ Hàn Quốc 2026',
+    targetAudience: 'business',
+    content: `<p>Kính gửi <strong>{{name}}</strong> - Đại diện <strong>{{organization}}</strong>,</p>
+
+<p>Ban Tổ chức trân trọng kính mời Quý Doanh nghiệp tham gia phiên triển lãm công nghệ và kết nối giao thương B2B trong khuôn khổ <strong>{{event_name}}</strong>.</p>
+
+<div style="background-color: #fdf2f8; padding: 16px; border-left: 4px solid #c83271; margin: 18px 0; border-radius: 8px;">
+  <p style="margin: 0 0 8px 0; color: #831843; font-size: 14px;"><strong>📅 Thời gian:</strong> {{event_date}}</p>
+  <p style="margin: 0 0 8px 0; color: #831843; font-size: 14px;"><strong>📍 Địa điểm:</strong> {{event_venue}}</p>
+  <p style="margin: 0; color: #be185d; font-size: 13.5px;"><strong>🤝 Cơ hội hợp tác độc quyền:</strong> Gặp gỡ và làm việc 1:1 trực tiếp với đại diện 22+ tập đoàn thiết bị thẩm mỹ, laser y tế, chỉ nâng cơ và dược mỹ phẩm sinh học hàng đầu Hàn Quốc (Hironic, Wontech, Classys, Hans Biomed...), tìm kiếm đối tác phân phối độc quyền tại Việt Nam.</p>
+</div>
+
+<p>Số lượng thẻ đại biểu doanh nghiệp tham gia khu vực Networking có giới hạn để đảm bảo chất lượng kết nối. Quý đối tác vui lòng xác nhận đăng ký sớm:</p>
+
+<p style="text-align: center; margin: 28px 0;">
+  <a href="{{invitation_link}}" style="background: linear-gradient(135deg, #c83271, #be185d); color: #ffffff; padding: 13px 32px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 14px; display: inline-block; box-shadow: 0 4px 12px rgba(200, 50, 113, 0.25);">👉 ĐĂNG KÝ GIAO THƯƠNG B2B</a>
+</p>
+
+<p>Trân trọng kính mời và chúc Quý Doanh nghiệp gặt hái nhiều hợp tác thành công!</p>
+<p><em>Ban Xúc Tiến Thương Mại KBIT</em></p>`,
+  },
+  {
+    id: 'tpl-reminder',
+    name: 'Nhắc Hẹn Đăng Ký (Suất Tham Dự Có Giới Hạn)',
+    subject: '[Nhắc Hẹn] Suất tham dự Hội nghị Thẩm mỹ Việt – Hàn 2026 sắp đủ số lượng',
+    targetAudience: 'all',
+    content: `<p>Kính gửi Quý Đại biểu <strong>{{name}}</strong> ({{organization}}),</p>
+
+<p>Cổng đăng ký của <strong>{{event_name}}</strong> (diễn ra vào ngày {{event_date}} tại {{event_venue}}) hiện đã đạt hơn 85% sức chứa của Hội trường lớn.</p>
+
+<p>Để đảm bảo Quý vị không bỏ lỡ các phiên báo cáo đỉnh cao về Deep Plane Facelift, Nâng mũi cấu trúc sụn sườn và cơ hội nhận thẻ đại biểu chính thức, vui lòng hoàn tất xác nhận tham dự:</p>
+
+<p style="text-align: center; margin: 28px 0;">
+  <a href="{{invitation_link}}" style="background-color: #059669; color: #ffffff; padding: 13px 32px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 14px; display: inline-block; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);">👉 XÁC NHẬN GIỮ CHỖ NGAY</a>
+</p>
+
+<p>Hotline hỗ trợ khẩn cấp: <strong>090 123 4567</strong></p>
+<p>Trân trọng!</p>`,
+  },
+];
+
+export const DEFAULT_EMAIL_CAMPAIGN: EmailCampaignConfig = {
+  senderName: 'Ban Tổ Chức Hội Nghị Thẩm Mỹ Việt – Hàn 2026',
+  senderEmail: 'invitation@kbitassociation.com',
+  replyToEmail: 'support@kbitassociation.com',
+  smtpHost: 'smtp.gmail.com',
+  smtpPort: 587,
+  smtpUser: '',
+  smtpPassword: '',
+  resendApiKey: '',
+  recipients: INITIAL_EMAIL_RECIPIENTS,
+  templates: DEFAULT_EMAIL_TEMPLATES,
+  selectedTemplateId: 'tpl-doctor',
+};
+
 
