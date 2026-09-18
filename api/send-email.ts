@@ -1,3 +1,5 @@
+import nodemailer from 'nodemailer';
+
 export default async function handler(req: any, res: any) {
   // CORS Headers
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -13,13 +15,57 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
-  // Handle verify API key action (GET or POST)
+  // Handle verify via GET
   if (req.method === 'GET') {
     const url = new URL(req.url || '', `http://${req.headers?.host || 'localhost'}`);
     const action = url.searchParams.get('action');
-    const apiKey = url.searchParams.get('apiKey') || process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY;
 
+    // 1. Verify Gmail SMTP credentials
+    if (action === 'verify_gmail') {
+      const user = url.searchParams.get('user');
+      const pass = url.searchParams.get('pass');
+
+      if (!user || !pass) {
+        return res.status(200).json({
+          success: false,
+          valid: false,
+          message: 'Vui lòng cung cấp đầy đủ email Gmail và Mật khẩu ứng dụng (App Password).',
+        });
+      }
+
+      try {
+        const cleanPass = pass.replace(/\s+/g, '');
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: user.trim(),
+            pass: cleanPass,
+          },
+        });
+
+        await transporter.verify();
+        return res.status(200).json({
+          success: true,
+          valid: true,
+          message: `Xác thực thành công! Tài khoản Gmail [${user}] đã sẵn sàng gửi thư.`,
+        });
+      } catch (err: any) {
+        let msg = err?.message || 'Lỗi xác thực Gmail';
+        if (msg.includes('Invalid login') || msg.includes('BadCredentials') || msg.includes('Username and Password not accepted')) {
+          msg = 'Mật khẩu ứng dụng (App Password) không chính xác hoặc chưa bật Xác minh 2 bước trong tài khoản Google.';
+        }
+        return res.status(200).json({
+          success: false,
+          valid: false,
+          message: msg,
+          rawError: err?.message,
+        });
+      }
+    }
+
+    // 2. Verify Resend API Key
     if (action === 'verify') {
+      const apiKey = url.searchParams.get('apiKey') || process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY;
       if (!apiKey) {
         return res.status(200).json({
           success: false,
@@ -64,7 +110,7 @@ export default async function handler(req: any, res: any) {
     }
 
     return res.status(200).json({
-      service: 'KBIT Symposium 2026 - Resend Email Dispatcher',
+      service: 'KBIT Symposium 2026 - Hybrid Email Dispatcher (Gmail Pool & Resend)',
       status: 'online',
     });
   }
@@ -76,6 +122,10 @@ export default async function handler(req: any, res: any) {
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
     const {
+      action,
+      provider = 'gmail', // 'gmail' | 'resend' | 'simulation'
+      gmailAuth, // { user, pass }
+      resendApiKey,
       to,
       toName,
       subject,
@@ -83,14 +133,54 @@ export default async function handler(req: any, res: any) {
       senderName = 'Hội Thảo Thẩm Mỹ Việt - Hàn 2026',
       senderEmail,
       replyToEmail,
-      resendApiKey,
-      action,
     } = body;
 
-    const apiKey = resendApiKey || process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY;
+    // 1. Verify Gmail action via POST
+    if (action === 'verify_gmail') {
+      const user = gmailAuth?.user;
+      const pass = gmailAuth?.pass;
 
-    // Verify Action via POST
+      if (!user || !pass) {
+        return res.status(200).json({
+          success: false,
+          valid: false,
+          message: 'Vui lòng cung cấp đầy đủ email Gmail và Mật khẩu ứng dụng (App Password).',
+        });
+      }
+
+      try {
+        const cleanPass = pass.replace(/\s+/g, '');
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: user.trim(),
+            pass: cleanPass,
+          },
+        });
+
+        await transporter.verify();
+        return res.status(200).json({
+          success: true,
+          valid: true,
+          message: `Xác thực thành công! Tài khoản Gmail [${user}] đã sẵn sàng gửi thư.`,
+        });
+      } catch (err: any) {
+        let msg = err?.message || 'Lỗi xác thực Gmail';
+        if (msg.includes('Invalid login') || msg.includes('BadCredentials') || msg.includes('Username and Password not accepted')) {
+          msg = 'Mật khẩu ứng dụng (App Password) không chính xác hoặc chưa bật Xác minh 2 bước trên tài khoản Google.';
+        }
+        return res.status(200).json({
+          success: false,
+          valid: false,
+          message: msg,
+          rawError: err?.message,
+        });
+      }
+    }
+
+    // 2. Verify Resend action via POST
     if (action === 'verify') {
+      const apiKey = resendApiKey || process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY;
       if (!apiKey) {
         return res.status(200).json({
           success: false,
@@ -134,6 +224,7 @@ export default async function handler(req: any, res: any) {
       }
     }
 
+    // Validate email dispatch parameters
     if (!to || !subject || !html) {
       return res.status(400).json({
         success: false,
@@ -141,10 +232,63 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    // 1. If Resend API Key is provided, send real email via Resend API
-    if (apiKey) {
+    // DISPATCH METHOD 1: GMAIL SMTP POOL (NodeMailer)
+    if (provider === 'gmail' && gmailAuth?.user && gmailAuth?.pass) {
       try {
-        // Determine legitimate From email address for Resend
+        const cleanPass = gmailAuth.pass.replace(/\s+/g, '');
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: gmailAuth.user.trim(),
+            pass: cleanPass,
+          },
+        });
+
+        const fromAddress = `"${senderName}" <${gmailAuth.user.trim()}>`;
+
+        const mailOptions: Record<string, any> = {
+          from: fromAddress,
+          to: to.trim(),
+          subject: subject.trim(),
+          html: html,
+        };
+
+        if (replyToEmail) {
+          mailOptions.replyTo = replyToEmail.trim();
+        }
+
+        const info = await transporter.sendMail(mailOptions);
+
+        return res.status(200).json({
+          success: true,
+          provider: 'gmail',
+          sentBy: gmailAuth.user.trim(),
+          messageId: info.messageId,
+          message: `Đã gửi thành công qua Gmail [${gmailAuth.user.trim()}] tới ${to}`,
+          sentAt: new Date().toISOString(),
+        });
+      } catch (gmailErr: any) {
+        let msg = gmailErr?.message || 'Lỗi gửi qua Gmail SMTP';
+        if (msg.includes('Daily user sending quota exceeded') || msg.includes('550-5.4.5')) {
+          msg = `Tài khoản Gmail [${gmailAuth.user}] đã đạt giới hạn 500 email/ngày của Google.`;
+        } else if (msg.includes('Invalid login') || msg.includes('Username and Password not accepted')) {
+          msg = `Lỗi đăng nhập Gmail [${gmailAuth.user}]. Hãy kiểm tra lại App Password 16 chữ cái.`;
+        }
+
+        return res.status(200).json({
+          success: false,
+          provider: 'gmail',
+          sentBy: gmailAuth.user,
+          message: msg,
+          rawError: gmailErr?.message,
+        });
+      }
+    }
+
+    // DISPATCH METHOD 2: RESEND API
+    const apiKey = resendApiKey || process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY;
+    if (provider === 'resend' && apiKey) {
+      try {
         let cleanSenderEmail = (senderEmail || '').trim();
         const isFreeWebmail =
           cleanSenderEmail.includes('@gmail.com') ||
@@ -152,7 +296,6 @@ export default async function handler(req: any, res: any) {
           cleanSenderEmail.includes('@hotmail.com') ||
           cleanSenderEmail.includes('@outlook.com');
 
-        // If email is webmail or empty, use onboarding@resend.dev to avoid domain rejection
         if (!cleanSenderEmail || isFreeWebmail) {
           cleanSenderEmail = 'onboarding@resend.dev';
         }
@@ -192,22 +335,12 @@ export default async function handler(req: any, res: any) {
             sentAt: new Date().toISOString(),
           });
         } else {
-          // Format helpful error explanation in Vietnamese
           let vietnameseHint = resendData?.message || 'Lỗi gửi từ Resend';
           if (resendData?.name === 'validation_error') {
             if (resendData?.message?.includes('domain is not verified')) {
-              vietnameseHint =
-                'Tên miền người gửi chưa được xác thực trên Resend. Hãy đổi email gửi thành "onboarding@resend.dev" hoặc xác thực tên miền tại resend.com/domains.';
-            } else if (resendData?.message?.includes('can only send testing emails to your own email')) {
-              vietnameseHint =
-                'Tài khoản Resend miễn phí chỉ cho phép gửi thư thử nghiệm đến email đăng ký tài khoản Resend của bạn. Để gửi cho danh sách khác, bạn cần add domain tại resend.com/domains.';
+              vietnameseHint = 'Tên miền người gửi chưa được xác thực trên Resend. Hãy dùng "onboarding@resend.dev".';
             }
-          } else if (resendData?.name === 'rate_limit_exceeded') {
-            vietnameseHint = 'Vượt quá giới hạn tần suất gửi của Resend (2 email/giây). Hệ thống sẽ tự động giãn thời gian.';
-          } else if (resendData?.name === 'invalid_api_key') {
-            vietnameseHint = 'Khóa Resend API Key không đúng. Vui lòng kiểm tra lại trong phần Cấu hình.';
           }
-
           return res.status(200).json({
             success: false,
             provider: 'resend',
@@ -224,13 +357,12 @@ export default async function handler(req: any, res: any) {
       }
     }
 
-    // 2. Default: Simulation fallback if API Key not yet supplied
+    // DISPATCH METHOD 3: SIMULATION FALLBACK
     await new Promise((resolve) => setTimeout(resolve, 350));
-
     return res.status(200).json({
       success: true,
       provider: 'simulation',
-      message: `[Mô phỏng] Đã xử lý gửi email cho ${toName || to} (${to}). Để gửi email thật, vui lòng nhập Resend API Key.`,
+      message: `[Mô phỏng] Đã xử lý gửi thư cho ${toName || to} (${to}).`,
       sentAt: new Date().toISOString(),
     });
   } catch (error: any) {

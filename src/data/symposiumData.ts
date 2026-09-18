@@ -1,4 +1,4 @@
-import { AgendaItem, Partner, ExpertSpeaker, EventDetails, HighlightItem, SEOConfig, EmailCampaignConfig, EmailRecipient, EmailTemplate } from '../types';
+import { AgendaItem, Partner, ExpertSpeaker, EventDetails, HighlightItem, SEOConfig, EmailCampaignConfig, EmailRecipient, EmailTemplate, GmailSenderAccount } from '../types';
 import { PARTNER_LOGOS } from './partnerLogos';
 
 export const EVENT_DETAILS: EventDetails = {
@@ -895,13 +895,68 @@ export const DEFAULT_EMAIL_TEMPLATES: EmailTemplate[] = [
   },
 ];
 
+export const DEFAULT_GMAIL_POOL: GmailSenderAccount[] = [
+  {
+    id: 'gmail-1',
+    email: '',
+    appPassword: '',
+    senderDisplayName: 'Ban Tổ Chức Hội Nghị Thẩm Mỹ Việt – Hàn',
+    dailyQuota: 500,
+    sentToday: 0,
+    isActive: true,
+    status: 'ready',
+  },
+  {
+    id: 'gmail-2',
+    email: '',
+    appPassword: '',
+    senderDisplayName: 'Ban Thư Ký Học Thuật & Chuyên Môn BV 108',
+    dailyQuota: 500,
+    sentToday: 0,
+    isActive: true,
+    status: 'ready',
+  },
+  {
+    id: 'gmail-3',
+    email: '',
+    appPassword: '',
+    senderDisplayName: 'Ban Đối Ngoại & Y Khoa KBIT',
+    dailyQuota: 500,
+    sentToday: 0,
+    isActive: true,
+    status: 'ready',
+  },
+  {
+    id: 'gmail-4',
+    email: '',
+    appPassword: '',
+    senderDisplayName: 'Ban Xúc Tiến Hợp Tác Y Tế Việt – Hàn',
+    dailyQuota: 500,
+    sentToday: 0,
+    isActive: true,
+    status: 'ready',
+  },
+  {
+    id: 'gmail-5',
+    email: '',
+    appPassword: '',
+    senderDisplayName: 'Phòng Hội Thảo & Sự Kiện Quốc Tế',
+    dailyQuota: 500,
+    sentToday: 0,
+    isActive: true,
+    status: 'ready',
+  },
+];
+
 export const DEFAULT_EMAIL_CAMPAIGN: EmailCampaignConfig = {
   senderName: 'Ban Tổ Chức Hội Nghị Thẩm Mỹ Việt – Hàn 2026',
   senderEmail: 'onboarding@resend.dev',
   replyToEmail: 'support@kbitassociation.com',
-  sendProvider: 'resend',
+  sendProvider: 'gmail_pool',
   resendApiKey: '',
   resendDomain: '',
+  gmailPool: DEFAULT_GMAIL_POOL,
+  gmailQuotaResetDate: new Date().toISOString().slice(0, 10),
   smtpHost: 'smtp.gmail.com',
   smtpPort: 587,
   smtpUser: '',

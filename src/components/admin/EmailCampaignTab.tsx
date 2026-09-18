@@ -31,9 +31,15 @@ import {
   Radio,
   HelpCircle,
   Info,
+  EyeOff,
+  Zap,
+  CheckCircle,
+  ToggleLeft,
+  ToggleRight,
+  Server,
 } from 'lucide-react';
 import { useCMS } from '../../context/CMSContext';
-import { EmailRecipient, EmailTemplate } from '../../types';
+import { EmailRecipient, EmailTemplate, GmailSenderAccount } from '../../types';
 
 interface EmailCampaignTabProps {
   showToast: (msg: string) => void;
@@ -48,15 +54,21 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
     updateEmailRecipientStatus,
     bulkAddEmailRecipients,
     resetEmailRecipientsStatus,
+    updateGmailSenderAccount,
+    addGmailSenderAccount,
+    removeGmailSenderAccount,
+    incrementGmailSentToday,
+    resetGmailDailyQuotas,
   } = useCMS();
 
   const campaign = cmsData.emailCampaignConfig || {
     senderName: 'Ban Tổ Chức Hội Thảo Thẩm Mỹ Việt – Hàn 2026',
     senderEmail: 'onboarding@resend.dev',
     replyToEmail: 'support@kbitassociation.com',
-    sendProvider: 'resend',
+    sendProvider: 'gmail_pool',
     resendApiKey: '',
     resendDomain: '',
+    gmailPool: [],
     recipients: [],
     templates: [],
     selectedTemplateId: '',
@@ -65,11 +77,16 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
   const templates = campaign.templates || [];
   const recipients = campaign.recipients || [];
   const selectedTemplate = templates.find((t) => t.id === campaign.selectedTemplateId) || templates[0];
+  const gmailPool = campaign.gmailPool || [];
+
+  // Provider mode: 'gmail_pool' (Cụm 5 Gmail xoay vòng 2500 email/ngày) | 'resend' | 'simulation'
+  const sendProvider = campaign.sendProvider || 'gmail_pool';
 
   // UI state
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'doctor' | 'business' | 'vip' | 'pending' | 'sent' | 'failed'>('all');
   const [showConfigModal, setShowConfigModal] = useState(false);
+  const [showGmailHelpModal, setShowGmailHelpModal] = useState(false);
   const [showAddRecipientModal, setShowAddRecipientModal] = useState(false);
   const [showBulkPasteModal, setShowBulkPasteModal] = useState(false);
   const [bulkPasteText, setBulkPasteText] = useState('');
@@ -77,6 +94,17 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
   const [isSendingTest, setIsSendingTest] = useState(false);
   const [previewRecipientId, setPreviewRecipientId] = useState<string>(recipients[0]?.id || '');
   const [activeTabSubView, setActiveTabSubView] = useState<'editor' | 'preview'>('editor');
+
+  // Show/Hide App Passwords
+  const [showPasswordMap, setShowPasswordMap] = useState<Record<string, boolean>>({});
+  const toggleShowPassword = (id: string) => {
+    setShowPasswordMap((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  // Gmail testing states
+  const [testingGmailId, setTestingGmailId] = useState<string | null>(null);
+  const [testingAllGmail, setTestingAllGmail] = useState(false);
+  const [gmailTestResults, setGmailTestResults] = useState<Record<string, { valid: boolean; message: string }>>({});
 
   // Resend API Key verification test state
   const [isVerifyingResendKey, setIsVerifyingResendKey] = useState(false);
@@ -91,8 +119,8 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
   const [isCampaignRunning, setIsCampaignRunning] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [totalToSend, setTotalToSend] = useState(0);
-  const [throttleMs, setThrottleMs] = useState(1000); // 1000ms safe default for Resend (standard limit is 2 req/s)
-  const [campaignLogs, setCampaignLogs] = useState<Array<{ time: string; text: string; type: 'info' | 'success' | 'error'; resendId?: string }>>([]);
+  const [throttleMs, setThrottleMs] = useState(1200); // 1.2s delay between emails for safety
+  const [campaignLogs, setCampaignLogs] = useState<Array<{ time: string; text: string; type: 'info' | 'success' | 'error'; account?: string }>>([]);
   const abortControllerRef = useRef<boolean>(false);
 
   // New recipient form state
@@ -139,6 +167,13 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
   const failedCount = recipients.filter((r) => r.status === 'failed').length;
   const progressPercent = totalRecipients > 0 ? Math.round((sentCount / totalRecipients) * 100) : 0;
 
+  // Gmail Pool Statistics
+  const totalPoolCapacity = gmailPool.reduce((acc, g) => acc + (g.dailyQuota || 500), 0);
+  const totalPoolSentToday = gmailPool.reduce((acc, g) => acc + (g.sentToday || 0), 0);
+  const activeGmailAccounts = gmailPool.filter((g) => g.isActive && g.email && g.appPassword);
+  const readyGmailAccounts = activeGmailAccounts.filter((g) => (g.sentToday || 0) < (g.dailyQuota || 500));
+  const poolUsagePercent = totalPoolCapacity > 0 ? Math.round((totalPoolSentToday / totalPoolCapacity) * 100) : 0;
+
   // Filtered Recipients
   const filteredRecipients = recipients.filter((r) => {
     const matchesSearch =
@@ -159,86 +194,136 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
   });
 
   // Log helper
-  const addLog = (text: string, type: 'info' | 'success' | 'error' = 'info', resendId?: string) => {
+  const addLog = (text: string, type: 'info' | 'success' | 'error' = 'info', account?: string) => {
     const time = new Date().toLocaleTimeString('vi-VN');
-    setCampaignLogs((prev) => [{ time, text, type, resendId }, ...prev.slice(0, 199)]);
+    setCampaignLogs((prev) => [{ time, text, type, account }, ...prev.slice(0, 199)]);
   };
 
-  // Test Resend API Key connection
-  const handleVerifyResendKey = async (keyToTest?: string) => {
-    const key = keyToTest || campaign.resendApiKey;
-    if (!key || !key.trim()) {
-      setResendVerifyResult({
-        tested: true,
-        valid: false,
-        message: 'Vui lòng nhập khóa Resend API Key (bắt đầu bằng re_...) để kiểm tra.',
-      });
-      return;
+  // Test single Gmail SMTP connection
+  const testGmailAccount = async (account: GmailSenderAccount): Promise<boolean> => {
+    if (!account.email || !account.appPassword) {
+      setGmailTestResults((prev) => ({
+        ...prev,
+        [account.id]: { valid: false, message: 'Chưa điền email hoặc Mật khẩu ứng dụng (App Password).' },
+      }));
+      return false;
     }
 
-    setIsVerifyingResendKey(true);
-    setResendVerifyResult(null);
-
+    setTestingGmailId(account.id);
     try {
-      const res = await fetch(`/api/send-email?action=verify&apiKey=${encodeURIComponent(key.trim())}`);
-      const data = await res.json();
-      setIsVerifyingResendKey(false);
-      setResendVerifyResult({
-        tested: true,
-        valid: data.valid,
-        message: data.message || (data.valid ? 'Kết nối Resend API thành công!' : 'Khóa API không hợp lệ'),
-        domains: data.domains,
-      });
-
-      if (data.valid) {
-        showToast('✅ Đã xác thực Resend API Key thành công!');
-      } else {
-        showToast('❌ Resend API Key chưa hợp lệ. Vui lòng kiểm tra lại!');
-      }
-    } catch (err: any) {
-      setIsVerifyingResendKey(false);
-      setResendVerifyResult({
-        tested: true,
-        valid: false,
-        message: 'Không thể kết nối máy chủ để kiểm tra: ' + (err?.message || String(err)),
-      });
-    }
-  };
-
-  // Dispatch single email (via /api/send-email or fallback)
-  const sendEmailToRecipient = async (recip: EmailRecipient, template: EmailTemplate): Promise<{ success: boolean; resendId?: string; error?: string }> => {
-    const finalSubject = replacePlaceholders(template.subject, recip);
-    const finalContent = replacePlaceholders(template.content, recip);
-
-    try {
-      const response = await fetch('/api/send-email', {
+      const res = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          to: recip.email,
-          toName: recip.name,
-          subject: finalSubject,
-          html: finalContent,
-          senderName: campaign.senderName || 'Ban Tổ Chức Hội Thảo Thẩm Mỹ Việt – Hàn 2026',
-          senderEmail: campaign.senderEmail || 'onboarding@resend.dev',
-          replyToEmail: campaign.replyToEmail || 'support@kbitassociation.com',
-          resendApiKey: campaign.resendApiKey,
+          action: 'verify_gmail',
+          gmailAuth: {
+            user: account.email.trim(),
+            pass: account.appPassword.trim(),
+          },
         }),
+      });
+
+      const data = await res.json();
+      setTestingGmailId(null);
+      setGmailTestResults((prev) => ({
+        ...prev,
+        [account.id]: { valid: data.valid, message: data.message },
+      }));
+
+      if (data.valid) {
+        updateGmailSenderAccount(account.id, { status: (account.sentToday || 0) >= (account.dailyQuota || 500) ? 'quota_reached' : 'ready', lastError: undefined });
+        showToast(`✅ [${account.email}] Kết nối Gmail SMTP thành công!`);
+        return true;
+      } else {
+        updateGmailSenderAccount(account.id, { status: 'error', lastError: data.message });
+        showToast(`❌ [${account.email}] Lỗi kết nối: ${data.message}`);
+        return false;
+      }
+    } catch (e: any) {
+      setTestingGmailId(null);
+      setGmailTestResults((prev) => ({
+        ...prev,
+        [account.id]: { valid: false, message: 'Lỗi mạng: ' + (e?.message || String(e)) },
+      }));
+      return false;
+    }
+  };
+
+  // Test all 5 Gmail accounts
+  const testAllGmailAccounts = async () => {
+    setTestingAllGmail(true);
+    addLog('🔍 Đang kiểm tra kết nối toàn bộ cụm tài khoản Gmail...', 'info');
+
+    let successCount = 0;
+    for (const acc of gmailPool) {
+      if (acc.isActive && acc.email && acc.appPassword) {
+        const ok = await testGmailAccount(acc);
+        if (ok) successCount++;
+      }
+    }
+
+    setTestingAllGmail(false);
+    showToast(`Đã kiểm tra xong: ${successCount}/${activeGmailAccounts.length} tài khoản Gmail hoạt động tốt!`);
+  };
+
+  // Dispatch single email with specific account or method
+  const sendEmailToRecipient = async (
+    recip: EmailRecipient,
+    template: EmailTemplate,
+    chosenGmail?: GmailSenderAccount
+  ): Promise<{ success: boolean; sentBy?: string; error?: string }> => {
+    const finalSubject = replacePlaceholders(template.subject, recip);
+    const finalContent = replacePlaceholders(template.content, recip);
+
+    const providerToUse = sendProvider === 'gmail_pool' && chosenGmail ? 'gmail' : sendProvider;
+
+    try {
+      const payload: Record<string, any> = {
+        provider: providerToUse,
+        to: recip.email,
+        toName: recip.name,
+        subject: finalSubject,
+        html: finalContent,
+        senderName: chosenGmail?.senderDisplayName || campaign.senderName || 'Ban Tổ Chức Hội Thảo Thẩm Mỹ Việt – Hàn 2026',
+        replyToEmail: campaign.replyToEmail || 'support@kbitassociation.com',
+      };
+
+      if (providerToUse === 'gmail' && chosenGmail) {
+        payload.gmailAuth = {
+          user: chosenGmail.email.trim(),
+          pass: chosenGmail.appPassword.trim(),
+        };
+      } else if (providerToUse === 'resend') {
+        payload.resendApiKey = campaign.resendApiKey;
+        payload.senderEmail = campaign.senderEmail || 'onboarding@resend.dev';
+      }
+
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
 
       const resData = await response.json();
       if (response.ok && resData.success) {
-        const resendId = resData.resendId;
-        updateEmailRecipientStatus(recip.id, 'sent', undefined, resendId);
-        const logMsg = resendId
-          ? `[Resend] Đã gửi thành công tới ${recip.name} <${recip.email}> (ID: ${resendId})`
-          : `Đã gửi thành công tới ${recip.name} <${recip.email}>`;
-        addLog(logMsg, 'success', resendId);
-        return { success: true, resendId };
+        const sentBy = resData.sentBy || (providerToUse === 'gmail' ? chosenGmail?.email : 'Resend');
+        updateEmailRecipientStatus(recip.id, 'sent', undefined, resData.resendId);
+        
+        // If sent via Gmail account, increment sentToday for this account
+        if (providerToUse === 'gmail' && chosenGmail) {
+          incrementGmailSentToday(chosenGmail.id);
+        }
+
+        const logMsg = providerToUse === 'gmail'
+          ? `[Gmail: ${sentBy}] Đã gửi thành công tới ${recip.name} <${recip.email}>`
+          : `[Resend] Đã gửi thành công tới ${recip.name} <${recip.email}> (ID: ${resData.resendId || 'OK'})`;
+
+        addLog(logMsg, 'success', sentBy);
+        return { success: true, sentBy };
       } else {
         const errMsg = resData.message || 'Lỗi gửi email máy chủ';
         updateEmailRecipientStatus(recip.id, 'failed', errMsg);
-        addLog(`[Lỗi] Không thể gửi tới ${recip.name} (${recip.email}): ${errMsg}`, 'error');
+        addLog(`[Lỗi] Không thể gửi tới ${recip.name} (${recip.email}): ${errMsg}`, 'error', chosenGmail?.email);
         return { success: false, error: errMsg };
       }
     } catch (err: any) {
@@ -273,17 +358,19 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
       status: 'pending',
     };
 
-    const result = await sendEmailToRecipient(testRecipient, selectedTemplate);
+    // Pick first ready Gmail account if using Gmail Pool
+    const testGmail = sendProvider === 'gmail_pool' ? (readyGmailAccounts[0] || gmailPool[0]) : undefined;
+    const result = await sendEmailToRecipient(testRecipient, selectedTemplate, testGmail);
     setIsSendingTest(false);
 
     if (result.success) {
-      showToast(`✅ Đã gửi thư thử nghiệm thành công tới ${testEmailAddress}! Vui lòng kiểm tra hộp thư (cả mục Hộp thư đến và Spam/Quảng cáo).`);
+      showToast(`✅ Đã gửi thư thử nghiệm thành công tới ${testEmailAddress}! Vui lòng kiểm tra hộp thư.`);
     } else {
       showToast(`❌ Gửi thử nghiệm thất bại: ${result.error || 'Kiểm tra nhật ký bên dưới'}`);
     }
   };
 
-  // Start Bulk Campaign
+  // Start Bulk Campaign with Round-Robin Rotation over 5 Gmail Accounts
   const handleStartCampaign = async () => {
     if (!selectedTemplate) {
       alert('Vui lòng chọn mẫu thư mời cần gửi!');
@@ -296,13 +383,19 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
       return;
     }
 
-    const isResendActive = !!campaign.resendApiKey?.trim();
-    const providerNotice = isResendActive
-      ? `Hệ thống sẽ gửi THẬT qua Resend API bằng tài khoản [${campaign.senderEmail || 'onboarding@resend.dev'}].`
-      : 'Hệ thống đang chạy ở chế độ MÔ PHỎNG (Sandbox) vì chưa có Resend API Key. Nhập API Key trong mục "Cấu hình Resend" để gửi email thật.';
+    if (sendProvider === 'gmail_pool') {
+      if (readyGmailAccounts.length === 0) {
+        alert(
+          'Không có tài khoản Gmail nào sẵn sàng trong cụm! Vui lòng kiểm tra:\n1. Đã điền email và App Password (Mật khẩu ứng dụng)\n2. Tài khoản đã bật hoạt động (Active)\n3. Tài khoản chưa vượt quá hạn ngạch 500 email hôm nay.'
+        );
+        return;
+      }
+    }
 
     const confirmSend = window.confirm(
-      `Xác nhận bắt đầu gửi thư mời hàng loạt tới ${pendingList.length} người nhận bằng mẫu: "${selectedTemplate.name}"?\n\n${providerNotice}\n\nKhoảng cách điều phối: ${throttleMs}ms/email.`
+      sendProvider === 'gmail_pool'
+        ? `Xác nhận bắt đầu gửi hàng loạt tới ${pendingList.length} người nhận?\n\nCơ chế: CỤM XOAY VÒNG ${readyGmailAccounts.length} TÀI KHOẢN GMAIL (Tối đa 500 email/tài khoản/ngày).\nKhoảng cách điều phối: ${throttleMs}ms/email.`
+        : `Xác nhận gửi hàng loạt qua Resend API tới ${pendingList.length} người nhận?`
     );
     if (!confirmSend) return;
 
@@ -311,9 +404,11 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
     setTotalToSend(pendingList.length);
     setCurrentIndex(0);
 
-    addLog(`🚀 Bắt đầu chiến dịch gửi thư mời hàng loạt cho ${pendingList.length} người nhận...`, 'info');
+    addLog(`🚀 Bắt đầu chiến dịch gửi hàng loạt cho ${pendingList.length} người nhận qua ${sendProvider === 'gmail_pool' ? `Cụm ${readyGmailAccounts.length} Gmail` : 'Resend'}...`, 'info');
 
     let processed = 0;
+    let roundRobinPointer = 0;
+
     for (let i = 0; i < pendingList.length; i++) {
       if (abortControllerRef.current) {
         addLog('⏹️ Chiến dịch đã được dừng bởi người quản trị.', 'error');
@@ -324,10 +419,28 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
       setCurrentIndex(i + 1);
       updateEmailRecipientStatus(recip.id, 'sending');
 
-      await sendEmailToRecipient(recip, selectedTemplate);
+      let chosenGmail: GmailSenderAccount | undefined = undefined;
+
+      if (sendProvider === 'gmail_pool') {
+        // Find available accounts that have not reached daily quota (sentToday < dailyQuota)
+        const currentPool = cmsData.emailCampaignConfig?.gmailPool || gmailPool;
+        const availableAccounts = currentPool.filter((g) => g.isActive && g.email && g.appPassword && (g.sentToday || 0) < (g.dailyQuota || 500));
+
+        if (availableAccounts.length === 0) {
+          addLog('⚠️ Toàn bộ 5 tài khoản Gmail đã đạt hạn ngạch 500 email hôm nay! Tạm dừng chiến dịch.', 'error');
+          alert('Tất cả các tài khoản Gmail trong cụm đã đạt giới hạn 500 email hôm nay (Tổng cộng tối đa 2,500 email/ngày). Hệ thống tạm dừng để bảo vệ tài khoản.');
+          break;
+        }
+
+        // Round-Robin selection: pick next account in circular fashion
+        chosenGmail = availableAccounts[roundRobinPointer % availableAccounts.length];
+        roundRobinPointer++;
+      }
+
+      await sendEmailToRecipient(recip, selectedTemplate, chosenGmail);
       processed++;
 
-      // Throttle delay to avoid spam flags & respect Resend rate limits
+      // Throttle delay between emails
       if (i < pendingList.length - 1 && !abortControllerRef.current) {
         await new Promise((resolve) => setTimeout(resolve, throttleMs));
       }
@@ -495,14 +608,14 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
 
   // Export CSV of recipients and sending status
   const handleExportCampaignCsv = () => {
-    const headers = ['Họ và Tên', 'Email', 'Cơ Quan / Đơn Vị', 'Đối Tượng', 'Trạng Thái', 'Resend Email ID', 'Thời Gian Gửi', 'Ghi Chú Lỗi'];
+    const headers = ['Họ và Tên', 'Email', 'Cơ Quan / Đơn Vị', 'Đối Tượng', 'Trạng Thái', 'Tài Khoản Gửi', 'Thời Gian Gửi', 'Ghi Chú Lỗi'];
     const rows = recipients.map((r) => [
       `"${r.name.replace(/"/g, '""')}"`,
       `"${r.email}"`,
       `"${(r.organization || '').replace(/"/g, '""')}"`,
       `"${r.recipientType || 'general'}"`,
       `"${r.status === 'sent' ? 'Đã gửi thành công' : r.status === 'failed' ? 'Thất bại' : r.status === 'sending' ? 'Đang gửi' : 'Chưa gửi'}"`,
-      `"${r.resendEmailId || ''}"`,
+      `"${r.sentByAccount || (r.resendEmailId ? `Resend ID: ${r.resendEmailId}` : '')}"`,
       `"${r.sentAt || ''}"`,
       `"${(r.errorMessage || '').replace(/"/g, '""')}"`,
     ]);
@@ -512,18 +625,16 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `Ket_qua_gui_email_thu_moi_Resend_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `Bao_cao_gui_email_thu_moi_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     link.remove();
     showToast('Đã xuất báo cáo gửi email ra file CSV thành công!');
   };
 
-  const isResendConfigured = Boolean(campaign.resendApiKey && campaign.resendApiKey.trim().startsWith('re_'));
-
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* Top Banner & Resend Status Header */}
+      {/* Top Banner & Provider Status Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 p-6 rounded-3xl bg-gradient-to-r from-[#002045] via-[#174ea6] to-[#4f46e5] text-white shadow-md relative overflow-hidden">
         <div className="absolute right-0 top-0 translate-x-10 -translate-y-10 w-72 h-72 bg-white/10 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 space-y-2">
@@ -534,23 +645,23 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
-                  Chiến Dịch Gửi Email Thư Mời Hàng Loạt
+                  Chiến Dịch Gửi Thư Mời Hàng Loạt
                 </h2>
-                {/* Resend Status Badge */}
-                {isResendConfigured ? (
+                {/* Provider Pill */}
+                {sendProvider === 'gmail_pool' ? (
                   <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-500/25 text-emerald-300 text-xs font-bold border border-emerald-400/40">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span>Cổng Gửi Thật Resend API: Đang Bật</span>
+                    <span>Cụm 5 Gmail Xoay Vòng: 2,500 email/ngày</span>
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-400/20 text-amber-200 text-xs font-bold border border-amber-300/30">
-                    <Info className="w-3.5 h-3.5" />
-                    <span>Chế độ Mô phỏng (Chưa gắn Resend Key)</span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-indigo-400/25 text-indigo-200 text-xs font-bold border border-indigo-300/30">
+                    <Globe className="w-3.5 h-3.5" />
+                    <span>Cổng Resend API Cloud</span>
                   </span>
                 )}
               </div>
               <p className="text-xs sm:text-sm text-blue-100/90 font-medium">
-                Tích hợp nền tảng gửi email đám mây <strong>Resend</strong> với tỷ lệ vào Inbox cao, chống spam &amp; theo dõi trạng thái gửi
+                Quản lý cụm 5 tài khoản Gmail (500 thư/ngày/tài khoản = 2,500 thư/ngày) hoặc Resend API đám mây
               </p>
             </div>
           </div>
@@ -560,15 +671,19 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
         <div className="relative z-10 flex items-center gap-2 flex-wrap">
           <button
             type="button"
-            onClick={() => setShowConfigModal(true)}
-            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black shadow-md transition-all cursor-pointer ${
-              isResendConfigured
-                ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                : 'bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white animate-pulse'
-            }`}
+            onClick={() => setShowGmailHelpModal(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold border border-white/20 transition-all cursor-pointer shadow-xs"
           >
-            <Key className="w-4 h-4" />
-            <span>{isResendConfigured ? 'Cấu Hình Resend API' : 'Cài Đặt Resend API Key'}</span>
+            <HelpCircle className="w-4 h-4 text-amber-300" />
+            <span>Cách Lấy Mật Khẩu Gmail</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowConfigModal(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold border border-white/20 transition-all cursor-pointer shadow-xs"
+          >
+            <Settings className="w-4 h-4 text-cyan-300" />
+            <span>Cài Đặt Cổng Gửi</span>
           </button>
           <button
             type="button"
@@ -581,38 +696,246 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
         </div>
       </div>
 
-      {/* Resend Integration Alert & Instructions */}
-      {!isResendConfigured && (
-        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border border-amber-200/90 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-amber-900 shadow-2xs">
-          <div className="flex items-start gap-3">
-            <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 mt-0.5 sm:mt-0 font-black">
-              R
-            </div>
-            <div className="space-y-0.5">
-              <h4 className="font-black text-amber-950 text-sm">
-                Bạn đang ở chế độ xem trước (Sandbox)!
-              </h4>
-              <p className="text-amber-800 leading-relaxed">
-                Để gửi email <strong>thật sự đến hộp thư của các Bác sĩ &amp; Doanh nghiệp</strong> qua hạ tầng Resend, vui lòng lấy API Key miễn phí tại{' '}
-                <a
-                  href="https://resend.com/api-keys"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="font-bold underline text-indigo-700 hover:text-indigo-900 inline-flex items-center gap-1"
-                >
-                  resend.com/api-keys <ExternalLink className="w-3 h-3" />
-                </a>{' '}
-                và dán vào nút <strong>"Cài Đặt Resend API Key"</strong>.
+      {/* Provider Selector Switcher Bar */}
+      <div className="p-2 bg-white rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <span className="text-xs font-bold text-slate-700 px-3">Cổng gửi email chính:</span>
+          <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 rounded-xl w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={() => updateEmailCampaignConfig({ sendProvider: 'gmail_pool' })}
+              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                sendProvider === 'gmail_pool'
+                  ? 'bg-white text-emerald-700 shadow-xs border border-emerald-200'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Zap className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Cụm 5 Gmail Xoay Vòng (2,500/ngày)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => updateEmailCampaignConfig({ sendProvider: 'resend' })}
+              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                sendProvider === 'resend'
+                  ? 'bg-white text-indigo-700 shadow-xs border border-indigo-200'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Globe className="w-3.5 h-3.5 text-indigo-600" />
+              <span>Resend API (Cloud)</span>
+            </button>
+          </div>
+        </div>
+
+        {sendProvider === 'gmail_pool' && (
+          <div className="flex items-center gap-2 px-3 text-xs text-slate-600">
+            <span>Hôm nay đã gửi: <strong className="text-emerald-700 font-mono">{totalPoolSentToday}</strong> / {totalPoolCapacity}</span>
+            <span>•</span>
+            <span>Sẵn sàng: <strong className="text-indigo-700">{readyGmailAccounts.length}/{gmailPool.length}</strong> tài khoản</span>
+          </div>
+        )}
+      </div>
+
+      {/* =========================================================================
+          SECTION: QUẢN LÝ CỤM 5 TÀI KHOẢN GMAIL (500 EMAIL/NGÀY MỖI TÀI KHOẢN)
+         ========================================================================= */}
+      {sendProvider === 'gmail_pool' && (
+        <div className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/90 shadow-xs space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h3 className="text-[16px] font-black text-slate-900 flex items-center gap-2">
+                <Server className="w-5 h-5 text-emerald-600" />
+                <span>Cụm 5 Tài Khoản Gmail Tự Động Xoay Vòng (Load Balancing)</span>
+              </h3>
+              <p className="text-xs text-slate-500">
+                Mỗi tài khoản gửi tối đa <strong>500 email/ngày</strong> theo chuẩn Google. Hệ thống tự động phân phối đều, tự ngắt tài khoản khi đủ 500 và chuyển sang tài khoản tiếp theo.
               </p>
             </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={testAllGmailAccounts}
+                disabled={testingAllGmail}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold border border-indigo-200 transition-colors cursor-pointer shadow-2xs"
+              >
+                {testingAllGmail ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5" />}
+                <span>Kiểm Tra Toàn Bộ 5 Tài Khoản</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const conf = window.confirm('Đặt lại số lượng đã gửi hôm nay về 0 cho toàn bộ 5 tài khoản Gmail?');
+                  if (conf) {
+                    resetGmailDailyQuotas();
+                    showToast('Đã đặt lại hạn ngạch gửi 500 email hôm nay về 0!');
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
+                title="Đặt lại bộ đếm gửi hôm nay về 0"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>Đặt Lại Hạn Ngạch Ngày</span>
+              </button>
+            </div>
           </div>
-          <button
-            type="button"
-            onClick={() => setShowConfigModal(true)}
-            className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-black shrink-0 cursor-pointer shadow-xs"
-          >
-            Cài Đặt Ngay
-          </button>
+
+          {/* 5 Gmail Account Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            {gmailPool.map((account, index) => {
+              const isPasswordVisible = !!showPasswordMap[account.id];
+              const isTesting = testingGmailId === account.id;
+              const testRes = gmailTestResults[account.id];
+              const isQuotaReached = (account.sentToday || 0) >= (account.dailyQuota || 500);
+              const percent = Math.min(100, Math.round(((account.sentToday || 0) / (account.dailyQuota || 500)) * 100));
+
+              return (
+                <div
+                  key={account.id}
+                  className={`p-4 rounded-2xl border transition-all space-y-3 ${
+                    !account.isActive
+                      ? 'bg-slate-50 border-slate-200 opacity-60'
+                      : isQuotaReached
+                      ? 'bg-amber-50/70 border-amber-300 ring-1 ring-amber-200'
+                      : account.status === 'error'
+                      ? 'bg-rose-50/70 border-rose-300'
+                      : 'bg-white border-slate-200 hover:border-indigo-300 hover:shadow-xs'
+                  }`}
+                >
+                  {/* Card Header: Slot & Active Toggle */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-lg bg-[#174ea6] text-white font-black text-xs flex items-center justify-center">
+                        #{index + 1}
+                      </span>
+                      <span className="text-xs font-black text-slate-800">
+                        {account.senderDisplayName || `Tài khoản Gmail ${index + 1}`}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => updateGmailSenderAccount(account.id, { isActive: !account.isActive })}
+                      className="text-xs font-bold flex items-center gap-1 cursor-pointer"
+                      title={account.isActive ? 'Tạm tắt tài khoản này' : 'Bật tài khoản này'}
+                    >
+                      {account.isActive ? (
+                        <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10.5px]">Đang bật</span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-md bg-slate-200 text-slate-600 text-[10.5px]">Đã tắt</span>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Inputs: Gmail Address + App Password */}
+                  <div className="space-y-2">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 mb-0.5">
+                        Địa chỉ Gmail:
+                      </label>
+                      <input
+                        type="email"
+                        placeholder="yourname@gmail.com"
+                        value={account.email || ''}
+                        onChange={(e) => updateGmailSenderAccount(account.id, { email: e.target.value.trim() })}
+                        className="w-full px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-mono outline-none focus:border-indigo-600 bg-white"
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-0.5">
+                        <label className="block text-[11px] font-bold text-slate-600">
+                          Mật khẩu ứng dụng (16 ký tự):
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => toggleShowPassword(account.id)}
+                          className="text-[10.5px] text-indigo-600 hover:text-indigo-800 font-medium cursor-pointer"
+                        >
+                          {isPasswordVisible ? 'Ẩn' : 'Hiện'}
+                        </button>
+                      </div>
+                      <div className="relative">
+                        <input
+                          type={isPasswordVisible ? 'text' : 'password'}
+                          placeholder="abcd efgh ijkl mnop"
+                          value={account.appPassword || ''}
+                          onChange={(e) => updateGmailSenderAccount(account.id, { appPassword: e.target.value })}
+                          className="w-full pl-3 pr-8 py-1.5 rounded-xl border border-slate-200 text-xs font-mono outline-none focus:border-indigo-600 bg-white"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => toggleShowPassword(account.id)}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                        >
+                          {isPasswordVisible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Daily Quota Counter & Progress Bar */}
+                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-slate-600 font-semibold">Đã gửi hôm nay:</span>
+                      <span className="font-mono font-bold text-slate-900">
+                        <span className={isQuotaReached ? 'text-amber-600 font-black' : 'text-emerald-700'}>
+                          {account.sentToday || 0}
+                        </span>
+                        /{account.dailyQuota || 500} email
+                      </span>
+                    </div>
+
+                    <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-300 ${
+                          isQuotaReached ? 'bg-amber-500' : 'bg-emerald-500'
+                        }`}
+                        style={{ width: `${percent}%` }}
+                      />
+                    </div>
+
+                    {isQuotaReached && (
+                      <p className="text-[10px] text-amber-800 font-bold">
+                        ⚠️ Đã gửi đủ 500 email hôm nay. Hệ thống sẽ tự động bỏ qua tài khoản này và chuyển sang các tài khoản còn lại.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Test Feedback Message */}
+                  {testRes && (
+                    <div
+                      className={`p-2 rounded-lg text-[10.5px] font-medium leading-relaxed ${
+                        testRes.valid ? 'bg-emerald-100 text-emerald-900' : 'bg-rose-100 text-rose-900'
+                      }`}
+                    >
+                      {testRes.valid ? '🟢 ' : '🔴 '}
+                      {testRes.message}
+                    </div>
+                  )}
+
+                  {/* Card Action Buttons */}
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => testGmailAccount(account)}
+                      disabled={isTesting}
+                      className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[11px] transition-colors cursor-pointer flex items-center gap-1"
+                    >
+                      {isTesting ? <RefreshCw className="w-3 h-3 animate-spin" /> : <ShieldCheck className="w-3 h-3" />}
+                      <span>Kiểm tra kết nối</span>
+                    </button>
+
+                    <span className="text-[10.5px] text-slate-400">
+                      {account.lastUsedAt ? `Dùng lúc ${account.lastUsedAt}` : 'Chưa gửi'}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
@@ -663,14 +986,14 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
           <div className="space-y-1">
             <h3 className="text-[15px] font-black text-slate-900 flex items-center gap-2">
               <Send className="w-4 h-4 text-indigo-600" />
-              <span>Bảng Điều Khiển Gửi Thư Resend Tự Động</span>
+              <span>Bảng Điều Khiển Gửi Thư Tự Động</span>
             </h3>
             <p className="text-xs text-slate-500 flex items-center gap-2 flex-wrap">
               <span>Đang chọn mẫu: <strong className="text-indigo-700">{selectedTemplate?.name || 'Chưa chọn'}</strong></span>
               <span>•</span>
-              <span>Người gửi: <strong className="font-mono text-slate-800">{campaign.senderEmail || 'onboarding@resend.dev'}</strong></span>
+              <span>Cổng: <strong className="text-emerald-700 font-bold">{sendProvider === 'gmail_pool' ? `Cụm ${readyGmailAccounts.length} Gmail` : 'Resend'}</strong></span>
               <span>•</span>
-              <span>Độ trễ Resend: <strong>{throttleMs}ms</strong></span>
+              <span>Khoảng cách: <strong>{throttleMs}ms/email</strong></span>
             </p>
           </div>
 
@@ -688,10 +1011,10 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
               <button
                 type="button"
                 onClick={handleStartCampaign}
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 via-blue-600 to-[#174ea6] hover:opacity-95 text-white font-black text-xs shadow-md hover:shadow-lg transition-all cursor-pointer active:scale-95"
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-[#174ea6] hover:opacity-95 text-white font-black text-xs shadow-md hover:shadow-lg transition-all cursor-pointer active:scale-95"
               >
                 <Play className="w-4 h-4 fill-white" />
-                <span>BẮT ĐẦU GỬI QUA RESEND ({pendingCount} CHƯA GỬI)</span>
+                <span>BẮT ĐẦU GỬI ({pendingCount} CHƯA GỬI)</span>
               </button>
             )}
 
@@ -702,7 +1025,7 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
               title="Đặt lại trạng thái tất cả người nhận về 'Chưa gửi' để gửi lại"
             >
               <RefreshCw className="w-3.5 h-3.5 text-slate-600" />
-              <span>Đặt Lại Trạng Thái (Reset)</span>
+              <span>Đặt Lại Trạng Thái Thư</span>
             </button>
           </div>
         </div>
@@ -714,8 +1037,8 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
               <span className="text-indigo-900 flex items-center gap-2">
                 {isCampaignRunning ? (
                   <>
-                    <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 animate-ping" />
-                    <span>Đang điều phối gửi thư mời qua Resend ({currentIndex}/{totalToSend || totalRecipients})...</span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-ping" />
+                    <span>Đang điều phối gửi thư ({currentIndex}/{totalToSend || totalRecipients})...</span>
                   </>
                 ) : (
                   <>
@@ -728,7 +1051,7 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
             </div>
             <div className="w-full h-3 bg-indigo-200/80 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-indigo-500 via-blue-500 to-emerald-500 rounded-full transition-all duration-300"
+                className="h-full bg-gradient-to-r from-emerald-500 via-teal-500 to-indigo-600 rounded-full transition-all duration-300"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
@@ -738,7 +1061,7 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
         {/* Quick Test Email Dispatch */}
         <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            <span className="text-xs font-bold text-slate-700 shrink-0">Thử nghiệm Resend:</span>
+            <span className="text-xs font-bold text-slate-700 shrink-0">Thử nghiệm trước:</span>
             <input
               type="email"
               placeholder="Nhập email của bạn (vd: your@gmail.com)"
@@ -758,16 +1081,16 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
           </div>
 
           <div className="flex items-center gap-2 text-xs text-slate-500">
-            <span className="font-semibold">Tốc độ gửi Resend:</span>
+            <span className="font-semibold">Khoảng cách gửi:</span>
             <select
               value={throttleMs}
               onChange={(e) => setThrottleMs(Number(e.target.value))}
               className="px-2.5 py-1 rounded-lg border border-slate-200 text-xs font-medium outline-none bg-white"
             >
-              <option value={600}>Nhanh (600ms / email - ~1.6 req/s)</option>
-              <option value={1000}>Tiêu chuẩn Resend (1.0s / email - Khuyên dùng)</option>
-              <option value={1500}>An toàn chống spam (1.5s / email)</option>
-              <option value={3000}>Chậm (3.0s / email)</option>
+              <option value={800}>800ms / email (Nhanh)</option>
+              <option value={1200}>1.2s / email (Tiêu chuẩn Gmail - Khuyên dùng)</option>
+              <option value={2000}>2.0s / email (An toàn cao)</option>
+              <option value={3500}>3.5s / email (Rất chậm)</option>
             </select>
           </div>
         </div>
@@ -911,7 +1234,7 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
                   <span className="w-3 h-3 rounded-full bg-amber-400" />
                   <span className="w-3 h-3 rounded-full bg-emerald-400" />
                 </div>
-                <span className="text-[11.5px] font-bold text-slate-700 ml-2">Mô Phỏng Hộp Thư Khách Hàng (Gmail / Apple Mail)</span>
+                <span className="text-[11.5px] font-bold text-slate-700 ml-2">Mô Phỏng Hộp Thư Khách Hàng (Gmail)</span>
               </div>
 
               {/* Sample Recipient Switcher */}
@@ -944,7 +1267,9 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
                   <div>
                     <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5 flex-wrap">
                       <span>{campaign.senderName}</span>
-                      <span className="text-[10px] font-normal text-slate-400">&lt;{campaign.senderEmail || 'onboarding@resend.dev'}&gt;</span>
+                      <span className="text-[10px] font-normal text-slate-400">
+                        &lt;{sendProvider === 'gmail_pool' && readyGmailAccounts[0]?.email ? readyGmailAccounts[0].email : (campaign.senderEmail || 'onboarding@resend.dev')}&gt;
+                      </span>
                     </div>
                     <div className="text-[11px] text-slate-500">
                       Gửi tới: <strong className="text-slate-800">{previewRecipient.name}</strong> &lt;{previewRecipient.email}&gt;
@@ -1088,7 +1413,7 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
                   <th className="py-3 px-4">Email</th>
                   <th className="py-3 px-4">Cơ Quan / Đơn Vị</th>
                   <th className="py-3 px-4">Đối Tượng</th>
-                  <th className="py-3 px-4">Trạng Thái &amp; Resend ID</th>
+                  <th className="py-3 px-4">Trạng Thái &amp; Tài Khoản Gửi</th>
                   <th className="py-3 px-4 text-right">Hành Động</th>
                 </tr>
               </thead>
@@ -1162,22 +1487,15 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
                           )}
                         </div>
 
-                        {/* Display Resend Tracking Email ID if available */}
+                        {/* Account or Resend ID info */}
+                        {recip.sentByAccount && (
+                          <div className="text-[10px] font-mono text-slate-500">
+                            Gửi qua: <span className="text-emerald-700 font-bold">{recip.sentByAccount}</span>
+                          </div>
+                        )}
                         {recip.resendEmailId && (
-                          <div className="flex items-center gap-1 text-[10px] font-mono text-slate-500">
-                            <span>Resend ID:</span>
-                            <span className="text-indigo-600 font-bold">{recip.resendEmailId.slice(0, 14)}...</span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                navigator.clipboard.writeText(recip.resendEmailId || '');
-                                showToast('Đã chép Resend Email ID!');
-                              }}
-                              className="p-0.5 hover:text-slate-800"
-                              title="Sao chép Resend ID"
-                            >
-                              <Copy className="w-3 h-3" />
-                            </button>
+                          <div className="text-[10px] font-mono text-slate-500">
+                            Resend: <span className="text-indigo-600 font-bold">{recip.resendEmailId.slice(0, 12)}...</span>
                           </div>
                         )}
                       </td>
@@ -1186,7 +1504,8 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
                           type="button"
                           onClick={() => {
                             if (!selectedTemplate) return;
-                            sendEmailToRecipient(recip, selectedTemplate);
+                            const testGmail = sendProvider === 'gmail_pool' ? (readyGmailAccounts[0] || gmailPool[0]) : undefined;
+                            sendEmailToRecipient(recip, selectedTemplate, testGmail);
                           }}
                           className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[11px] transition-colors cursor-pointer"
                           title="Gửi riêng email này ngay"
@@ -1217,7 +1536,7 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
           <div className="flex items-center justify-between text-slate-400 pb-2 border-b border-slate-800">
             <span className="font-bold text-slate-300 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>Nhật Ký Điều Phối Resend (Live Dispatch Logs)</span>
+              <span>Nhật Ký Điều Phối Email (Live Dispatch Logs)</span>
             </span>
             <button
               type="button"
@@ -1244,6 +1563,120 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
                 </span>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* POPUP MODAL: Hướng dẫn tạo Mật khẩu ứng dụng (App Password) cho Gmail */}
+      {showGmailHelpModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-xl rounded-3xl p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-5 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="text-lg font-black text-slate-900 flex items-center gap-2.5">
+                <span className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold">
+                  G
+                </span>
+                <span>Cách Tạo Mật Khẩu Ứng Dụng (App Password) Cho Gmail</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowGmailHelpModal(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Google yêu cầu sử dụng <strong>Mật khẩu ứng dụng (16 chữ cái)</strong> thay cho mật khẩu đăng nhập thông thường để gửi email qua SMTP/phần mềm an toàn. Mỗi tài khoản Gmail chỉ mất 1 phút cài đặt:
+            </p>
+
+            <div className="space-y-3 text-xs">
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-start gap-3">
+                <span className="w-6 h-6 rounded-full bg-[#174ea6] text-white font-bold text-xs flex items-center justify-center shrink-0">
+                  1
+                </span>
+                <div>
+                  <h4 className="font-bold text-slate-900">Bật Xác Minh 2 Bước (2-Step Verification)</h4>
+                  <p className="text-slate-600 mt-0.5">
+                    Đăng nhập tài khoản Gmail tại{' '}
+                    <a
+                      href="https://myaccount.google.com/security"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-indigo-600 font-bold underline"
+                    >
+                      myaccount.google.com/security
+                    </a>
+                    , đảm bảo mục <strong>"Xác minh 2 bước"</strong> đang ở trạng thái <strong>BẬT</strong>.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-start gap-3">
+                <span className="w-6 h-6 rounded-full bg-[#174ea6] text-white font-bold text-xs flex items-center justify-center shrink-0">
+                  2
+                </span>
+                <div>
+                  <h4 className="font-bold text-slate-900">Truy cập Trang Mật Khẩu Ứng Dụng</h4>
+                  <p className="text-slate-600 mt-0.5">
+                    Truy cập trực tiếp liên kết:{' '}
+                    <a
+                      href="https://myaccount.google.com/apppasswords"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-indigo-600 font-bold underline inline-flex items-center gap-1"
+                    >
+                      myaccount.google.com/apppasswords <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-start gap-3">
+                <span className="w-6 h-6 rounded-full bg-[#174ea6] text-white font-bold text-xs flex items-center justify-center shrink-0">
+                  3
+                </span>
+                <div>
+                  <h4 className="font-bold text-slate-900">Đặt tên &amp; Tạo Mật Khẩu</h4>
+                  <p className="text-slate-600 mt-0.5">
+                    Nhập tên ứng dụng (VD: <code>KBIT Email Sender</code>) rồi bấm nút <strong>Tạo (Create)</strong>.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-start gap-3">
+                <span className="w-6 h-6 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                  4
+                </span>
+                <div>
+                  <h4 className="font-bold text-emerald-900">Sao Chép &amp; Dán Vào CMS</h4>
+                  <p className="text-emerald-800 mt-0.5">
+                    Google sẽ hiển thị mã 16 chữ cái (ví dụ: <code>abcd efgh ijkl mnop</code>). Sao chép và dán vào ô Mật khẩu ứng dụng của tài khoản tương ứng trong cụm 5 Gmail.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1">
+              <p className="font-bold flex items-center gap-1.5">
+                <Zap className="w-4 h-4 text-amber-600" />
+                <span>Hiệu quả 5 tài khoản Gmail = 2,500 email / ngày:</span>
+              </p>
+              <p className="text-[11.5px] leading-relaxed text-amber-800">
+                Khi cấu hình xong cả 5 tài khoản, hệ thống sẽ tự động xoay vòng gửi lần lượt qua từng tài khoản. Mỗi tài khoản dừng lại khi đạt đúng 500 email, tổng cộng cả ngày bạn có thể gửi tới <strong>2,500 thư mời hoàn toàn miễn phí</strong>!
+              </p>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setShowGmailHelpModal(false)}
+                className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer shadow-xs"
+              >
+                Đã Hiểu &amp; Đóng Hướng Dẫn
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1378,28 +1811,56 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
           <div className="bg-white w-full max-w-xl rounded-3xl p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-5 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="text-lg font-black text-slate-900 flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black">
-                  R
-                </div>
-                <span>Cấu Hình Gửi Email Bằng Resend</span>
+                <Settings className="w-5 h-5 text-indigo-600" />
+                <span>Cấu Hình Thông Tin Người Gửi &amp; Resend API</span>
               </h3>
-              <a
-                href="https://resend.com"
-                target="_blank"
-                rel="noreferrer"
-                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+              <button
+                type="button"
+                onClick={() => setShowConfigModal(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer"
               >
-                resend.com <ExternalLink className="w-3 h-3" />
-              </a>
+                ✕
+              </button>
             </div>
 
             <div className="space-y-4">
-              {/* Resend API Key Input Box */}
+              {/* Sender Name */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Tên Người Gửi Hiển Thị (Sender Name)
+                </label>
+                <input
+                  type="text"
+                  value={campaign.senderName || ''}
+                  onChange={(e) => updateEmailCampaignConfig({ senderName: e.target.value })}
+                  placeholder="VD: Ban Tổ Chức Hội Thảo Thẩm Mỹ Việt – Hàn 2026"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs outline-none focus:border-indigo-600"
+                />
+              </div>
+
+              {/* Reply-To Email */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Email Nhận Phản Hồi (Reply-To Email)
+                </label>
+                <input
+                  type="email"
+                  value={campaign.replyToEmail || ''}
+                  onChange={(e) => updateEmailCampaignConfig({ replyToEmail: e.target.value })}
+                  placeholder="support@kbitassociation.com"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-mono outline-none focus:border-indigo-600"
+                />
+                <p className="text-[10.5px] text-slate-500 mt-1">
+                  Khi khách mời bấm "Trả lời (Reply)", thư sẽ gửi trực tiếp đến địa chỉ này của Ban Thư Ký.
+                </p>
+              </div>
+
+              {/* Resend API Section */}
               <div className="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-200/80 space-y-2.5">
                 <div className="flex items-center justify-between">
                   <label className="block text-xs font-black text-indigo-950 flex items-center gap-1.5">
                     <Key className="w-3.5 h-3.5 text-indigo-600" />
-                    <span>Khóa Resend API Key (*)</span>
+                    <span>Khóa Resend API Key (Tùy chọn)</span>
                   </label>
                   <a
                     href="https://resend.com/api-keys"
@@ -1421,7 +1882,22 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
                   />
                   <button
                     type="button"
-                    onClick={() => handleVerifyResendKey()}
+                    onClick={async () => {
+                      if (!campaign.resendApiKey) {
+                        alert('Vui lòng nhập Resend API Key');
+                        return;
+                      }
+                      setIsVerifyingResendKey(true);
+                      try {
+                        const res = await fetch(`/api/send-email?action=verify&apiKey=${encodeURIComponent(campaign.resendApiKey)}`);
+                        const d = await res.json();
+                        setIsVerifyingResendKey(false);
+                        setResendVerifyResult({ tested: true, valid: d.valid, message: d.message, domains: d.domains });
+                      } catch (e: any) {
+                        setIsVerifyingResendKey(false);
+                        setResendVerifyResult({ tested: true, valid: false, message: e.message });
+                      }
+                    }}
                     disabled={isVerifyingResendKey}
                     className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shrink-0 flex items-center gap-1.5 cursor-pointer shadow-xs"
                   >
@@ -1434,101 +1910,18 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
                   </button>
                 </div>
 
-                {/* Test Result Message */}
                 {resendVerifyResult && (
                   <div
-                    className={`p-3 rounded-xl text-xs font-medium ${
+                    className={`p-2.5 rounded-xl text-xs font-medium ${
                       resendVerifyResult.valid
-                        ? 'bg-emerald-100/80 text-emerald-900 border border-emerald-300'
-                        : 'bg-rose-100/80 text-rose-900 border border-rose-300'
+                        ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                        : 'bg-rose-100 text-rose-900 border border-rose-300'
                     }`}
                   >
-                    <div className="flex items-center gap-1.5 font-bold">
-                      {resendVerifyResult.valid ? (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      ) : (
-                        <AlertCircle className="w-4 h-4 text-rose-600" />
-                      )}
-                      <span>{resendVerifyResult.message}</span>
-                    </div>
-                    {resendVerifyResult.domains && resendVerifyResult.domains.length > 0 && (
-                      <div className="mt-1.5 text-[11px] text-emerald-800">
-                        Tên miền đã xác thực: <strong>{resendVerifyResult.domains.map((d: any) => d.name).join(', ')}</strong>
-                      </div>
-                    )}
+                    {resendVerifyResult.valid ? '🟢 ' : '🔴 '}
+                    {resendVerifyResult.message}
                   </div>
                 )}
-
-                <p className="text-[11px] text-indigo-800 leading-relaxed">
-                  💡 Khóa Resend bắt đầu bằng <code>re_</code>. Bạn có thể tạo miễn phí trong 30 giây để gửi 3,000 email/tháng (100 email/ngày) không mất phí.
-                </p>
-              </div>
-
-              {/* Sender Name */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Tên Người Gửi (Sender Name)
-                </label>
-                <input
-                  type="text"
-                  value={campaign.senderName || ''}
-                  onChange={(e) => updateEmailCampaignConfig({ senderName: e.target.value })}
-                  placeholder="VD: Ban Tổ Chức Hội Thảo Thẩm Mỹ Việt – Hàn 2026"
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs outline-none focus:border-indigo-600"
-                />
-              </div>
-
-              {/* Sender Email with Resend Presets */}
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">
-                  Địa Chỉ Email Gửi (Sender Email)
-                </label>
-                <input
-                  type="email"
-                  value={campaign.senderEmail || ''}
-                  onChange={(e) => updateEmailCampaignConfig({ senderEmail: e.target.value })}
-                  placeholder="onboarding@resend.dev"
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-mono outline-none focus:border-indigo-600"
-                />
-
-                {/* Quick Presets */}
-                <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
-                  <span className="text-[10.5px] text-slate-500">Mẫu sẵn:</span>
-                  <button
-                    type="button"
-                    onClick={() => updateEmailCampaignConfig({ senderEmail: 'onboarding@resend.dev' })}
-                    className="px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-[10.5px] font-mono font-medium text-slate-700 cursor-pointer"
-                  >
-                    onboarding@resend.dev (Mặc định miễn phí)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => updateEmailCampaignConfig({ senderEmail: 'invitation@kbitassociation.com' })}
-                    className="px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-[10.5px] font-mono font-medium text-slate-700 cursor-pointer"
-                  >
-                    invitation@kbitassociation.com
-                  </button>
-                </div>
-                <p className="text-[10.5px] text-slate-500">
-                  * Nếu bạn chưa cấu hình DNS tên miền riêng trên Resend, hãy dùng <code>onboarding@resend.dev</code> để gửi được ngay.
-                </p>
-              </div>
-
-              {/* Reply-To Email */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Email Nhận Phản Hồi (Reply-To Email)
-                </label>
-                <input
-                  type="email"
-                  value={campaign.replyToEmail || ''}
-                  onChange={(e) => updateEmailCampaignConfig({ replyToEmail: e.target.value })}
-                  placeholder="support@kbitassociation.com"
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-mono outline-none focus:border-indigo-600"
-                />
-                <p className="text-[10.5px] text-slate-500 mt-1">
-                  Khi khách mời bấm "Trả lời (Reply)", email sẽ gửi trực tiếp đến địa chỉ này của Ban Thư Ký.
-                </p>
               </div>
             </div>
 
@@ -1540,7 +1933,7 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
                 type="button"
                 onClick={() => {
                   setShowConfigModal(false);
-                  showToast('Đã lưu cấu hình Resend thành công!');
+                  showToast('Đã lưu cấu hình thành công!');
                 }}
                 className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer shadow-xs"
               >

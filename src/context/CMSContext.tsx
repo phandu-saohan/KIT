@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { CMSData, EventDetails, ExpertSpeaker, AgendaItem, HighlightItem, Partner, AttendeeBadge, FooterConfig, AdminAccountConfig, SEOConfig, EmailCampaignConfig, EmailRecipient, EmailTemplate } from '../types';
+import { CMSData, EventDetails, ExpertSpeaker, AgendaItem, HighlightItem, Partner, AttendeeBadge, FooterConfig, AdminAccountConfig, SEOConfig, EmailCampaignConfig, EmailRecipient, EmailTemplate, GmailSenderAccount } from '../types';
 import {
   EVENT_DETAILS as DEFAULT_EVENT_DETAILS,
   LEADING_EXPERTS as DEFAULT_EXPERTS,
@@ -181,6 +181,11 @@ interface CMSContextType {
   updateEmailRecipientStatus: (id: string, status: EmailRecipient['status'], error?: string, resendEmailId?: string) => void;
   bulkAddEmailRecipients: (recipients: EmailRecipient[]) => void;
   resetEmailRecipientsStatus: () => void;
+  updateGmailSenderAccount: (id: string, updated: Partial<GmailSenderAccount>) => void;
+  addGmailSenderAccount: (acc: GmailSenderAccount) => void;
+  removeGmailSenderAccount: (id: string) => void;
+  incrementGmailSentToday: (id: string) => void;
+  resetGmailDailyQuotas: () => void;
   resetToDefaults: () => void;
   clearAllCacheAndReload: () => void;
   exportDataToJson: () => void;
@@ -260,7 +265,26 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           footerConfig: { ...DEFAULT_FOOTER_CONFIG, ...(parsed.footerConfig || {}) },
           adminAccount: { ...DEFAULT_ADMIN_ACCOUNT, ...(parsed.adminAccount || {}) },
           seoConfig: { ...DEFAULT_SEO_CONFIG, ...(parsed.seoConfig || {}) },
-          emailCampaignConfig: { ...DEFAULT_EMAIL_CAMPAIGN, ...(parsed.emailCampaignConfig || {}) },
+          emailCampaignConfig: (() => {
+            const today = new Date().toISOString().slice(0, 10);
+            const savedCfg = parsed.emailCampaignConfig ? { ...DEFAULT_EMAIL_CAMPAIGN, ...parsed.emailCampaignConfig } : DEFAULT_EMAIL_CAMPAIGN;
+            let pool: GmailSenderAccount[] = savedCfg.gmailPool && savedCfg.gmailPool.length > 0 ? savedCfg.gmailPool : DEFAULT_EMAIL_CAMPAIGN.gmailPool || [];
+
+            // If new day, automatically reset daily quota counters for all Gmail accounts
+            if (savedCfg.gmailQuotaResetDate !== today) {
+              pool = pool.map((acc: GmailSenderAccount) => ({
+                ...acc,
+                sentToday: 0,
+                status: acc.status === 'quota_reached' ? 'ready' : acc.status,
+              }));
+              savedCfg.gmailQuotaResetDate = today;
+            }
+
+            return {
+              ...savedCfg,
+              gmailPool: pool,
+            };
+          })(),
         };
       }
     } catch (e) {
@@ -751,6 +775,94 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
+  const updateGmailSenderAccount = (id: string, updated: Partial<GmailSenderAccount>) => {
+    setCmsData((prev) => {
+      const cfg = prev.emailCampaignConfig || DEFAULT_EMAIL_CAMPAIGN;
+      const pool = cfg.gmailPool || DEFAULT_EMAIL_CAMPAIGN.gmailPool || [];
+      return {
+        ...prev,
+        emailCampaignConfig: {
+          ...cfg,
+          gmailPool: pool.map((acc) => (acc.id === id ? { ...acc, ...updated } : acc)),
+        },
+      };
+    });
+  };
+
+  const addGmailSenderAccount = (acc: GmailSenderAccount) => {
+    setCmsData((prev) => {
+      const cfg = prev.emailCampaignConfig || DEFAULT_EMAIL_CAMPAIGN;
+      const pool = cfg.gmailPool || DEFAULT_EMAIL_CAMPAIGN.gmailPool || [];
+      return {
+        ...prev,
+        emailCampaignConfig: {
+          ...cfg,
+          gmailPool: [...pool, acc],
+        },
+      };
+    });
+  };
+
+  const removeGmailSenderAccount = (id: string) => {
+    setCmsData((prev) => {
+      const cfg = prev.emailCampaignConfig || DEFAULT_EMAIL_CAMPAIGN;
+      const pool = cfg.gmailPool || DEFAULT_EMAIL_CAMPAIGN.gmailPool || [];
+      return {
+        ...prev,
+        emailCampaignConfig: {
+          ...cfg,
+          gmailPool: pool.filter((acc) => acc.id !== id),
+        },
+      };
+    });
+  };
+
+  const incrementGmailSentToday = (id: string) => {
+    setCmsData((prev) => {
+      const cfg = prev.emailCampaignConfig || DEFAULT_EMAIL_CAMPAIGN;
+      const pool = cfg.gmailPool || DEFAULT_EMAIL_CAMPAIGN.gmailPool || [];
+      return {
+        ...prev,
+        emailCampaignConfig: {
+          ...cfg,
+          gmailPool: pool.map((acc) => {
+            if (acc.id === id) {
+              const nextSent = (acc.sentToday || 0) + 1;
+              const quota = acc.dailyQuota || 500;
+              return {
+                ...acc,
+                sentToday: nextSent,
+                status: nextSent >= quota ? 'quota_reached' : acc.status,
+                lastUsedAt: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+              };
+            }
+            return acc;
+          }),
+        },
+      };
+    });
+  };
+
+  const resetGmailDailyQuotas = () => {
+    const today = new Date().toISOString().slice(0, 10);
+    setCmsData((prev) => {
+      const cfg = prev.emailCampaignConfig || DEFAULT_EMAIL_CAMPAIGN;
+      const pool = cfg.gmailPool || DEFAULT_EMAIL_CAMPAIGN.gmailPool || [];
+      return {
+        ...prev,
+        emailCampaignConfig: {
+          ...cfg,
+          gmailQuotaResetDate: today,
+          gmailPool: pool.map((acc) => ({
+            ...acc,
+            sentToday: 0,
+            status: acc.status === 'quota_reached' ? 'ready' : acc.status,
+          })),
+        },
+      };
+    });
+  };
+
   const addImageToLibrary = (imageUrl: string) => {
     if (!imageUrl) return;
     setCmsData((prev) => {
@@ -910,6 +1022,11 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateEmailRecipientStatus,
         bulkAddEmailRecipients,
         resetEmailRecipientsStatus,
+        updateGmailSenderAccount,
+        addGmailSenderAccount,
+        removeGmailSenderAccount,
+        incrementGmailSentToday,
+        resetGmailDailyQuotas,
         resetToDefaults,
         clearAllCacheAndReload,
         exportDataToJson,

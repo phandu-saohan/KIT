@@ -226,6 +226,19 @@ export interface SEOConfig {
   customHeadTags?: string;
 }
 
+export interface GmailSenderAccount {
+  id: string;
+  email: string;
+  appPassword: string; // 16-character Google App Password
+  senderDisplayName?: string;
+  dailyQuota: number; // default: 500
+  sentToday: number; // sent count today
+  lastUsedAt?: string;
+  isActive: boolean;
+  status: 'ready' | 'quota_reached' | 'error' | 'disabled';
+  lastError?: string;
+}
+
 export interface EmailRecipient {
   id: string;
   name: string;
@@ -236,6 +249,7 @@ export interface EmailRecipient {
   sentAt?: string;
   errorMessage?: string;
   resendEmailId?: string;
+  sentByAccount?: string; // e.g. "acc1@gmail.com"
 }
 
 export interface EmailTemplate {
@@ -250,9 +264,11 @@ export interface EmailCampaignConfig {
   senderName: string;
   senderEmail: string;
   replyToEmail: string;
-  sendProvider?: 'resend' | 'simulation';
+  sendProvider?: 'gmail_pool' | 'resend' | 'simulation';
   resendApiKey?: string;
   resendDomain?: string;
+  gmailPool?: GmailSenderAccount[];
+  gmailQuotaResetDate?: string; // YYYY-MM-DD
   smtpHost?: string;
   smtpPort?: number;
   smtpUser?: string;
