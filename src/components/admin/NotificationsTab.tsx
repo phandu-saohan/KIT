@@ -15,6 +15,8 @@ import {
   ToggleRight,
   Sparkles,
   FileText,
+  Server,
+  Settings,
 } from "lucide-react";
 import { useCMS } from "../../context/CMSContext";
 import { ConfirmEmailTemplate } from "../../types";
@@ -25,7 +27,15 @@ interface NotificationsTabProps {
 }
 
 export const NotificationsTab: React.FC<NotificationsTabProps> = ({ showToast }) => {
-  const { cmsData, updateConfirmEmailTemplate, saveConfirmEmailTemplateToCloud, saveCmsToCloud } = useCMS();
+  const {
+    cmsData,
+    updateConfirmEmailTemplate,
+    saveConfirmEmailTemplateToCloud,
+    saveCmsToCloud,
+    updateHostingerSenderAccount,
+    updateEmailCampaignConfig,
+    setActiveAdminTab,
+  } = useCMS();
 
   const tpl: ConfirmEmailTemplate =
     cmsData.confirmEmailTemplate || DEFAULT_CONFIRM_EMAIL_TEMPLATE;
@@ -38,6 +48,10 @@ export const NotificationsTab: React.FC<NotificationsTabProps> = ({ showToast })
   const [isSendingTest, setIsSendingTest] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [hostingerVerifyState, setHostingerVerifyState] = useState<{ testing: boolean; result: { ok: boolean; msg: string } | null }>({
+    testing: false,
+    result: null,
+  });
 
   const sampleName = "TS.BS. Nguyễn Văn Hùng";
   const sampleCode = "KBIT-DOC-8899";
@@ -57,10 +71,15 @@ export const NotificationsTab: React.FC<NotificationsTabProps> = ({ showToast })
 
     try {
       const okCloud = await saveConfirmEmailTemplateToCloud(draft);
+      if (cmsData.emailCampaignConfig) {
+        try {
+          localStorage.setItem('kbit_email_campaign_config', JSON.stringify(cmsData.emailCampaignConfig));
+        } catch {}
+      }
       const okFull = await saveCmsToCloud({ ...cmsData, confirmEmailTemplate: draft });
       setIsSaving(false);
       if (okCloud || okFull) {
-        showToast("✅ Đã lưu cấu hình email xác nhận và đồng bộ Vercel Postgres thành công!");
+        showToast("✅ Đã lưu cấu hình Email Xác Nhận & thông tin Hostinger SMTP vào Vercel Postgres!");
       } else {
         showToast("✅ Đã lưu cấu hình email xác nhận vào trình duyệt!");
       }
@@ -207,17 +226,176 @@ export const NotificationsTab: React.FC<NotificationsTabProps> = ({ showToast })
         </button>
       </div>
 
-      {/* Provider info */}
-      <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 flex items-start gap-3">
-        <Info className="w-4 h-4 text-[#174ea6] mt-0.5 shrink-0" />
-        <div className="text-[12.5px] text-slate-600 leading-relaxed">
-          <span className="font-bold text-[#174ea6]">Provider gửi email: </span>
-          Email xác nhận dùng cấu hình provider từ tab{" "}
-          <span className="font-bold">Gửi Email Thư Mời</span> (Hostinger / Gmail / Resend). Đảm bảo đã cấu hình SMTP
-          trước khi bật tính năng này. Provider hiện tại:{" "}
-          <strong className="text-[#174ea6]">{campaign?.sendProvider || "hostinger"}</strong>
-        </div>
-      </div>
+      {/* Hostinger SMTP Configuration Card */}
+      {(() => {
+        const hostingerList = campaign?.hostingerPool || [];
+        const primaryHostinger = hostingerList[0] || {
+          id: 'hostinger-1',
+          email: 'bantin@kbit-symposium.com',
+          password: '',
+          smtpHost: 'smtp.hostinger.com',
+          smtpPort: 465,
+          secure: true,
+          senderDisplayName: 'Ban Tổ Chức Hội Nghị Thẩm Mỹ Việt – Hàn',
+          dailyQuota: 1000,
+          sentToday: 0,
+          isActive: true,
+          status: 'ready',
+        };
+
+        return (
+          <div className="rounded-2xl border border-purple-200 bg-gradient-to-br from-purple-50/70 via-white to-indigo-50/50 p-5 space-y-4 shadow-2xs">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-purple-100 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-xs shrink-0">
+                  <Server className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-[#002045] flex items-center gap-2">
+                    <span>Kết Nối Máy Chủ Hostinger SMTP</span>
+                    {primaryHostinger.password ? (
+                      <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10.5px] font-bold">
+                        Đã cấu hình
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10.5px] font-bold">
+                        Cần nhập mật khẩu
+                      </span>
+                    )}
+                  </h3>
+                  <p className="text-[12px] text-slate-500">
+                    Cổng gửi email chính thức qua tên miền riêng Hostinger (Hạn mức 1,000 email/ngày)
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!primaryHostinger.email || !primaryHostinger.password) {
+                      setHostingerVerifyState({
+                        testing: false,
+                        result: { ok: false, msg: 'Vui lòng nhập đầy đủ Email và Mật khẩu Hostinger.' },
+                      });
+                      return;
+                    }
+                    setHostingerVerifyState({ testing: true, result: null });
+                    try {
+                      const res = await fetch('/api/send-email?action=verify_hostinger&user=' + encodeURIComponent(primaryHostinger.email.trim()) + '&pass=' + encodeURIComponent(primaryHostinger.password.trim()) + '&host=' + encodeURIComponent(primaryHostinger.smtpHost || 'smtp.hostinger.com') + '&port=' + (primaryHostinger.smtpPort || 465));
+                      const data = await res.json().catch(() => ({}));
+                      if (data.valid) {
+                        setHostingerVerifyState({ testing: false, result: { ok: true, msg: '🟢 Kết nối SMTP Hostinger thành công 100%!' } });
+                        showToast('✅ Kết nối SMTP Hostinger thành công!');
+                      } else {
+                        setHostingerVerifyState({ testing: false, result: { ok: false, msg: data.message || 'Lỗi đăng nhập SMTP Hostinger.' } });
+                      }
+                    } catch (e: any) {
+                      setHostingerVerifyState({ testing: false, result: { ok: false, msg: 'Lỗi mạng khi kiểm tra Hostinger: ' + (e?.message || String(e)) } });
+                    }
+                  }}
+                  disabled={hostingerVerifyState.testing}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-all cursor-pointer disabled:opacity-60 shadow-xs shrink-0"
+                >
+                  {hostingerVerifyState.testing ? (
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                  )}
+                  <span>Kiểm Tra Kết Nối SMTP</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Fields */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  Email Hostinger (Tên Miền Riêng)
+                </label>
+                <input
+                  type="email"
+                  value={primaryHostinger.email || ''}
+                  onChange={(e) => updateHostingerSenderAccount(primaryHostinger.id, { email: e.target.value.trim() })}
+                  placeholder="bantin@kbit-symposium.com"
+                  className="w-full h-9 px-3 rounded-xl border border-purple-200 bg-white text-xs font-mono text-slate-800 outline-none focus:border-purple-600"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  Mật Khẩu Hòm Thư Hostinger
+                </label>
+                <input
+                  type="password"
+                  value={primaryHostinger.password || ''}
+                  onChange={(e) => updateHostingerSenderAccount(primaryHostinger.id, { password: e.target.value })}
+                  placeholder="Nhập mật khẩu email..."
+                  className="w-full h-9 px-3 rounded-xl border border-purple-200 bg-white text-xs font-mono text-slate-800 outline-none focus:border-purple-600"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  Máy Chủ SMTP
+                </label>
+                <input
+                  type="text"
+                  value={primaryHostinger.smtpHost || 'smtp.hostinger.com'}
+                  onChange={(e) => updateHostingerSenderAccount(primaryHostinger.id, { smtpHost: e.target.value.trim() })}
+                  className="w-full h-9 px-3 rounded-xl border border-purple-200 bg-white text-xs font-mono text-slate-800 outline-none focus:border-purple-600"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  Cổng (Port &amp; SSL)
+                </label>
+                <select
+                  value={primaryHostinger.smtpPort || 465}
+                  onChange={(e) => updateHostingerSenderAccount(primaryHostinger.id, { smtpPort: Number(e.target.value), secure: Number(e.target.value) === 465 })}
+                  className="w-full h-9 px-3 rounded-xl border border-purple-200 bg-white text-xs font-mono text-slate-800 outline-none focus:border-purple-600"
+                >
+                  <option value={465}>465 (SSL - Khuyên dùng)</option>
+                  <option value={587}>587 (TLS / STARTTLS)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Test Result Message */}
+            {hostingerVerifyState.result && (
+              <div
+                className={`p-3 rounded-xl text-xs font-bold leading-relaxed flex items-center gap-2 ${
+                  hostingerVerifyState.result.ok
+                    ? 'bg-emerald-50 text-emerald-900 border border-emerald-200'
+                    : 'bg-rose-50 text-rose-900 border border-rose-200'
+                }`}
+              >
+                {hostingerVerifyState.result.ok ? (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                )}
+                <span>{hostingerVerifyState.result.msg}</span>
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-[11.5px] text-slate-500 pt-1">
+              <span>
+                💡 Sau khi nhập mật khẩu hòm thư Hostinger, hãy bấm <strong>Lưu cấu hình</strong> ở góc trên để lưu vĩnh viễn vào Vercel Postgres.
+              </span>
+              <button
+                type="button"
+                onClick={() => setActiveAdminTab('email')}
+                className="text-purple-700 hover:text-purple-900 font-bold inline-flex items-center gap-1 cursor-pointer underline"
+              >
+                <Settings className="w-3.5 h-3.5" />
+                <span>Xem chi tiết quản lý cụm SMTP trong tab Gửi Email Thư Mời</span>
+              </button>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Sub-tabs */}
       <div className="rounded-2xl border border-[#e2eaf8] bg-white overflow-hidden">
