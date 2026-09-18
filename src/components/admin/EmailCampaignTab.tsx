@@ -23,6 +23,7 @@ import {
   Clock,
   ShieldCheck,
   ArrowRight,
+  Save,
   UserCheck,
   Layers,
   FileText,
@@ -67,7 +68,40 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
     removeHostingerSenderAccount,
     incrementHostingerSentToday,
     resetHostingerDailyQuotas,
+    saveEmailCampaignToCloud,
+    saveCmsToCloud,
   } = useCMS();
+
+  const [isSavingCloud, setIsSavingCloud] = useState(false);
+  const [saveCloudSuccessTick, setSaveCloudSuccessTick] = useState(false);
+
+  const handleSaveEmailConfigToCloud = async () => {
+    setIsSavingCloud(true);
+    try {
+      if (cmsData.emailCampaignConfig) {
+        try {
+          localStorage.setItem('kbit_email_campaign_config', JSON.stringify(cmsData.emailCampaignConfig));
+        } catch (e) {
+          console.warn('kbit_email_campaign_config save error:', e);
+        }
+      }
+      const cloudSuccess = await saveEmailCampaignToCloud(cmsData.emailCampaignConfig);
+      const fullSuccess = await saveCmsToCloud(cmsData);
+      const ok = cloudSuccess || fullSuccess;
+      setIsSavingCloud(false);
+      setSaveCloudSuccessTick(true);
+      setTimeout(() => setSaveCloudSuccessTick(false), 3500);
+
+      if (ok) {
+        showToast('✅ Đã lưu cấu hình Email Thư mời và đồng bộ Vercel Postgres thành công!');
+      } else {
+        showToast('✅ Đã lưu cấu hình Email Thư mời vào bộ nhớ trình duyệt thành công!');
+      }
+    } catch (err: any) {
+      setIsSavingCloud(false);
+      showToast('❌ Lỗi khi lưu cấu hình Email: ' + (err?.message || 'Thử lại'));
+    }
+  };
 
   const campaign = cmsData.emailCampaignConfig || {
     senderName: 'Ban Tổ Chức Hội Thảo Thẩm Mỹ Việt – Hàn 2026',
@@ -1084,6 +1118,36 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
               <span>Cách Lấy Mật Khẩu Gmail</span>
             </button>
           ) : null}
+
+          {/* PROMINENT SAVE TO CLOUD BUTTON */}
+          <button
+            type="button"
+            onClick={handleSaveEmailConfigToCloud}
+            disabled={isSavingCloud}
+            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-xs font-black shadow-md hover:shadow-lg transition-all cursor-pointer active:scale-95 ${
+              saveCloudSuccessTick
+                ? 'bg-emerald-600 hover:bg-emerald-700 ring-2 ring-emerald-300'
+                : 'bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-600 hover:opacity-95 ring-2 ring-emerald-300/50'
+            }`}
+            title="Lưu toàn bộ danh sách email, tài khoản gửi SMTP và nội dung thư mời vào Vercel Postgres"
+          >
+            {isSavingCloud ? (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                <span>Đang lưu vào Vercel Postgres...</span>
+              </>
+            ) : saveCloudSuccessTick ? (
+              <>
+                <CheckCircle2 className="w-4 h-4 text-white" />
+                <span>ĐÃ LƯU VERCEL POSTGRES!</span>
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 text-white" />
+                <span>LƯU VÀO DATABASE VERCEL</span>
+              </>
+            )}
+          </button>
 
           <button
             type="button"
@@ -2864,13 +2928,13 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
               </span>
               <button
                 type="button"
-                onClick={() => {
+                onClick={async () => {
                   setShowConfigModal(false);
-                  showToast('Đã lưu cấu hình thành công!');
+                  await handleSaveEmailConfigToCloud();
                 }}
                 className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer shadow-xs"
               >
-                Hoàn Tất &amp; Lưu
+                Hoàn Tất &amp; Lưu Vào Database
               </button>
             </div>
           </div>

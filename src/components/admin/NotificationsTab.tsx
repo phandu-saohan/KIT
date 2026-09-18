@@ -25,7 +25,7 @@ interface NotificationsTabProps {
 }
 
 export const NotificationsTab: React.FC<NotificationsTabProps> = ({ showToast }) => {
-  const { cmsData, updateConfirmEmailTemplate } = useCMS();
+  const { cmsData, updateConfirmEmailTemplate, saveConfirmEmailTemplateToCloud, saveCmsToCloud } = useCMS();
 
   const tpl: ConfirmEmailTemplate =
     cmsData.confirmEmailTemplate || DEFAULT_CONFIRM_EMAIL_TEMPLATE;
@@ -48,13 +48,26 @@ export const NotificationsTab: React.FC<NotificationsTabProps> = ({ showToast })
       .replace(/\{\{code\}\}/g, code)
       .replace(/\{\{institution\}\}/g, "Bệnh viện Trung ương Quân đội 108");
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsSaving(true);
     updateConfirmEmailTemplate(draft);
-    setTimeout(() => {
+    try {
+      localStorage.setItem('kbit_confirm_email_template', JSON.stringify(draft));
+    } catch {}
+
+    try {
+      const okCloud = await saveConfirmEmailTemplateToCloud(draft);
+      const okFull = await saveCmsToCloud({ ...cmsData, confirmEmailTemplate: draft });
       setIsSaving(false);
-      showToast("✅ Đã lưu cấu hình email xác nhận thành công!");
-    }, 400);
+      if (okCloud || okFull) {
+        showToast("✅ Đã lưu cấu hình email xác nhận và đồng bộ Vercel Postgres thành công!");
+      } else {
+        showToast("✅ Đã lưu cấu hình email xác nhận vào trình duyệt!");
+      }
+    } catch (err: any) {
+      setIsSaving(false);
+      showToast("❌ Lỗi khi lưu vào cơ sở dữ liệu: " + (err?.message || "Thử lại"));
+    }
   };
 
   const buildPreviewHtml = (name: string, code: string) => {

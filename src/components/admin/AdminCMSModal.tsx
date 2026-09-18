@@ -287,6 +287,20 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
           console.warn('kbit_event_details save warning:', e);
         }
       }
+      if (cmsData.emailCampaignConfig) {
+        try {
+          localStorage.setItem('kbit_email_campaign_config', JSON.stringify(cmsData.emailCampaignConfig));
+        } catch (e) {
+          console.warn('kbit_email_campaign_config save warning:', e);
+        }
+      }
+      if (cmsData.confirmEmailTemplate) {
+        try {
+          localStorage.setItem('kbit_confirm_email_template', JSON.stringify(cmsData.confirmEmailTemplate));
+        } catch (e) {
+          console.warn('kbit_confirm_email_template save warning:', e);
+        }
+      }
 
       // 2. Force save to localStorage with safe recovery fallback
       try {

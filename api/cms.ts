@@ -99,6 +99,40 @@ export default async function handler(req: any, res: any) {
         });
       }
 
+      // If specific sub-section update requested for emailCampaign
+      if (cmsPayload.type === 'emailCampaign' && cmsPayload.data) {
+        const emailJson = JSON.stringify(cmsPayload.data);
+        await sql`
+          INSERT INTO cms_data (key, data, updated_at)
+          VALUES ('main', jsonb_build_object('emailCampaignConfig', ${emailJson}::jsonb), CURRENT_TIMESTAMP)
+          ON CONFLICT (key) DO UPDATE SET
+            data = jsonb_set(COALESCE(cms_data.data, '{}'::jsonb), '{emailCampaignConfig}', ${emailJson}::jsonb, true),
+            updated_at = CURRENT_TIMESTAMP;
+        `;
+        return res.status(200).json({
+          success: true,
+          message: 'Lưu cấu hình Email Thư mời vào Vercel Postgres thành công.',
+          updatedAt: new Date().toISOString(),
+        });
+      }
+
+      // If specific sub-section update requested for confirmEmailTemplate
+      if (cmsPayload.type === 'confirmEmailTemplate' && cmsPayload.data) {
+        const confirmJson = JSON.stringify(cmsPayload.data);
+        await sql`
+          INSERT INTO cms_data (key, data, updated_at)
+          VALUES ('main', jsonb_build_object('confirmEmailTemplate', ${confirmJson}::jsonb), CURRENT_TIMESTAMP)
+          ON CONFLICT (key) DO UPDATE SET
+            data = jsonb_set(COALESCE(cms_data.data, '{}'::jsonb), '{confirmEmailTemplate}', ${confirmJson}::jsonb, true),
+            updated_at = CURRENT_TIMESTAMP;
+        `;
+        return res.status(200).json({
+          success: true,
+          message: 'Lưu cấu hình Email Xác nhận vào Vercel Postgres thành công.',
+          updatedAt: new Date().toISOString(),
+        });
+      }
+
       const jsonStr = JSON.stringify(cmsPayload);
 
       await sql`

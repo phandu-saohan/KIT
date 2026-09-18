@@ -214,6 +214,8 @@ interface CMSContextType {
   saveCmsToCloud: (dataToSave?: CMSData) => Promise<boolean>;
   saveSeoToCloud: (seoConfig?: Partial<SEOConfig>) => Promise<boolean>;
   saveEventDetailsToCloud: (eventDetails?: Partial<EventDetails>) => Promise<boolean>;
+  saveEmailCampaignToCloud: (emailCampaignConfig?: Partial<EmailCampaignConfig>) => Promise<boolean>;
+  saveConfirmEmailTemplateToCloud: (confirmEmailTemplate?: Partial<ConfirmEmailTemplate>) => Promise<boolean>;
 }
 
 export const isPathAdmin = (): boolean => {
@@ -238,7 +240,7 @@ export const getInitialAdminTab = (): string => {
   const tabParam = search.get('tab');
   if (tabParam) return tabParam;
   const hash = window.location.hash.replace(/^#\/?admin\/?/, '').replace(/^#/, '');
-  const validTabs = ['general', 'seo', 'speakers', 'agenda', 'media', 'partners', 'highlights', 'registrations', 'email', 'footer'];
+  const validTabs = ['general', 'seo', 'speakers', 'agenda', 'media', 'partners', 'highlights', 'registrations', 'email', 'notifications', 'footer'];
   if (validTabs.includes(hash)) {
     return hash;
   }
@@ -265,6 +267,24 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const savedEvRaw = localStorage.getItem('kbit_event_details');
         if (savedEvRaw) {
           localEventDetails = JSON.parse(savedEvRaw);
+        }
+      } catch {}
+
+      // Check dedicated resilient Email Campaign config storage
+      let localEmailCampaign: Partial<EmailCampaignConfig> | null = null;
+      try {
+        const savedEmailRaw = localStorage.getItem('kbit_email_campaign_config');
+        if (savedEmailRaw) {
+          localEmailCampaign = JSON.parse(savedEmailRaw);
+        }
+      } catch {}
+
+      // Check dedicated resilient Confirmation Template storage
+      let localConfirmTemplate: Partial<ConfirmEmailTemplate> | null = null;
+      try {
+        const savedTplRaw = localStorage.getItem('kbit_confirm_email_template');
+        if (savedTplRaw) {
+          localConfirmTemplate = JSON.parse(savedTplRaw);
         }
       } catch {}
 
@@ -330,19 +350,24 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
             return {
               ...savedCfg,
+              ...(localEmailCampaign || {}),
               gmailPool: pool,
               hostingerPool: hostingerList,
             };
           })(),
-          confirmEmailTemplate: parsed.confirmEmailTemplate
-            ? { ...DEFAULT_CONFIRM_EMAIL_TEMPLATE, ...parsed.confirmEmailTemplate }
-            : DEFAULT_CONFIRM_EMAIL_TEMPLATE,
+          confirmEmailTemplate: {
+            ...DEFAULT_CONFIRM_EMAIL_TEMPLATE,
+            ...(parsed.confirmEmailTemplate || {}),
+            ...(localConfirmTemplate || {}),
+          },
         };
-      } else if (localSeoConfig || localEventDetails) {
+      } else if (localSeoConfig || localEventDetails || localEmailCampaign || localConfirmTemplate) {
         return {
           ...INITIAL_CMS_DATA,
           eventDetails: { ...DEFAULT_EVENT_DETAILS, ...(localEventDetails || {}) },
           seoConfig: { ...DEFAULT_SEO_CONFIG, ...(localSeoConfig || {}) },
+          emailCampaignConfig: { ...DEFAULT_EMAIL_CAMPAIGN, ...(localEmailCampaign || {}) },
+          confirmEmailTemplate: { ...DEFAULT_CONFIRM_EMAIL_TEMPLATE, ...(localConfirmTemplate || {}) },
         };
       }
     } catch (e) {
@@ -404,6 +429,18 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 if (evRaw) localEventDetails = JSON.parse(evRaw);
               } catch {}
 
+              let localEmailCampaign: Partial<EmailCampaignConfig> | null = null;
+              try {
+                const s = localStorage.getItem('kbit_email_campaign_config');
+                if (s) localEmailCampaign = JSON.parse(s);
+              } catch {}
+
+              let localConfirmTemplate: Partial<ConfirmEmailTemplate> | null = null;
+              try {
+                const s = localStorage.getItem('kbit_confirm_email_template');
+                if (s) localConfirmTemplate = JSON.parse(s);
+              } catch {}
+
               // Cloud is the single source of truth across all devices/sessions
               const mergedSeo = {
                 ...DEFAULT_SEO_CONFIG,
@@ -415,6 +452,16 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 ...(localEventDetails || {}),
                 ...(parsedData.eventDetails || {}),
               };
+              const mergedEmailCampaign = {
+                ...DEFAULT_EMAIL_CAMPAIGN,
+                ...(localEmailCampaign || {}),
+                ...(parsedData.emailCampaignConfig || {}),
+              };
+              const mergedConfirmTemplate = {
+                ...DEFAULT_CONFIRM_EMAIL_TEMPLATE,
+                ...(localConfirmTemplate || {}),
+                ...(parsedData.confirmEmailTemplate || {}),
+              };
 
               // Keep dedicated local keys in sync with the cloud so refreshes always show latest data
               try {
@@ -423,19 +470,27 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               try {
                 localStorage.setItem('kbit_event_details', JSON.stringify(mergedEvent));
               } catch {}
+              try {
+                localStorage.setItem('kbit_email_campaign_config', JSON.stringify(mergedEmailCampaign));
+              } catch {}
+              try {
+                localStorage.setItem('kbit_confirm_email_template', JSON.stringify(mergedConfirmTemplate));
+              } catch {}
 
               setCmsData((prev) => {
                 return {
                   ...prev,
                   ...parsedData,
                   seoConfig: mergedSeo,
-                  registrations: cloudRegistrations || parsedData.registrations || prev.registrations,
                   eventDetails: {
                     ...mergedEvent,
                     initialRegistered: cloudRegistrations
                       ? Math.max(mergedEvent.initialRegistered || 0, cloudRegistrations.length)
                       : (mergedEvent.initialRegistered || prev.eventDetails.initialRegistered),
                   },
+                  emailCampaignConfig: mergedEmailCampaign,
+                  confirmEmailTemplate: mergedConfirmTemplate,
+                  registrations: cloudRegistrations || parsedData.registrations || prev.registrations,
                 };
               });
             } else if (!cmsJson.hasCustomData) {
@@ -504,6 +559,64 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     } catch (err) {
       console.warn('Could not sync EventDetails to Vercel Postgres:', err);
+    }
+    return false;
+  };
+
+  // Dedicated lightweight cloud sync for Email Campaign
+  const saveEmailCampaignToCloud = async (customConfig?: Partial<EmailCampaignConfig>): Promise<boolean> => {
+    try {
+      let targetCfg = customConfig || cmsDataRef.current.emailCampaignConfig;
+      try {
+        const savedEmailRaw = localStorage.getItem('kbit_email_campaign_config');
+        if (savedEmailRaw) {
+          targetCfg = { ...DEFAULT_EMAIL_CAMPAIGN, ...(targetCfg || {}), ...JSON.parse(savedEmailRaw) };
+        }
+      } catch {}
+
+      const res = await fetch('/api/cms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'emailCampaign', data: targetCfg }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success) {
+          setIsCloudDbConnected(true);
+          return true;
+        }
+      }
+    } catch (err) {
+      console.warn('Could not sync Email Campaign to Vercel Postgres:', err);
+    }
+    return false;
+  };
+
+  // Dedicated lightweight cloud sync for Confirmation Email Template
+  const saveConfirmEmailTemplateToCloud = async (customTemplate?: Partial<ConfirmEmailTemplate>): Promise<boolean> => {
+    try {
+      let targetTpl = customTemplate || cmsDataRef.current.confirmEmailTemplate;
+      try {
+        const savedTplRaw = localStorage.getItem('kbit_confirm_email_template');
+        if (savedTplRaw) {
+          targetTpl = { ...DEFAULT_CONFIRM_EMAIL_TEMPLATE, ...(targetTpl || {}), ...JSON.parse(savedTplRaw) };
+        }
+      } catch {}
+
+      const res = await fetch('/api/cms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'confirmEmailTemplate', data: targetTpl }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success) {
+          setIsCloudDbConnected(true);
+          return true;
+        }
+      }
+    } catch (err) {
+      console.warn('Could not sync Confirm Email Template to Vercel Postgres:', err);
     }
     return false;
   };
@@ -649,6 +762,16 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             localStorage.setItem('kbit_event_details', JSON.stringify(cmsData.eventDetails));
           } catch {}
         }
+        if (cmsData.emailCampaignConfig) {
+          try {
+            localStorage.setItem('kbit_email_campaign_config', JSON.stringify(cmsData.emailCampaignConfig));
+          } catch {}
+        }
+        if (cmsData.confirmEmailTemplate) {
+          try {
+            localStorage.setItem('kbit_confirm_email_template', JSON.stringify(cmsData.confirmEmailTemplate));
+          } catch {}
+        }
         const json = JSON.stringify(cmsData);
         if (json !== lastSavedJsonRef.current) {
           lastSavedJsonRef.current = json;
@@ -668,6 +791,16 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           if (cmsData.eventDetails) {
             try {
               localStorage.setItem('kbit_event_details', JSON.stringify(cmsData.eventDetails));
+            } catch {}
+          }
+          if (cmsData.emailCampaignConfig) {
+            try {
+              localStorage.setItem('kbit_email_campaign_config', JSON.stringify(cmsData.emailCampaignConfig));
+            } catch {}
+          }
+          if (cmsData.confirmEmailTemplate) {
+            try {
+              localStorage.setItem('kbit_confirm_email_template', JSON.stringify(cmsData.confirmEmailTemplate));
             } catch {}
           }
           const safeData = {
@@ -923,24 +1056,40 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateEmailCampaignConfig = (updated: Partial<EmailCampaignConfig>) => {
-    setCmsData((prev) => ({
-      ...prev,
-      emailCampaignConfig: {
+    setCmsData((prev) => {
+      const merged = {
         ...(prev.emailCampaignConfig || DEFAULT_EMAIL_CAMPAIGN),
         ...updated,
-      },
-    }));
+      };
+      try {
+        localStorage.setItem('kbit_email_campaign_config', JSON.stringify(merged));
+      } catch (e) {
+        console.warn('Failed to persist kbit_email_campaign_config:', e);
+      }
+      return {
+        ...prev,
+        emailCampaignConfig: merged,
+      };
+    });
   };
 
   const updateConfirmEmailTemplate = (updated: Partial<ConfirmEmailTemplate>) => {
-    setCmsData((prev) => ({
-      ...prev,
-      confirmEmailTemplate: {
+    setCmsData((prev) => {
+      const merged = {
         ...(prev.confirmEmailTemplate || DEFAULT_CONFIRM_EMAIL_TEMPLATE),
         ...updated,
         lastUpdated: new Date().toISOString(),
-      },
-    }));
+      };
+      try {
+        localStorage.setItem('kbit_confirm_email_template', JSON.stringify(merged));
+      } catch (e) {
+        console.warn('Failed to persist kbit_confirm_email_template:', e);
+      }
+      return {
+        ...prev,
+        confirmEmailTemplate: merged,
+      };
+    });
   };
 
   const addEmailRecipient = (recipient: EmailRecipient) => {
@@ -1416,6 +1565,8 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         saveCmsToCloud,
         saveSeoToCloud,
         saveEventDetailsToCloud,
+        saveEmailCampaignToCloud,
+        saveConfirmEmailTemplateToCloud,
       }}
     >
       {children}
