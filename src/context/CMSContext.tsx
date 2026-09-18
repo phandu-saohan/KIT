@@ -196,7 +196,16 @@ interface CMSContextType {
   exportDataToJson: () => void;
   importDataFromJson: (jsonStr: string) => boolean;
   addImageToLibrary: (imageUrl: string) => void;
-  uploadImageFile: (file: File) => Promise<string>;
+  uploadImageFile: (
+    file: File,
+    options?: {
+      maxWidth?: number;
+      maxHeight?: number;
+      quality?: number;
+      forceJpeg?: boolean;
+      addToLibrary?: boolean;
+    }
+  ) => Promise<string>;
   isCloudDbConnected: boolean;
   refreshFromCloud: () => Promise<void>;
   saveCmsToCloud: (dataToSave?: CMSData) => Promise<boolean>;
@@ -236,6 +245,15 @@ const CMSContext = createContext<CMSContextType | undefined>(undefined);
 export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [cmsData, setCmsData] = useState<CMSData>(() => {
     try {
+      // Check dedicated resilient SEO storage first
+      let localSeoConfig: Partial<SEOConfig> | null = null;
+      try {
+        const savedSeoRaw = localStorage.getItem('kbit_seo_config');
+        if (savedSeoRaw) {
+          localSeoConfig = JSON.parse(savedSeoRaw);
+        }
+      } catch {}
+
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
@@ -269,7 +287,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           mediaLibrary: parsed.mediaLibrary || DEFAULT_MEDIA_LIBRARY,
           footerConfig: { ...DEFAULT_FOOTER_CONFIG, ...(parsed.footerConfig || {}) },
           adminAccount: { ...DEFAULT_ADMIN_ACCOUNT, ...(parsed.adminAccount || {}) },
-          seoConfig: { ...DEFAULT_SEO_CONFIG, ...(parsed.seoConfig || {}) },
+          seoConfig: { ...DEFAULT_SEO_CONFIG, ...(parsed.seoConfig || {}), ...(localSeoConfig || {}) },
           emailCampaignConfig: (() => {
             const today = new Date().toISOString().slice(0, 10);
             const savedCfg = parsed.emailCampaignConfig ? { ...DEFAULT_EMAIL_CAMPAIGN, ...parsed.emailCampaignConfig } : DEFAULT_EMAIL_CAMPAIGN;
@@ -302,6 +320,11 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               hostingerPool: hostingerList,
             };
           })(),
+        };
+      } else if (localSeoConfig) {
+        return {
+          ...INITIAL_CMS_DATA,
+          seoConfig: { ...DEFAULT_SEO_CONFIG, ...localSeoConfig },
         };
       }
     } catch (e) {
@@ -351,17 +374,32 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           if (cmsJson.success) {
             if (cmsJson.hasCustomData && cmsJson.data) {
               const parsedData = typeof cmsJson.data === 'string' ? JSON.parse(cmsJson.data) : cmsJson.data;
-              setCmsData((prev) => ({
-                ...prev,
-                ...parsedData,
-                registrations: cloudRegistrations || parsedData.registrations || prev.registrations,
-                eventDetails: {
-                  ...parsedData.eventDetails,
-                  initialRegistered: cloudRegistrations
-                    ? Math.max(parsedData.eventDetails?.initialRegistered || 0, cloudRegistrations.length)
-                    : (parsedData.eventDetails?.initialRegistered || prev.eventDetails.initialRegistered),
-                },
-              }));
+              let localSeoConfig: Partial<SEOConfig> | null = null;
+              try {
+                const s = localStorage.getItem('kbit_seo_config');
+                if (s) localSeoConfig = JSON.parse(s);
+              } catch {}
+
+              setCmsData((prev) => {
+                const mergedSeo = {
+                  ...DEFAULT_SEO_CONFIG,
+                  ...(parsedData.seoConfig || {}),
+                  ...(prev.seoConfig || {}),
+                  ...(localSeoConfig || {}),
+                };
+                return {
+                  ...prev,
+                  ...parsedData,
+                  seoConfig: mergedSeo,
+                  registrations: cloudRegistrations || parsedData.registrations || prev.registrations,
+                  eventDetails: {
+                    ...parsedData.eventDetails,
+                    initialRegistered: cloudRegistrations
+                      ? Math.max(parsedData.eventDetails?.initialRegistered || 0, cloudRegistrations.length)
+                      : (parsedData.eventDetails?.initialRegistered || prev.eventDetails.initialRegistered),
+                  },
+                };
+              });
             } else if (!cmsJson.hasCustomData) {
               // Database connected on Vercel but empty -> auto-seed current CMS data to Vercel Postgres!
               saveCmsToCloud(cmsDataRef.current);
@@ -376,7 +414,21 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const saveCmsToCloud = async (dataToSave?: CMSData): Promise<boolean> => {
     try {
-      const payload = dataToSave || cmsDataRef.current;
+      const source = dataToSave || cmsDataRef.current;
+      let currentSeo = source.seoConfig;
+      try {
+        const savedSeoRaw = localStorage.getItem('kbit_seo_config');
+        if (savedSeoRaw) {
+          currentSeo = { ...DEFAULT_SEO_CONFIG, ...(currentSeo || {}), ...JSON.parse(savedSeoRaw) };
+        }
+      } catch {}
+
+      const payload = {
+        ...source,
+        seoConfig: currentSeo,
+        mediaLibrary: (source.mediaLibrary || []).slice(0, 20),
+      };
+
       const res = await fetch('/api/cms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -481,6 +533,11 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const timer = setTimeout(() => {
       try {
+        if (cmsData.seoConfig) {
+          try {
+            localStorage.setItem('kbit_seo_config', JSON.stringify(cmsData.seoConfig));
+          } catch {}
+        }
         const json = JSON.stringify(cmsData);
         if (json !== lastSavedJsonRef.current) {
           lastSavedJsonRef.current = json;
@@ -492,6 +549,11 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } catch (err) {
         console.warn('LocalStorage quota warning or size limit, attempting safe recovery...', err);
         try {
+          if (cmsData.seoConfig) {
+            try {
+              localStorage.setItem('kbit_seo_config', JSON.stringify(cmsData.seoConfig));
+            } catch {}
+          }
           const safeData = {
             ...cmsData,
             mediaLibrary: cmsData.mediaLibrary.slice(0, 3),
@@ -719,13 +781,21 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateSEOConfig = (updated: Partial<SEOConfig>) => {
-    setCmsData((prev) => ({
-      ...prev,
-      seoConfig: {
+    setCmsData((prev) => {
+      const merged = {
         ...(prev.seoConfig || DEFAULT_SEO_CONFIG),
         ...updated,
-      },
-    }));
+      };
+      try {
+        localStorage.setItem('kbit_seo_config', JSON.stringify(merged));
+      } catch (e) {
+        console.warn('Failed to persist kbit_seo_config:', e);
+      }
+      return {
+        ...prev,
+        seoConfig: merged,
+      };
+    });
   };
 
   const updateEmailCampaignConfig = (updated: Partial<EmailCampaignConfig>) => {
@@ -995,18 +1065,25 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!imageUrl) return;
     setCmsData((prev) => {
       if (prev.mediaLibrary.includes(imageUrl)) return prev;
+      // Keep library capped to 24 most recent images to prevent LocalStorage quota overflow
       return {
         ...prev,
-        mediaLibrary: [imageUrl, ...prev.mediaLibrary],
+        mediaLibrary: [imageUrl, ...prev.mediaLibrary].slice(0, 24),
       };
     });
   };
 
-  // Client-side image compression to guarantee lightweight storage (< 250KB) and prevent LocalStorage quota errors
-  const compressImageFile = (file: File, maxWidth = 1920, maxHeight = 1080, quality = 0.82): Promise<string> => {
+  // Client-side image compression to guarantee lightweight storage (< 200KB) and prevent LocalStorage quota errors
+  const compressImageFile = (
+    file: File,
+    maxWidth = 1600,
+    maxHeight = 1000,
+    quality = 0.80,
+    forceJpeg = false
+  ): Promise<string> => {
     return new Promise((resolve, reject) => {
-      if (!file.type.startsWith('image/')) {
-        reject(new Error('Vui lòng chọn định dạng file ảnh (PNG, JPG, WEBP, SVG)'));
+      if (!file.type.startsWith('image/') && !file.name.toLowerCase().endsWith('.ico')) {
+        reject(new Error('Vui lòng chọn định dạng file ảnh (PNG, JPG, WEBP, SVG, ICO)'));
         return;
       }
 
@@ -1029,8 +1106,8 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           // Scale down keeping aspect ratio
           if (width > maxWidth || height > maxHeight) {
             const ratio = Math.min(maxWidth / width, maxHeight / height);
-            width = Math.round(width * ratio);
-            height = Math.round(height * ratio);
+            width = Math.max(1, Math.round(width * ratio));
+            height = Math.max(1, Math.round(height * ratio));
           }
 
           const canvas = document.createElement('canvas');
@@ -1046,12 +1123,25 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           ctx.imageSmoothingQuality = 'high';
           ctx.drawImage(img, 0, 0, width, height);
 
-          const isPngWithAlpha = file.type === 'image/png';
-          let dataUrl = canvas.toDataURL(isPngWithAlpha ? 'image/png' : 'image/jpeg', isPngWithAlpha ? undefined : quality);
-          // If PNG is overly large (> 1.2MB), convert to optimized JPEG to guarantee smooth storage
-          if (isPngWithAlpha && dataUrl.length > 1200000) {
-            dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          const isPng = file.type === 'image/png' || file.name.toLowerCase().endsWith('.png');
+          let dataUrl: string;
+
+          if (forceJpeg || !isPng) {
+            dataUrl = canvas.toDataURL('image/jpeg', quality);
+          } else {
+            // PNG mode
+            dataUrl = canvas.toDataURL('image/png');
+            // If PNG is over 280KB, convert to optimized JPEG to prevent LocalStorage quota crashes
+            if (dataUrl.length > 280000) {
+              dataUrl = canvas.toDataURL('image/jpeg', Math.min(quality, 0.82));
+            }
           }
+
+          // If still over 400KB in base64, compress further to safeguard storage
+          if (dataUrl.length > 400000) {
+            dataUrl = canvas.toDataURL('image/jpeg', 0.72);
+          }
+
           resolve(dataUrl);
         };
         img.onerror = () => reject(new Error('Không thể xử lý hình ảnh này'));
@@ -1062,9 +1152,26 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  const uploadImageFile = async (file: File): Promise<string> => {
-    const result = await compressImageFile(file);
-    addImageToLibrary(result);
+  const uploadImageFile = async (
+    file: File,
+    options?: {
+      maxWidth?: number;
+      maxHeight?: number;
+      quality?: number;
+      forceJpeg?: boolean;
+      addToLibrary?: boolean;
+    }
+  ): Promise<string> => {
+    const maxWidth = options?.maxWidth ?? 1600;
+    const maxHeight = options?.maxHeight ?? 1000;
+    const quality = options?.quality ?? 0.80;
+    const forceJpeg = options?.forceJpeg ?? false;
+    const addToLibrary = options?.addToLibrary ?? true;
+
+    const result = await compressImageFile(file, maxWidth, maxHeight, quality, forceJpeg);
+    if (addToLibrary) {
+      addImageToLibrary(result);
+    }
     return result;
   };
 
@@ -1072,6 +1179,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (window.confirm('Bạn có chắc chắn muốn khôi phục lại toàn bộ nội dung và hình ảnh gốc mặc định của trang? Tất cả thay đổi chỉnh sửa thủ công sẽ được hoàn tác.')) {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem('custom_hero_bg');
+      localStorage.removeItem('kbit_seo_config');
       setCmsData(INITIAL_CMS_DATA);
     }
   };

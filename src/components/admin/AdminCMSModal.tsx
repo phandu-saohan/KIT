@@ -268,14 +268,32 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
   const handleManualSave = async (showFeedback = true): Promise<boolean> => {
     setIsSaving(true);
     try {
-      // 1. Force save to localStorage
+      // 1. Force save SEO to dedicated key first
+      if (cmsData.seoConfig) {
+        try {
+          localStorage.setItem('kbit_seo_config', JSON.stringify(cmsData.seoConfig));
+        } catch (e) {
+          console.warn('kbit_seo_config save warning:', e);
+        }
+      }
+
+      // 2. Force save to localStorage with safe recovery fallback
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(cmsData));
       } catch (e) {
-        console.warn('LocalStorage manual save warning:', e);
+        console.warn('LocalStorage manual save warning, attempting safe recovery...', e);
+        try {
+          const safeData = {
+            ...cmsData,
+            mediaLibrary: cmsData.mediaLibrary.slice(0, 5),
+          };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(safeData));
+        } catch (e2) {
+          console.error('Safe recovery failed:', e2);
+        }
       }
 
-      // 2. Trigger cloud sync if connected
+      // 3. Trigger cloud sync if connected
       let cloudSuccess = false;
       try {
         cloudSuccess = await saveCmsToCloud(cmsData);
@@ -301,6 +319,30 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
       setIsSaving(false);
       showToast('❌ Có lỗi khi lưu: ' + (err?.message || 'Thử lại'));
       return false;
+    }
+  };
+
+  const handleSaveSEO = async () => {
+    setIsSaving(true);
+    try {
+      const currentSeo = cmsData.seoConfig || DEFAULT_SEO_CONFIG;
+      try {
+        localStorage.setItem('kbit_seo_config', JSON.stringify(currentSeo));
+      } catch (e) {
+        console.warn('kbit_seo_config save error:', e);
+      }
+      const cloudSuccess = await handleManualSave(false);
+      setSaveSuccessTick(true);
+      setTimeout(() => setSaveSuccessTick(false), 3500);
+      if (cloudSuccess) {
+        showToast('✅ Đã lưu cấu hình SEO và đồng bộ cơ sở dữ liệu Vercel Postgres thành công!');
+      } else {
+        showToast('✅ Đã lưu cấu hình SEO & hình ảnh chia sẻ thành công! Có hiệu lực ngay.');
+      }
+    } catch (err: any) {
+      showToast('❌ Lỗi khi lưu cấu hình SEO: ' + (err?.message || 'Thử lại'));
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -333,12 +375,27 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
   const handleOgImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       try {
-        const url = await uploadImageFile(e.target.files[0]);
+        setIsSaving(true);
+        const file = e.target.files[0];
+        // Standard OpenGraph dimensions (1200x630) with optimized compression
+        const url = await uploadImageFile(file, {
+          maxWidth: 1200,
+          maxHeight: 630,
+          quality: 0.80,
+          forceJpeg: false,
+          addToLibrary: true,
+        });
         updateSEOConfig({ ogImageUrl: url });
-        showToast('Đã tải và cập nhật ảnh đại diện mạng xã hội (OG Image) thành công!');
+        const updatedSeo = { ...(cmsData.seoConfig || DEFAULT_SEO_CONFIG), ogImageUrl: url };
+        try {
+          localStorage.setItem('kbit_seo_config', JSON.stringify(updatedSeo));
+        } catch {}
+        await handleManualSave(false);
+        showToast('✅ Đã tải và lưu ảnh đại diện mạng xã hội (OG Image) thành công!');
       } catch (err: any) {
         alert(err.message || 'Lỗi tải ảnh');
       } finally {
+        setIsSaving(false);
         e.target.value = '';
       }
     }
@@ -347,12 +404,27 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
   const handleFaviconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       try {
-        const url = await uploadImageFile(e.target.files[0]);
+        setIsSaving(true);
+        const file = e.target.files[0];
+        // Standard Favicon dimensions (128x128)
+        const url = await uploadImageFile(file, {
+          maxWidth: 128,
+          maxHeight: 128,
+          quality: 0.85,
+          forceJpeg: false,
+          addToLibrary: true,
+        });
         updateSEOConfig({ faviconUrl: url });
-        showToast('Đã tải và cập nhật biểu tượng Favicon website thành công!');
+        const updatedSeo = { ...(cmsData.seoConfig || DEFAULT_SEO_CONFIG), faviconUrl: url };
+        try {
+          localStorage.setItem('kbit_seo_config', JSON.stringify(updatedSeo));
+        } catch {}
+        await handleManualSave(false);
+        showToast('✅ Đã tải và lưu biểu tượng Favicon website thành công!');
       } catch (err: any) {
         alert(err.message || 'Lỗi tải favicon');
       } finally {
+        setIsSaving(false);
         e.target.value = '';
       }
     }
@@ -2997,6 +3069,9 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                       type="button"
                       onClick={() => {
                         updateSEOConfig(DEFAULT_SEO_CONFIG);
+                        try {
+                          localStorage.setItem('kbit_seo_config', JSON.stringify(DEFAULT_SEO_CONFIG));
+                        } catch {}
                         showToast('Đã khôi phục toàn bộ cấu hình SEO về chuẩn mặc định!');
                       }}
                       className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-600 transition-colors cursor-pointer"
@@ -3008,7 +3083,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
 
                     <button
                       type="button"
-                      onClick={() => handleManualSave()}
+                      onClick={handleSaveSEO}
                       disabled={isSaving}
                       className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
                     >
@@ -3445,6 +3520,10 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                             type="button"
                             onClick={() => {
                               updateSEOConfig({ faviconUrl: opt.url });
+                              try {
+                                const current = cmsData.seoConfig || DEFAULT_SEO_CONFIG;
+                                localStorage.setItem('kbit_seo_config', JSON.stringify({ ...current, faviconUrl: opt.url }));
+                              } catch {}
                               showToast(`Đã chọn Favicon: ${opt.name}`);
                             }}
                             className={`px-2.5 py-1 rounded-lg border text-[10.5px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
@@ -3483,6 +3562,10 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                             type="button"
                             onClick={() => {
                               updateSEOConfig({ faviconUrl: imgUrl });
+                              try {
+                                const current = cmsData.seoConfig || DEFAULT_SEO_CONFIG;
+                                localStorage.setItem('kbit_seo_config', JSON.stringify({ ...current, faviconUrl: imgUrl }));
+                              } catch {}
                               showToast('Đã chọn Favicon từ thư viện ảnh!');
                             }}
                             className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all cursor-pointer p-1 bg-white group ${
@@ -3600,6 +3683,10 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                             type="button"
                             onClick={() => {
                               updateSEOConfig({ ogImageUrl: imgUrl });
+                              try {
+                                const current = cmsData.seoConfig || DEFAULT_SEO_CONFIG;
+                                localStorage.setItem('kbit_seo_config', JSON.stringify({ ...current, ogImageUrl: imgUrl }));
+                              } catch {}
                               showToast('Đã chọn ảnh đại diện mạng xã hội từ thư viện!');
                             }}
                             className={`relative aspect-[1.91/1] rounded-xl overflow-hidden border-2 transition-all cursor-pointer group ${
@@ -3790,6 +3877,46 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                       <span>Mở Google Rich Results Test để kiểm tra</span>
                       <ExternalLink className="w-3.5 h-3.5" />
                     </a>
+                  </div>
+                </div>
+
+                {/* Bottom Action Bar for SEO */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-100/60 border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                      <span>Hoàn tất chỉnh sửa SEO &amp; Chia sẻ mạng xã hội</span>
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Dữ liệu sẽ được lưu an toàn vào bộ nhớ trình duyệt và đồng bộ tự động lên cơ sở dữ liệu Vercel Postgres.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-3 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        updateSEOConfig(DEFAULT_SEO_CONFIG);
+                        try {
+                          localStorage.setItem('kbit_seo_config', JSON.stringify(DEFAULT_SEO_CONFIG));
+                        } catch {}
+                        showToast('Đã khôi phục toàn bộ cấu hình SEO về chuẩn mặc định!');
+                      }}
+                      className="px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition-colors cursor-pointer"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 inline mr-1.5" />
+                      <span>Khôi phục mặc định</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleSaveSEO}
+                      disabled={isSaving}
+                      className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      {saveSuccessTick ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+                      <span>{isSaving ? 'Đang lưu cài đặt...' : 'Lưu Cài Đặt SEO Ngay'}</span>
+                    </button>
                   </div>
                 </div>
               </div>
