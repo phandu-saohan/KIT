@@ -1,4 +1,4 @@
-import { isDbConfigured, getDb, ensureTablesExist } from './db';
+import { isDbConfigured, getDb, ensureTablesExist } from './db.js';
 
 export default async function handler(req: any, res: any) {
   // CORS Headers
@@ -88,9 +88,72 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    // POST /api/registrations - Create new registration
+    // POST /api/registrations - Create new registration OR Bulk insert registrations
     if (req.method === 'POST') {
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+
+      // Handle Bulk Upload of registrations
+      if (Array.isArray(body) || (body && (body.bulk === true || Array.isArray(body.registrations)))) {
+        const rawList: any[] = Array.isArray(body) ? body : (body.registrations || []);
+        if (rawList.length === 0) {
+          return res.status(400).json({ success: false, error: 'Danh sách đại biểu tải lên trống.' });
+        }
+
+        // If replace mode requested
+        if (body.mode === 'replace') {
+          await sql`DELETE FROM registrations;`;
+        }
+
+        const insertedItems: any[] = [];
+        for (const reg of rawList) {
+          if (!reg || !reg.fullName || !reg.phone) continue;
+          const id = reg.id || `reg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+          const regCode = reg.registrationCode || `KBIT-${Math.floor(1000 + Math.random() * 9000)}`;
+          const wantsCme = Boolean(reg.wantsCme || reg.cmeNeed === 'yes');
+          const selectedEvents = JSON.stringify(reg.selectedEvents && reg.selectedEvents.length > 0 ? reg.selectedEvents : ['SYM']);
+          const interests = JSON.stringify(reg.interests || []);
+          const goals = JSON.stringify(reg.goals || []);
+          const dataPayload = JSON.stringify({ ...reg, id, registrationCode: regCode });
+
+          await sql`
+            INSERT INTO registrations (
+              id, registration_code, full_name, phone, email,
+              attendee_type, workplace, title, specialty, license,
+              wants_cme, selected_events, interests, goals, notes,
+              qr_code_url, data
+            ) VALUES (
+              ${id}, ${regCode}, ${reg.fullName}, ${reg.phone}, ${reg.email || ''},
+              ${reg.attendeeType || 'Bác sĩ'}, ${reg.workplace || reg.institution || ''}, ${reg.title || reg.titleRole || ''}, ${reg.specialty || ''}, ${reg.license || ''},
+              ${wantsCme}, ${selectedEvents}::jsonb, ${interests}::jsonb, ${goals}::jsonb, ${reg.notes || ''},
+              ${reg.qrCodeUrl || ''}, ${dataPayload}::jsonb
+            )
+            ON CONFLICT (id) DO UPDATE SET
+              full_name = EXCLUDED.full_name,
+              phone = EXCLUDED.phone,
+              email = EXCLUDED.email,
+              attendee_type = EXCLUDED.attendee_type,
+              workplace = EXCLUDED.workplace,
+              title = EXCLUDED.title,
+              specialty = EXCLUDED.specialty,
+              license = EXCLUDED.license,
+              wants_cme = EXCLUDED.wants_cme,
+              selected_events = EXCLUDED.selected_events,
+              interests = EXCLUDED.interests,
+              goals = EXCLUDED.goals,
+              notes = EXCLUDED.notes,
+              data = EXCLUDED.data;
+          `;
+          insertedItems.push({ ...reg, id, registrationCode: regCode });
+        }
+
+        return res.status(201).json({
+          success: true,
+          message: `Đã nhập và lưu thành công ${insertedItems.length} đại biểu vào cơ sở dữ liệu Vercel Postgres.`,
+          count: insertedItems.length,
+          data: insertedItems,
+        });
+      }
+
       const reg = body;
 
       if (!reg || !reg.fullName || !reg.phone) {
