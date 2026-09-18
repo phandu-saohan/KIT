@@ -19,6 +19,8 @@ import {
   ChevronLeft,
   Smartphone,
   Info,
+  Search,
+  ChevronDown,
 } from 'lucide-react';
 import { AttendeeBadge } from '../types';
 
@@ -65,6 +67,10 @@ export const PosterCreatorModal: React.FC<PosterCreatorModalProps> = ({
 
   // Selection and text state
   const [selectedAttendeeId, setSelectedAttendeeId] = useState<string>('');
+  const [attendeeSearchQuery, setAttendeeSearchQuery] = useState<string>('');
+  const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState<boolean>(false);
+  const searchContainerRef = useRef<HTMLDivElement | null>(null);
+
   const [honorific, setHonorific] = useState<string>('MRS.');
   const [fullName, setFullName] = useState<string>('HƯƠNG GIANG');
   const [organization, setOrganization] = useState<string>('CEO PHÒNG KHÁM G2CLINIC');
@@ -130,6 +136,7 @@ export const PosterCreatorModal: React.FC<PosterCreatorModalProps> = ({
 
       setHonorific(matchedHonorific);
       setFullName(cleanName.toUpperCase());
+      setAttendeeSearchQuery(cleanName);
 
       const role = (defaultAttendee.titleRole || defaultAttendee.degree || '').trim();
       const inst = (defaultAttendee.institution || '').trim();
@@ -154,6 +161,35 @@ export const PosterCreatorModal: React.FC<PosterCreatorModalProps> = ({
     }
   }, [isOpen]);
 
+  // Close search dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setIsSearchDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, []);
+
+  // Filtered attendees for quick search
+  const filteredAttendees = attendees.filter((att) => {
+    if (!attendeeSearchQuery.trim()) return true;
+    const q = attendeeSearchQuery.toLowerCase().trim();
+    return (
+      (att.fullName && att.fullName.toLowerCase().includes(q)) ||
+      (att.registrationCode && att.registrationCode.toLowerCase().includes(q)) ||
+      (att.phone && att.phone.toLowerCase().includes(q)) ||
+      (att.institution && att.institution.toLowerCase().includes(q)) ||
+      (att.titleRole && att.titleRole.toLowerCase().includes(q)) ||
+      (att.degree && att.degree.toLowerCase().includes(q))
+    );
+  });
+
   // 3. Attendee Dropdown Selection Handler
   const handleSelectAttendee = (id: string) => {
     setSelectedAttendeeId(id);
@@ -175,6 +211,7 @@ export const PosterCreatorModal: React.FC<PosterCreatorModalProps> = ({
 
       setHonorific(matchedHonorific);
       setFullName(found.fullName.toUpperCase());
+      setAttendeeSearchQuery(found.fullName);
 
       const role = (found.titleRole || found.degree || '').trim();
       const inst = (found.institution || '').trim();
@@ -887,29 +924,122 @@ export const PosterCreatorModal: React.FC<PosterCreatorModalProps> = ({
                       Bước 1: Chọn Tên Đại Biểu Đã Đăng Ký
                     </h3>
                     <p className="text-[11px] text-slate-500">
-                      Chọn thông tin từ danh sách hệ thống hoặc tự điền chức danh
+                      Gõ tìm kiếm nhanh hoặc tự điền chức danh
                     </p>
                   </div>
                 </div>
 
-                {/* Dropdown list */}
+                {/* Quick Search & Select Dropdown Combobox */}
                 {attendees.length > 0 ? (
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                      Chọn bạn trong danh sách đăng ký:
-                    </label>
-                    <select
-                      value={selectedAttendeeId}
-                      onChange={(e) => handleSelectAttendee(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-800 outline-none focus:border-[#c83271] focus:ring-2 focus:ring-[#c83271]/20 transition-all cursor-pointer"
-                    >
-                      <option value="">-- Chọn tên đại biểu đã đăng ký --</option>
-                      {attendees.map((att) => (
-                        <option key={att.id} value={att.id}>
-                          {att.fullName} {att.institution ? `- ${att.institution}` : ''} ({att.registrationCode})
-                        </option>
-                      ))}
-                    </select>
+                  <div ref={searchContainerRef} className="relative">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-bold text-slate-700">
+                        Tìm kiếm &amp; chọn đại biểu đã đăng ký:
+                      </label>
+                      <span className="text-[10.5px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                        {attendees.length} đại biểu
+                      </span>
+                    </div>
+
+                    {/* Search Input Bar */}
+                    <div className="relative">
+                      <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <input
+                        type="text"
+                        value={attendeeSearchQuery}
+                        onChange={(e) => {
+                          setAttendeeSearchQuery(e.target.value);
+                          setIsSearchDropdownOpen(true);
+                        }}
+                        onFocus={() => setIsSearchDropdownOpen(true)}
+                        placeholder="Gõ tên, SĐT, mã đại biểu, phòng khám..."
+                        className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-800 placeholder:text-slate-400 outline-none focus:border-[#c83271] focus:ring-2 focus:ring-[#c83271]/20 transition-all"
+                      />
+                      {attendeeSearchQuery ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAttendeeSearchQuery('');
+                            setIsSearchDropdownOpen(true);
+                          }}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 size-6 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center cursor-pointer"
+                          title="Xóa tìm kiếm"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setIsSearchDropdownOpen(!isSearchDropdownOpen)}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 size-6 rounded-full hover:bg-slate-100 text-slate-400 flex items-center justify-center cursor-pointer"
+                        >
+                          <ChevronDown className={`w-4 h-4 transition-transform ${isSearchDropdownOpen ? 'rotate-180' : ''}`} />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Floating Dropdown Results List */}
+                    {isSearchDropdownOpen && (
+                      <div className="absolute top-full left-0 right-0 mt-1.5 max-h-60 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-2xl divide-y divide-slate-100 z-30 animate-fade-in">
+                        {filteredAttendees.length > 0 ? (
+                          filteredAttendees.map((att) => (
+                            <button
+                              key={att.id}
+                              type="button"
+                              onClick={() => {
+                                handleSelectAttendee(att.id);
+                                setIsSearchDropdownOpen(false);
+                              }}
+                              className={`w-full text-left p-2.5 hover:bg-pink-50/70 transition-colors flex items-center justify-between gap-2 cursor-pointer ${
+                                selectedAttendeeId === att.id ? 'bg-pink-50 text-[#c83271]' : 'text-slate-800'
+                              }`}
+                            >
+                              <div className="flex-1 min-w-0">
+                                <div className="text-xs font-bold truncate flex items-center gap-1.5">
+                                  <span>{att.fullName}</span>
+                                  <span className="font-mono text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-medium">
+                                    {att.registrationCode}
+                                  </span>
+                                </div>
+                                <div className="text-[11px] text-slate-500 truncate mt-0.5">
+                                  {att.institution || att.titleRole || 'Đại biểu hội nghị'}
+                                  {att.phone && ` • ${att.phone}`}
+                                </div>
+                              </div>
+                              {selectedAttendeeId === att.id && (
+                                <Check className="w-4 h-4 text-[#c83271] shrink-0" />
+                              )}
+                            </button>
+                          ))
+                        ) : (
+                          <div className="p-4 text-center text-xs text-slate-500">
+                            Không tìm thấy đại biểu nào với từ khóa "{attendeeSearchQuery}"
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Active Selected Attendee Badge */}
+                    {selectedAttendeeId && (
+                      <div className="mt-2 p-2 px-2.5 rounded-lg bg-emerald-50 border border-emerald-200/80 flex items-center justify-between text-xs text-emerald-900">
+                        <div className="flex items-center gap-1.5 truncate">
+                          <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span className="truncate font-semibold">
+                            Đang chọn: <strong>{fullName}</strong>
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedAttendeeId('');
+                            setAttendeeSearchQuery('');
+                          }}
+                          className="text-[11px] text-emerald-700 hover:text-emerald-950 font-bold ml-2 underline shrink-0 cursor-pointer"
+                        >
+                          Đổi
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="p-3 rounded-xl bg-amber-50 text-amber-900 text-xs border border-amber-200 flex items-start gap-2">
