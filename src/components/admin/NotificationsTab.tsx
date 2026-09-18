@@ -31,6 +31,7 @@ export const NotificationsTab: React.FC<NotificationsTabProps> = ({ showToast })
     cmsData,
     updateConfirmEmailTemplate,
     saveConfirmEmailTemplateToCloud,
+    saveEmailCampaignToCloud,
     saveCmsToCloud,
     updateHostingerSenderAccount,
     updateEmailCampaignConfig,
@@ -71,14 +72,16 @@ export const NotificationsTab: React.FC<NotificationsTabProps> = ({ showToast })
 
     try {
       const okCloud = await saveConfirmEmailTemplateToCloud(draft);
+      let okEmail = false;
       if (cmsData.emailCampaignConfig) {
         try {
           localStorage.setItem('kbit_email_campaign_config', JSON.stringify(cmsData.emailCampaignConfig));
         } catch {}
+        okEmail = await saveEmailCampaignToCloud(cmsData.emailCampaignConfig);
       }
       const okFull = await saveCmsToCloud({ ...cmsData, confirmEmailTemplate: draft });
       setIsSaving(false);
-      if (okCloud || okFull) {
+      if (okCloud || okEmail || okFull) {
         showToast("✅ Đã lưu cấu hình Email Xác Nhận & thông tin Hostinger SMTP vào Vercel Postgres!");
       } else {
         showToast("✅ Đã lưu cấu hình email xác nhận vào trình duyệt!");

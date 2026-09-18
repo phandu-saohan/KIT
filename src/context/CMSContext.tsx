@@ -247,6 +247,128 @@ export const getInitialAdminTab = (): string => {
   return 'general';
 };
 
+export const mergeEmailCampaignConfigs = (
+  base: EmailCampaignConfig,
+  cloud?: Partial<EmailCampaignConfig> | null,
+  local?: Partial<EmailCampaignConfig> | null
+): EmailCampaignConfig => {
+  const today = new Date().toISOString().slice(0, 10);
+  const c = cloud || {};
+  const l = local || {};
+
+  // Hostinger accounts map
+  const hostingerMap = new Map<string, HostingerSenderAccount>();
+
+  // 1. Seed with base defaults if any
+  for (const acc of base.hostingerPool || []) {
+    if (acc && (acc.id || acc.email)) hostingerMap.set(acc.id || acc.email, { ...acc });
+  }
+
+  // 2. Overlay cloud accounts
+  for (const acc of c.hostingerPool || []) {
+    if (acc && (acc.id || acc.email)) {
+      const key = acc.id || acc.email;
+      const prev = hostingerMap.get(key) || ({} as HostingerSenderAccount);
+      hostingerMap.set(key, { ...prev, ...acc });
+    }
+  }
+
+  // 3. Overlay local accounts, ensuring passwords and custom settings are not lost
+  for (const acc of l.hostingerPool || []) {
+    if (acc && (acc.id || acc.email)) {
+      const key = acc.id || acc.email;
+      const prev = hostingerMap.get(key);
+      if (prev) {
+        hostingerMap.set(key, {
+          ...prev,
+          ...acc,
+          password: acc.password || prev.password || '',
+          smtpHost: acc.smtpHost || prev.smtpHost || 'smtp.hostinger.com',
+          smtpPort: acc.smtpPort || prev.smtpPort || 465,
+          email: acc.email || prev.email || '',
+          senderDisplayName: acc.senderDisplayName || prev.senderDisplayName || '',
+        });
+      } else {
+        hostingerMap.set(key, { ...acc });
+      }
+    }
+  }
+
+  // Gmail accounts map
+  const gmailMap = new Map<string, GmailSenderAccount>();
+
+  for (const acc of base.gmailPool || []) {
+    if (acc && (acc.id || acc.email)) gmailMap.set(acc.id || acc.email, { ...acc });
+  }
+
+  for (const acc of c.gmailPool || []) {
+    if (acc && (acc.id || acc.email)) {
+      const key = acc.id || acc.email;
+      const prev = gmailMap.get(key) || ({} as GmailSenderAccount);
+      gmailMap.set(key, { ...prev, ...acc });
+    }
+  }
+
+  for (const acc of l.gmailPool || []) {
+    if (acc && (acc.id || acc.email)) {
+      const key = acc.id || acc.email;
+      const prev = gmailMap.get(key);
+      if (prev) {
+        gmailMap.set(key, {
+          ...prev,
+          ...acc,
+          appPassword: acc.appPassword || prev.appPassword || '',
+          email: acc.email || prev.email || '',
+          senderDisplayName: acc.senderDisplayName || prev.senderDisplayName || '',
+        });
+      } else {
+        gmailMap.set(key, { ...acc });
+      }
+    }
+  }
+
+  let hostingerPool = Array.from(hostingerMap.values());
+  if (hostingerPool.length === 0) {
+    hostingerPool = base.hostingerPool || DEFAULT_EMAIL_CAMPAIGN.hostingerPool || [];
+  }
+
+  let gmailPool = Array.from(gmailMap.values());
+  if (gmailPool.length === 0) {
+    gmailPool = base.gmailPool || DEFAULT_EMAIL_CAMPAIGN.gmailPool || [];
+  }
+
+  // Check quota reset date for Gmail
+  const gmailResetDate = l.gmailQuotaResetDate || c.gmailQuotaResetDate || base.gmailQuotaResetDate || today;
+  if (gmailResetDate !== today) {
+    gmailPool = gmailPool.map((acc) => ({
+      ...acc,
+      sentToday: 0,
+      status: acc.status === 'quota_reached' ? 'ready' : acc.status,
+    }));
+  }
+
+  // Check quota reset date for Hostinger
+  const hostingerResetDate = l.hostingerQuotaResetDate || c.hostingerQuotaResetDate || base.hostingerQuotaResetDate || today;
+  if (hostingerResetDate !== today) {
+    hostingerPool = hostingerPool.map((acc) => ({
+      ...acc,
+      sentToday: 0,
+      status: acc.status === 'quota_reached' ? 'ready' : acc.status,
+    }));
+  }
+
+  return {
+    ...base,
+    ...c,
+    ...l,
+    hostingerPool,
+    gmailPool,
+    gmailQuotaResetDate: today,
+    hostingerQuotaResetDate: today,
+    smtpPassword: l.smtpPassword || c.smtpPassword || base.smtpPassword || '',
+  };
+};
+
 const CMSContext = createContext<CMSContextType | undefined>(undefined);
 
 export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -322,39 +444,11 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           footerConfig: { ...DEFAULT_FOOTER_CONFIG, ...(parsed.footerConfig || {}) },
           adminAccount: { ...DEFAULT_ADMIN_ACCOUNT, ...(parsed.adminAccount || {}) },
           seoConfig: { ...DEFAULT_SEO_CONFIG, ...(parsed.seoConfig || {}), ...(localSeoConfig || {}) },
-          emailCampaignConfig: (() => {
-            const today = new Date().toISOString().slice(0, 10);
-            const savedCfg = parsed.emailCampaignConfig ? { ...DEFAULT_EMAIL_CAMPAIGN, ...parsed.emailCampaignConfig } : DEFAULT_EMAIL_CAMPAIGN;
-            let pool: GmailSenderAccount[] = savedCfg.gmailPool && savedCfg.gmailPool.length > 0 ? savedCfg.gmailPool : DEFAULT_EMAIL_CAMPAIGN.gmailPool || [];
-            let hostingerList: HostingerSenderAccount[] = savedCfg.hostingerPool && savedCfg.hostingerPool.length > 0 ? savedCfg.hostingerPool : DEFAULT_EMAIL_CAMPAIGN.hostingerPool || [];
-
-            // If new day, automatically reset daily quota counters for all Gmail accounts
-            if (savedCfg.gmailQuotaResetDate !== today) {
-              pool = pool.map((acc: GmailSenderAccount) => ({
-                ...acc,
-                sentToday: 0,
-                status: acc.status === 'quota_reached' ? 'ready' : acc.status,
-              }));
-              savedCfg.gmailQuotaResetDate = today;
-            }
-
-            // If new day, automatically reset daily quota counters for Hostinger accounts
-            if (savedCfg.hostingerQuotaResetDate !== today) {
-              hostingerList = hostingerList.map((acc: HostingerSenderAccount) => ({
-                ...acc,
-                sentToday: 0,
-                status: acc.status === 'quota_reached' ? 'ready' : acc.status,
-              }));
-              savedCfg.hostingerQuotaResetDate = today;
-            }
-
-            return {
-              ...savedCfg,
-              ...(localEmailCampaign || {}),
-              gmailPool: pool,
-              hostingerPool: hostingerList,
-            };
-          })(),
+          emailCampaignConfig: mergeEmailCampaignConfigs(
+            DEFAULT_EMAIL_CAMPAIGN,
+            parsed.emailCampaignConfig,
+            localEmailCampaign
+          ),
           confirmEmailTemplate: {
             ...DEFAULT_CONFIRM_EMAIL_TEMPLATE,
             ...(parsed.confirmEmailTemplate || {}),
@@ -366,7 +460,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           ...INITIAL_CMS_DATA,
           eventDetails: { ...DEFAULT_EVENT_DETAILS, ...(localEventDetails || {}) },
           seoConfig: { ...DEFAULT_SEO_CONFIG, ...(localSeoConfig || {}) },
-          emailCampaignConfig: { ...DEFAULT_EMAIL_CAMPAIGN, ...(localEmailCampaign || {}) },
+          emailCampaignConfig: mergeEmailCampaignConfigs(DEFAULT_EMAIL_CAMPAIGN, null, localEmailCampaign),
           confirmEmailTemplate: { ...DEFAULT_CONFIRM_EMAIL_TEMPLATE, ...(localConfirmTemplate || {}) },
         };
       }
@@ -452,15 +546,15 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 ...(localEventDetails || {}),
                 ...(parsedData.eventDetails || {}),
               };
-              const mergedEmailCampaign = {
-                ...DEFAULT_EMAIL_CAMPAIGN,
-                ...(localEmailCampaign || {}),
-                ...(parsedData.emailCampaignConfig || {}),
-              };
+              const mergedEmailCampaign = mergeEmailCampaignConfigs(
+                DEFAULT_EMAIL_CAMPAIGN,
+                parsedData.emailCampaignConfig,
+                localEmailCampaign
+              );
               const mergedConfirmTemplate = {
                 ...DEFAULT_CONFIRM_EMAIL_TEMPLATE,
-                ...(localConfirmTemplate || {}),
                 ...(parsedData.confirmEmailTemplate || {}),
+                ...(localConfirmTemplate || {}),
               };
 
               // Keep dedicated local keys in sync with the cloud so refreshes always show latest data
@@ -570,8 +664,16 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       try {
         const savedEmailRaw = localStorage.getItem('kbit_email_campaign_config');
         if (savedEmailRaw) {
-          targetCfg = { ...DEFAULT_EMAIL_CAMPAIGN, ...(targetCfg || {}), ...JSON.parse(savedEmailRaw) };
+          targetCfg = mergeEmailCampaignConfigs(
+            DEFAULT_EMAIL_CAMPAIGN,
+            targetCfg,
+            JSON.parse(savedEmailRaw)
+          );
         }
+      } catch {}
+
+      try {
+        localStorage.setItem('kbit_email_campaign_config', JSON.stringify(targetCfg));
       } catch {}
 
       const res = await fetch('/api/cms', {
@@ -640,11 +742,33 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       } catch {}
 
+      let currentEmailCampaign = source.emailCampaignConfig;
+      try {
+        const savedEmailRaw = localStorage.getItem('kbit_email_campaign_config');
+        if (savedEmailRaw) {
+          currentEmailCampaign = mergeEmailCampaignConfigs(
+            DEFAULT_EMAIL_CAMPAIGN,
+            source.emailCampaignConfig,
+            JSON.parse(savedEmailRaw)
+          );
+        }
+      } catch {}
+
+      let currentConfirmTemplate = source.confirmEmailTemplate;
+      try {
+        const savedTplRaw = localStorage.getItem('kbit_confirm_email_template');
+        if (savedTplRaw) {
+          currentConfirmTemplate = { ...DEFAULT_CONFIRM_EMAIL_TEMPLATE, ...(currentConfirmTemplate || {}), ...JSON.parse(savedTplRaw) };
+        }
+      } catch {}
+
       // Keep payload lightweight (under 2MB) to stay safely within Vercel 4.5MB Serverless Function limits
       const payload = {
         ...source,
         seoConfig: currentSeo,
         eventDetails: currentEvent,
+        emailCampaignConfig: currentEmailCampaign,
+        confirmEmailTemplate: currentConfirmTemplate,
         mediaLibrary: (source.mediaLibrary || []).slice(0, 6),
       };
 
@@ -1173,13 +1297,38 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCmsData((prev) => {
       const cfg = prev.emailCampaignConfig || DEFAULT_EMAIL_CAMPAIGN;
       const pool = cfg.gmailPool || DEFAULT_EMAIL_CAMPAIGN.gmailPool || [];
-      return {
-        ...prev,
-        emailCampaignConfig: {
-          ...cfg,
-          gmailPool: pool.map((acc) => (acc.id === id ? { ...acc, ...updated } : acc)),
-        },
+      const exists = pool.some((acc) => acc.id === id);
+      const newPool = exists
+        ? pool.map((acc) => (acc.id === id ? { ...acc, ...updated } : acc))
+        : [
+            ...pool,
+            {
+              id,
+              email: '',
+              appPassword: '',
+              senderDisplayName: 'Ban Tổ Chức Hội Nghị',
+              dailyQuota: 500,
+              sentToday: 0,
+              isActive: true,
+              status: 'ready' as const,
+              ...updated,
+            },
+          ];
+      const newConfig = {
+        ...cfg,
+        gmailPool: newPool,
       };
+      try {
+        localStorage.setItem('kbit_email_campaign_config', JSON.stringify(newConfig));
+      } catch (e) {}
+      const nextCms = {
+        ...prev,
+        emailCampaignConfig: newConfig,
+      };
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(nextCms));
+      } catch (e) {}
+      return nextCms;
     });
   };
 
@@ -1187,13 +1336,21 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCmsData((prev) => {
       const cfg = prev.emailCampaignConfig || DEFAULT_EMAIL_CAMPAIGN;
       const pool = cfg.gmailPool || DEFAULT_EMAIL_CAMPAIGN.gmailPool || [];
-      return {
-        ...prev,
-        emailCampaignConfig: {
-          ...cfg,
-          gmailPool: [...pool, acc],
-        },
+      const newConfig = {
+        ...cfg,
+        gmailPool: [...pool, acc],
       };
+      try {
+        localStorage.setItem('kbit_email_campaign_config', JSON.stringify(newConfig));
+      } catch (e) {}
+      const nextCms = {
+        ...prev,
+        emailCampaignConfig: newConfig,
+      };
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(nextCms));
+      } catch (e) {}
+      return nextCms;
     });
   };
 
@@ -1201,13 +1358,21 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCmsData((prev) => {
       const cfg = prev.emailCampaignConfig || DEFAULT_EMAIL_CAMPAIGN;
       const pool = cfg.gmailPool || DEFAULT_EMAIL_CAMPAIGN.gmailPool || [];
-      return {
-        ...prev,
-        emailCampaignConfig: {
-          ...cfg,
-          gmailPool: pool.filter((acc) => acc.id !== id),
-        },
+      const newConfig = {
+        ...cfg,
+        gmailPool: pool.filter((acc) => acc.id !== id),
       };
+      try {
+        localStorage.setItem('kbit_email_campaign_config', JSON.stringify(newConfig));
+      } catch (e) {}
+      const nextCms = {
+        ...prev,
+        emailCampaignConfig: newConfig,
+      };
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(nextCms));
+      } catch (e) {}
+      return nextCms;
     });
   };
 
@@ -1215,24 +1380,25 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCmsData((prev) => {
       const cfg = prev.emailCampaignConfig || DEFAULT_EMAIL_CAMPAIGN;
       const pool = cfg.gmailPool || DEFAULT_EMAIL_CAMPAIGN.gmailPool || [];
+      const newConfig = {
+        ...cfg,
+        gmailPool: pool.map((acc) => {
+          if (acc.id === id) {
+            const nextSent = (acc.sentToday || 0) + 1;
+            const quota = acc.dailyQuota || 500;
+            return {
+              ...acc,
+              sentToday: nextSent,
+              status: nextSent >= quota ? 'quota_reached' : acc.status,
+              lastUsedAt: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+            };
+          }
+          return acc;
+        }),
+      };
       return {
         ...prev,
-        emailCampaignConfig: {
-          ...cfg,
-          gmailPool: pool.map((acc) => {
-            if (acc.id === id) {
-              const nextSent = (acc.sentToday || 0) + 1;
-              const quota = acc.dailyQuota || 500;
-              return {
-                ...acc,
-                sentToday: nextSent,
-                status: nextSent >= quota ? 'quota_reached' : acc.status,
-                lastUsedAt: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
-              };
-            }
-            return acc;
-          }),
-        },
+        emailCampaignConfig: newConfig,
       };
     });
   };
@@ -1242,17 +1408,18 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCmsData((prev) => {
       const cfg = prev.emailCampaignConfig || DEFAULT_EMAIL_CAMPAIGN;
       const pool = cfg.gmailPool || DEFAULT_EMAIL_CAMPAIGN.gmailPool || [];
+      const newConfig = {
+        ...cfg,
+        gmailQuotaResetDate: today,
+        gmailPool: pool.map((acc) => ({
+          ...acc,
+          sentToday: 0,
+          status: acc.status === 'quota_reached' ? 'ready' : acc.status,
+        })),
+      };
       return {
         ...prev,
-        emailCampaignConfig: {
-          ...cfg,
-          gmailQuotaResetDate: today,
-          gmailPool: pool.map((acc) => ({
-            ...acc,
-            sentToday: 0,
-            status: acc.status === 'quota_reached' ? 'ready' : acc.status,
-          })),
-        },
+        emailCampaignConfig: newConfig,
       };
     });
   };
@@ -1261,13 +1428,41 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCmsData((prev) => {
       const cfg = prev.emailCampaignConfig || DEFAULT_EMAIL_CAMPAIGN;
       const pool = cfg.hostingerPool || DEFAULT_EMAIL_CAMPAIGN.hostingerPool || [];
-      return {
-        ...prev,
-        emailCampaignConfig: {
-          ...cfg,
-          hostingerPool: pool.map((acc) => (acc.id === id ? { ...acc, ...updated } : acc)),
-        },
+      const exists = pool.some((acc) => acc.id === id);
+      const newPool = exists
+        ? pool.map((acc) => (acc.id === id ? { ...acc, ...updated } : acc))
+        : [
+            ...pool,
+            {
+              id,
+              email: 'bantin@kbit-symposium.com',
+              password: '',
+              smtpHost: 'smtp.hostinger.com',
+              smtpPort: 465,
+              secure: true,
+              senderDisplayName: 'Ban Tổ Chức Hội Nghị Thẩm Mỹ Việt – Hàn',
+              dailyQuota: 1000,
+              sentToday: 0,
+              isActive: true,
+              status: 'ready' as const,
+              ...updated,
+            },
+          ];
+      const newConfig = {
+        ...cfg,
+        hostingerPool: newPool,
       };
+      try {
+        localStorage.setItem('kbit_email_campaign_config', JSON.stringify(newConfig));
+      } catch (e) {}
+      const nextCms = {
+        ...prev,
+        emailCampaignConfig: newConfig,
+      };
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(nextCms));
+      } catch (e) {}
+      return nextCms;
     });
   };
 
@@ -1275,13 +1470,21 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCmsData((prev) => {
       const cfg = prev.emailCampaignConfig || DEFAULT_EMAIL_CAMPAIGN;
       const pool = cfg.hostingerPool || DEFAULT_EMAIL_CAMPAIGN.hostingerPool || [];
-      return {
-        ...prev,
-        emailCampaignConfig: {
-          ...cfg,
-          hostingerPool: [...pool, acc],
-        },
+      const newConfig = {
+        ...cfg,
+        hostingerPool: [...pool, acc],
       };
+      try {
+        localStorage.setItem('kbit_email_campaign_config', JSON.stringify(newConfig));
+      } catch (e) {}
+      const nextCms = {
+        ...prev,
+        emailCampaignConfig: newConfig,
+      };
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(nextCms));
+      } catch (e) {}
+      return nextCms;
     });
   };
 
@@ -1289,13 +1492,21 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCmsData((prev) => {
       const cfg = prev.emailCampaignConfig || DEFAULT_EMAIL_CAMPAIGN;
       const pool = cfg.hostingerPool || DEFAULT_EMAIL_CAMPAIGN.hostingerPool || [];
-      return {
-        ...prev,
-        emailCampaignConfig: {
-          ...cfg,
-          hostingerPool: pool.filter((acc) => acc.id !== id),
-        },
+      const newConfig = {
+        ...cfg,
+        hostingerPool: pool.filter((acc) => acc.id !== id),
       };
+      try {
+        localStorage.setItem('kbit_email_campaign_config', JSON.stringify(newConfig));
+      } catch (e) {}
+      const nextCms = {
+        ...prev,
+        emailCampaignConfig: newConfig,
+      };
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(nextCms));
+      } catch (e) {}
+      return nextCms;
     });
   };
 
