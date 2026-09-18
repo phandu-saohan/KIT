@@ -579,7 +579,7 @@ export const RegistrationSection: React.FC = () => {
                           onChange={handleInputChange}
                           required
                           placeholder="Ví dụ: BS.CKII Nguyễn Văn An"
-                          className="h-10 px-3 rounded-lg border border-[#e2eaf8] bg-[#f8faff] text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] focus:ring-1 focus:ring-[#c83271]/30 transition-all"
+                          className="h-11 sm:h-10 px-3.5 sm:px-3 rounded-xl border border-[#e2eaf8] bg-[#f8faff] text-[16px] sm:text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] focus:ring-1 focus:ring-[#c83271]/30 transition-all"
                         />
                       </div>
 
@@ -595,7 +595,7 @@ export const RegistrationSection: React.FC = () => {
                           onChange={handleInputChange}
                           required
                           placeholder="090x xxx xxx"
-                          className="h-10 px-3 rounded-lg border border-[#e2eaf8] bg-[#f8faff] text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] focus:ring-1 focus:ring-[#c83271]/30 transition-all"
+                          className="h-11 sm:h-10 px-3.5 sm:px-3 rounded-xl border border-[#e2eaf8] bg-[#f8faff] text-[16px] sm:text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] focus:ring-1 focus:ring-[#c83271]/30 transition-all"
                         />
                       </div>
 
@@ -611,7 +611,7 @@ export const RegistrationSection: React.FC = () => {
                           onChange={handleInputChange}
                           required
                           placeholder="dai-bieu@email.com"
-                          className="h-10 px-3 rounded-lg border border-[#e2eaf8] bg-[#f8faff] text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] focus:ring-1 focus:ring-[#c83271]/30 transition-all"
+                          className="h-11 sm:h-10 px-3.5 sm:px-3 rounded-xl border border-[#e2eaf8] bg-[#f8faff] text-[16px] sm:text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] focus:ring-1 focus:ring-[#c83271]/30 transition-all"
                         />
                       </div>
 
@@ -627,7 +627,7 @@ export const RegistrationSection: React.FC = () => {
                           onChange={handleInputChange}
                           required
                           placeholder="Khoa Phẫu thuật - BV..."
-                          className="h-10 px-3 rounded-lg border border-[#e2eaf8] bg-[#f8faff] text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] transition-all"
+                          className="h-11 sm:h-10 px-3.5 sm:px-3 rounded-xl border border-[#e2eaf8] bg-[#f8faff] text-[16px] sm:text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] transition-all"
                         />
                       </div>
 
@@ -642,7 +642,7 @@ export const RegistrationSection: React.FC = () => {
                           value={formData.titleRole}
                           onChange={handleInputChange}
                           placeholder="Bác sĩ chuyên khoa, Giảng viên..."
-                          className="h-10 px-3 rounded-lg border border-[#e2eaf8] bg-[#f8faff] text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] transition-all"
+                          className="h-11 sm:h-10 px-3.5 sm:px-3 rounded-xl border border-[#e2eaf8] bg-[#f8faff] text-[16px] sm:text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] transition-all"
                         />
                       </div>
 
@@ -653,7 +653,7 @@ export const RegistrationSection: React.FC = () => {
                           name="specialty"
                           value={formData.specialty}
                           onChange={handleInputChange}
-                          className="h-10 px-3 rounded-lg border border-[#e2eaf8] bg-[#f8faff] text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] transition-all"
+                          className="h-11 sm:h-10 px-3.5 sm:px-3 rounded-xl border border-[#e2eaf8] bg-[#f8faff] text-[16px] sm:text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] transition-all"
                         >
                           <option value="">-- Chọn chuyên khoa --</option>
                           <option value="Tạo hình Thẩm mỹ">Tạo hình Thẩm mỹ</option>
@@ -675,7 +675,7 @@ export const RegistrationSection: React.FC = () => {
                           value={formData.license}
                           onChange={handleInputChange}
                           placeholder="Số CCHN y khoa"
-                          className="h-10 px-3 rounded-lg border border-[#e2eaf8] bg-[#f8faff] text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] transition-all"
+                          className="h-11 sm:h-10 px-3.5 sm:px-3 rounded-xl border border-[#e2eaf8] bg-[#f8faff] text-[16px] sm:text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] transition-all"
                         />
                       </div>
 
@@ -686,7 +686,7 @@ export const RegistrationSection: React.FC = () => {
                           name="city"
                           value={formData.city}
                           onChange={handleInputChange}
-                          className="h-10 px-3 rounded-lg border border-[#e2eaf8] bg-[#f8faff] text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] transition-all"
+                          className="h-11 sm:h-10 px-3.5 sm:px-3 rounded-xl border border-[#e2eaf8] bg-[#f8faff] text-[16px] sm:text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] transition-all"
                         >
                           <option value="TP. Hồ Chí Minh">TP. Hồ Chí Minh</option>
                           <option value="Hà Nội">Hà Nội</option>
@@ -706,7 +706,7 @@ export const RegistrationSection: React.FC = () => {
                           value={formData.country}
                           onChange={handleInputChange}
                           placeholder="Việt Nam"
-                          className="h-10 px-3 rounded-lg border border-[#e2eaf8] bg-[#f8faff] text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] transition-all"
+                          className="h-11 sm:h-10 px-3.5 sm:px-3 rounded-xl border border-[#e2eaf8] bg-[#f8faff] text-[16px] sm:text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] transition-all"
                         />
                       </div>
 
@@ -748,7 +748,7 @@ export const RegistrationSection: React.FC = () => {
                           onChange={handleInputChange}
                           required
                           placeholder="Ví dụ: Nguyễn Văn B"
-                          className="h-10 px-3 rounded-lg border border-[#e2eaf8] bg-[#f8faff] text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] focus:ring-1 focus:ring-[#c83271]/30 transition-all"
+                          className="h-11 sm:h-10 px-3.5 sm:px-3 rounded-xl border border-[#e2eaf8] bg-[#f8faff] text-[16px] sm:text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] focus:ring-1 focus:ring-[#c83271]/30 transition-all"
                         />
                       </div>
 
@@ -764,7 +764,7 @@ export const RegistrationSection: React.FC = () => {
                           onChange={handleInputChange}
                           required
                           placeholder="Tên công ty hoặc phòng khám..."
-                          className="h-10 px-3 rounded-lg border border-[#e2eaf8] bg-[#f8faff] text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] transition-all"
+                          className="h-11 sm:h-10 px-3.5 sm:px-3 rounded-xl border border-[#e2eaf8] bg-[#f8faff] text-[16px] sm:text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] transition-all"
                         />
                       </div>
 
@@ -779,7 +779,7 @@ export const RegistrationSection: React.FC = () => {
                           value={formData.titleRole}
                           onChange={handleInputChange}
                           placeholder="Giám đốc, Quản lý..."
-                          className="h-10 px-3 rounded-lg border border-[#e2eaf8] bg-[#f8faff] text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] transition-all"
+                          className="h-11 sm:h-10 px-3.5 sm:px-3 rounded-xl border border-[#e2eaf8] bg-[#f8faff] text-[16px] sm:text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] transition-all"
                         />
                       </div>
 
@@ -795,7 +795,7 @@ export const RegistrationSection: React.FC = () => {
                           onChange={handleInputChange}
                           required
                           placeholder="090x xxx xxx"
-                          className="h-10 px-3 rounded-lg border border-[#e2eaf8] bg-[#f8faff] text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] focus:ring-1 focus:ring-[#c83271]/30 transition-all"
+                          className="h-11 sm:h-10 px-3.5 sm:px-3 rounded-xl border border-[#e2eaf8] bg-[#f8faff] text-[16px] sm:text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] focus:ring-1 focus:ring-[#c83271]/30 transition-all"
                         />
                       </div>
 
@@ -811,7 +811,7 @@ export const RegistrationSection: React.FC = () => {
                           onChange={handleInputChange}
                           required
                           placeholder="dai-bieu@email.com"
-                          className="h-10 px-3 rounded-lg border border-[#e2eaf8] bg-[#f8faff] text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] focus:ring-1 focus:ring-[#c83271]/30 transition-all"
+                          className="h-11 sm:h-10 px-3.5 sm:px-3 rounded-xl border border-[#e2eaf8] bg-[#f8faff] text-[16px] sm:text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] focus:ring-1 focus:ring-[#c83271]/30 transition-all"
                         />
                       </div>
 
@@ -824,7 +824,7 @@ export const RegistrationSection: React.FC = () => {
                           name="specialty"
                           value={formData.specialty}
                           onChange={handleInputChange}
-                          className="h-10 px-3 rounded-lg border border-[#e2eaf8] bg-[#f8faff] text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] transition-all"
+                          className="h-11 sm:h-10 px-3.5 sm:px-3 rounded-xl border border-[#e2eaf8] bg-[#f8faff] text-[16px] sm:text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] transition-all"
                         >
                           <option value="">-- Chọn lĩnh vực --</option>
                           <option value="Thiết bị thẩm mỹ">Thiết bị thẩm mỹ công nghệ cao</option>
@@ -846,7 +846,7 @@ export const RegistrationSection: React.FC = () => {
                           value={formData.license}
                           onChange={handleInputChange}
                           placeholder="Mã số thuế doanh nghiệp"
-                          className="h-10 px-3 rounded-lg border border-[#e2eaf8] bg-[#f8faff] text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] transition-all"
+                          className="h-11 sm:h-10 px-3.5 sm:px-3 rounded-xl border border-[#e2eaf8] bg-[#f8faff] text-[16px] sm:text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] transition-all"
                         />
                       </div>
 
@@ -857,7 +857,7 @@ export const RegistrationSection: React.FC = () => {
                           name="city"
                           value={formData.city}
                           onChange={handleInputChange}
-                          className="h-10 px-3 rounded-lg border border-[#e2eaf8] bg-[#f8faff] text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] transition-all"
+                          className="h-11 sm:h-10 px-3.5 sm:px-3 rounded-xl border border-[#e2eaf8] bg-[#f8faff] text-[16px] sm:text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] transition-all"
                         >
                           <option value="TP. Hồ Chí Minh">TP. Hồ Chí Minh</option>
                           <option value="Hà Nội">Hà Nội</option>
@@ -877,7 +877,7 @@ export const RegistrationSection: React.FC = () => {
                           value={formData.country}
                           onChange={handleInputChange}
                           placeholder="Việt Nam"
-                          className="h-10 px-3 rounded-lg border border-[#e2eaf8] bg-[#f8faff] text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] transition-all"
+                          className="h-11 sm:h-10 px-3.5 sm:px-3 rounded-xl border border-[#e2eaf8] bg-[#f8faff] text-[16px] sm:text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] transition-all"
                         />
                       </div>
                     </>
@@ -892,7 +892,7 @@ export const RegistrationSection: React.FC = () => {
                       value={formData.notes}
                       onChange={handleInputChange}
                       placeholder="Ghi chú thêm hoặc câu hỏi gửi Ban tổ chức..."
-                      className="h-10 px-3 rounded-lg border border-[#e2eaf8] bg-[#f8faff] text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] transition-all"
+                      className="h-11 sm:h-10 px-3.5 sm:px-3 rounded-xl border border-[#e2eaf8] bg-[#f8faff] text-[16px] sm:text-[13px] text-slate-800 focus:outline-none focus:border-[#c83271] transition-all"
                     />
                   </div>
                 </div>
