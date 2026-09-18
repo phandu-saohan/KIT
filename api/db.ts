@@ -1,10 +1,19 @@
 import { neon } from '@neondatabase/serverless';
+import dotenv from 'dotenv';
 
-export function getConnectionString(): string | undefined {
+try {
+  dotenv.config();
+} catch {}
+
+const DEFAULT_NEON_DATABASE_URL =
+  'postgresql://neondb_owner:npg_dwRGog4FNqM6@ep-late-salad-awhbmsid-pooler.c-12.us-east-1.aws.neon.tech/neondb?channel_binding=require&sslmode=require';
+
+export function getConnectionString(): string {
   if (process.env.POSTGRES_URL) return process.env.POSTGRES_URL;
+  if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
   if (process.env.POSTGRES_PRISMA_URL) return process.env.POSTGRES_PRISMA_URL;
   if (process.env.POSTGRES_URL_NON_POOLING) return process.env.POSTGRES_URL_NON_POOLING;
-  if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
+  if (process.env.DATABASE_URL_UNPOOLED) return process.env.DATABASE_URL_UNPOOLED;
   if (process.env.VERCEL_POSTGRES_URL) return process.env.VERCEL_POSTGRES_URL;
   if (process.env.POSTGRES_URL_NO_SSL) return process.env.POSTGRES_URL_NO_SSL;
 
@@ -12,24 +21,29 @@ export function getConnectionString(): string | undefined {
     const host = process.env.POSTGRES_HOST;
     const user = encodeURIComponent(process.env.POSTGRES_USER);
     const pass = encodeURIComponent(process.env.POSTGRES_PASSWORD);
-    const db = process.env.POSTGRES_DATABASE || 'verceldb';
+    const db = process.env.POSTGRES_DATABASE || 'neondb';
     return `postgres://${user}:${pass}@${host}:5432/${db}?sslmode=require`;
   }
 
-  return undefined;
+  return DEFAULT_NEON_DATABASE_URL;
 }
 
 export function isDbConfigured(): boolean {
-  return Boolean(getConnectionString());
+  return true;
+}
+
+function cleanUrl(raw: string): string {
+  try {
+    const u = new URL(raw);
+    u.searchParams.delete('channel_binding');
+    return u.toString();
+  } catch {
+    return raw.replace('channel_binding=require&', '').replace('&channel_binding=require', '').replace('?channel_binding=require', '');
+  }
 }
 
 export function getDb() {
-  const connectionString = getConnectionString();
-  if (!connectionString) {
-    throw new Error(
-      'Database connection string not found. Please ensure POSTGRES_URL is configured in your Vercel Project Environment Variables.'
-    );
-  }
+  const connectionString = cleanUrl(getConnectionString());
   return neon(connectionString);
 }
 
