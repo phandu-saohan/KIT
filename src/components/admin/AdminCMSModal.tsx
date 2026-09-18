@@ -96,6 +96,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
     saveCmsToCloud,
     saveSeoToCloud,
     saveEventDetailsToCloud,
+    openPosterModal,
   } = useCMS();
 
   // Local feedback states
@@ -5573,6 +5574,14 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                                       title="Xem chi tiết hồ sơ đại biểu"
                                     >
                                       <Eye className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => openPosterModal(attendee)}
+                                      className="p-1.5 rounded-lg text-purple-600 hover:text-purple-800 hover:bg-purple-50 transition-colors cursor-pointer"
+                                      title="Tạo poster thư mời cho đại biểu này"
+                                    >
+                                      <Sparkles className="w-4 h-4" />
                                     </button>
                                     <button
                                       type="button"

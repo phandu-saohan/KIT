@@ -216,6 +216,10 @@ interface CMSContextType {
   saveEventDetailsToCloud: (eventDetails?: Partial<EventDetails>) => Promise<boolean>;
   saveEmailCampaignToCloud: (emailCampaignConfig?: Partial<EmailCampaignConfig>) => Promise<boolean>;
   saveConfirmEmailTemplateToCloud: (confirmEmailTemplate?: Partial<ConfirmEmailTemplate>) => Promise<boolean>;
+  isPosterModalOpen: boolean;
+  posterModalAttendee: Partial<AttendeeBadge> | null;
+  openPosterModal: (attendee?: Partial<AttendeeBadge> | null) => void;
+  closePosterModal: () => void;
 }
 
 export const isPathAdmin = (): boolean => {
@@ -473,6 +477,18 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isAdminOpen, setIsAdminOpenState] = useState<boolean>(() => isPathAdmin());
   const [activeAdminTab, setActiveAdminTabState] = useState<string>(() => getInitialAdminTab());
   const [isCloudDbConnected, setIsCloudDbConnected] = useState<boolean>(false);
+  const [isPosterModalOpen, setIsPosterModalOpen] = useState<boolean>(false);
+  const [posterModalAttendee, setPosterModalAttendee] = useState<Partial<AttendeeBadge> | null>(null);
+
+  const openPosterModal = (attendee?: Partial<AttendeeBadge> | null) => {
+    setPosterModalAttendee(attendee || null);
+    setIsPosterModalOpen(true);
+  };
+
+  const closePosterModal = () => {
+    setIsPosterModalOpen(false);
+  };
+
   const cmsDataRef = useRef<CMSData>(cmsData);
   useEffect(() => {
     cmsDataRef.current = cmsData;
@@ -1778,6 +1794,10 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         saveEventDetailsToCloud,
         saveEmailCampaignToCloud,
         saveConfirmEmailTemplateToCloud,
+        isPosterModalOpen,
+        posterModalAttendee,
+        openPosterModal,
+        closePosterModal,
       }}
     >
       {children}

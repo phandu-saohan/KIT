@@ -9,9 +9,12 @@ import {
   MapPin,
   X,
   ChevronRight,
+  Sparkles,
 } from 'lucide-react';
+import { useCMS } from '../context/CMSContext';
 
 export const MobileQuickNav: React.FC = () => {
+  const { openPosterModal } = useCMS();
   const [activeTab, setActiveTab] = useState<'dang-ky' | 'noi-dung' | 'ho-tro' | null>(null);
   const [isSupportOpen, setIsSupportOpen] = useState(false);
 
@@ -71,7 +74,7 @@ export const MobileQuickNav: React.FC = () => {
         aria-label="Mobile Bottom Navigation"
         className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white/95 backdrop-blur-xl border-t border-[#e2eaf8] shadow-[0_-4px_25px_rgba(0,32,69,0.12)] pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-1.5 transition-all duration-300"
       >
-        <div className="grid grid-cols-3 items-center px-3 py-1 gap-1 max-w-md mx-auto">
+        <div className="grid grid-cols-4 items-center px-2 py-1 gap-1 max-w-md mx-auto">
           {/* TAB 1: ĐĂNG KÝ */}
           <button
             type="button"
@@ -95,7 +98,7 @@ export const MobileQuickNav: React.FC = () => {
               <UserCheck className="w-5 h-5 stroke-[2.2]" />
             </div>
             <span
-              className={`text-[11px] leading-tight mt-0.5 tracking-tight ${
+              className={`text-[10.5px] leading-tight mt-0.5 tracking-tight ${
                 activeTab === 'dang-ky' && !isSupportOpen
                   ? 'font-bold text-[#c83271]'
                   : 'font-semibold'
@@ -128,7 +131,7 @@ export const MobileQuickNav: React.FC = () => {
               <BookOpen className="w-5 h-5 stroke-[2.2]" />
             </div>
             <span
-              className={`text-[11px] leading-tight mt-0.5 tracking-tight ${
+              className={`text-[10.5px] leading-tight mt-0.5 tracking-tight ${
                 activeTab === 'noi-dung' && !isSupportOpen
                   ? 'font-bold text-[#174ea6]'
                   : 'font-semibold'
@@ -138,7 +141,21 @@ export const MobileQuickNav: React.FC = () => {
             </span>
           </button>
 
-          {/* TAB 3: HỖ TRỢ 24/7 */}
+          {/* TAB 3: TẠO POSTER */}
+          <button
+            type="button"
+            onClick={() => openPosterModal()}
+            className="group flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all cursor-pointer relative text-purple-700 hover:text-purple-900"
+          >
+            <div className="p-1 rounded-xl group-hover:scale-105 transition-transform bg-gradient-to-tr from-purple-100 to-pink-100 text-[#c83271]">
+              <Sparkles className="w-5 h-5 stroke-[2.2]" />
+            </div>
+            <span className="text-[10.5px] leading-tight mt-0.5 tracking-tight font-black text-[#c83271]">
+              Tạo Poster
+            </span>
+          </button>
+
+          {/* TAB 4: HỖ TRỢ 24/7 */}
           <button
             type="button"
             onClick={() => setIsSupportOpen((prev) => !prev)}

@@ -1,9 +1,9 @@
 import React from 'react';
-import { Calendar, ArrowRight } from 'lucide-react';
+import { Calendar, ArrowRight, Sparkles } from 'lucide-react';
 import { useCMS } from '../context/CMSContext';
 
 export const HeroBanner: React.FC = () => {
-  const { cmsData } = useCMS();
+  const { cmsData, openPosterModal } = useCMS();
   const event = cmsData.eventDetails;
 
   const heading1 = event.heroHeadingLine1 || 'HỘI NGHỊ';
@@ -174,6 +174,18 @@ export const HeroBanner: React.FC = () => {
                 {dateText}
               </span>
             </div>
+
+            {/* CTA 3: Tạo Poster Thư Mời */}
+            <button
+              type="button"
+              onClick={() => openPosterModal()}
+              className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 xs:px-4.5 sm:px-5 py-1.5 sm:py-2.5 rounded-full bg-gradient-to-r from-purple-700 via-indigo-700 to-[#c83271] text-white hover:opacity-95 shadow-md hover:shadow-lg transition-all active:scale-[0.98] cursor-pointer whitespace-nowrap shrink-0"
+            >
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-pink-200" />
+              <span className="text-[12px] xs:text-[13px] sm:text-[14px] font-black tracking-tight">
+                Tạo Poster Thư Mời
+              </span>
+            </button>
           </div>
         </div>
 

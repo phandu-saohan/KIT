@@ -11,9 +11,17 @@ import { AdminCMSModal } from './components/admin/AdminCMSModal';
 import { AdminLoginScreen } from './components/admin/AdminLoginScreen';
 import { MobileQuickNav } from './components/MobileQuickNav';
 import { SEOHead } from './components/SEOHead';
+import { PosterCreatorModal } from './components/PosterCreatorModal';
 
 function MainApp() {
-  const { isAdminOpen, closeAdmin } = useCMS();
+  const {
+    isAdminOpen,
+    closeAdmin,
+    isPosterModalOpen,
+    closePosterModal,
+    posterModalAttendee,
+    cmsData,
+  } = useCMS();
   const [modalType, setModalType] = useState<'cme' | 'layout' | 'privacy' | null>(null);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
@@ -84,6 +92,14 @@ function MainApp() {
 
       {/* Mobile Floating Quick Navigation Dock */}
       <MobileQuickNav />
+
+      {/* Official Invitation Poster Creator Modal */}
+      <PosterCreatorModal
+        isOpen={isPosterModalOpen}
+        onClose={closePosterModal}
+        defaultAttendee={posterModalAttendee}
+        attendees={cmsData.registrations || []}
+      />
     </div>
   );
 }

@@ -18,6 +18,7 @@ import {
   Mail,
   Loader2,
   AlertCircle,
+  Camera,
 } from 'lucide-react';
 import { RegistrationFormData, AttendeeBadge } from '../types';
 import { useCMS } from '../context/CMSContext';
@@ -81,7 +82,7 @@ const BUSINESS_GOALS = [
 ];
 
 export const RegistrationSection: React.FC = () => {
-  const { cmsData, addRegistration, incrementHostingerSentToday, incrementGmailSentToday } = useCMS();
+  const { cmsData, addRegistration, incrementHostingerSentToday, incrementGmailSentToday, openPosterModal } = useCMS();
   const sectionRef = useRef<HTMLElement>(null);
   const totalSeats = cmsData.eventDetails.totalSeats || 1000;
   const currentRegistered = (cmsData.eventDetails.initialRegistered || 820) + cmsData.registrations.length - 2;
@@ -1208,6 +1209,34 @@ export const RegistrationSection: React.FC = () => {
               </div>
             )}
 
+            {/* PROMINENT POSTER CREATOR CALLOUT */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#002045] via-[#102a54] to-[#c83271] text-white border border-purple-400/30 shadow-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3.5">
+              <div className="flex items-center gap-3">
+                <div className="size-11 rounded-xl bg-white/20 backdrop-blur-md text-pink-200 flex items-center justify-center shadow-inner shrink-0">
+                  <Camera className="w-6 h-6" />
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-black tracking-widest text-pink-300">
+                    Đặc Quyền Dành Cho Đại Biểu
+                  </span>
+                  <h4 className="text-sm sm:text-base font-extrabold text-white mt-0.5">
+                    Tạo Poster Thư Mời Chính Thức Của Bạn
+                  </h4>
+                  <p className="text-[11.5px] text-pink-100/90 mt-0.5">
+                    Tải ảnh chân dung của bạn lên để tạo poster chuẩn HD sẵn sàng chia sẻ lên Facebook &amp; Zalo
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => openPosterModal(registeredBadge)}
+                className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-[#c83271] to-pink-600 hover:from-[#b02260] hover:to-pink-700 text-white text-xs sm:text-sm font-black shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 active:scale-95"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>Tạo Poster Ngay</span>
+              </button>
+            </div>
+
             {/* E-Badge Pass */}
             <div className="p-6 sm:p-7 rounded-3xl bg-gradient-to-br from-[#002045] via-[#1a365d] to-[#c83271] text-white shadow-xl relative overflow-hidden border border-white/20">
               <div className="flex items-center justify-between pb-3.5 border-b border-white/15">
@@ -1281,6 +1310,15 @@ export const RegistrationSection: React.FC = () => {
               >
                 <Printer className="w-4 h-4" />
                 <span>In Thẻ / Lưu PDF</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => openPosterModal(registeredBadge)}
+                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-700 to-[#c83271] text-white text-[12.5px] font-bold hover:from-purple-800 hover:to-[#b02260] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-[0.98]"
+              >
+                <Camera className="w-4 h-4" />
+                <span>Tạo Poster Thư Mời (FB / Zalo)</span>
               </button>
 
               <button
