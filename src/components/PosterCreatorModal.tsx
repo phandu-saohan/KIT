@@ -82,9 +82,13 @@ export const PosterCreatorModal: React.FC<PosterCreatorModalProps> = ({
   const [panY, setPanY] = useState<number>(0);
   const [rotation, setRotation] = useState<number>(0);
 
+  // Pre-rendered export assets (Ready for instant synchronous sharing on mobile)
+  const [posterDataUrl, setPosterDataUrl] = useState<string>('');
+  const [posterBlob, setPosterBlob] = useState<Blob | null>(null);
+  const [posterFile, setPosterFile] = useState<File | null>(null);
+
   // UI status state
   const [isCopied, setIsCopied] = useState<boolean>(false);
-  const [isProcessingShare, setIsProcessingShare] = useState<boolean>(false);
   const [templateLoaded, setTemplateLoaded] = useState<boolean>(false);
 
   // Dragging state
@@ -262,7 +266,7 @@ export const PosterCreatorModal: React.FC<PosterCreatorModalProps> = ({
     ctx.closePath();
   };
 
-  // 6. Draw Full Canvas
+  // 6. Draw Full Canvas & Pre-generate Blob/File for Instant Sharing
   const renderCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -356,6 +360,23 @@ export const PosterCreatorModal: React.FC<PosterCreatorModalProps> = ({
       ctx.fillText(fullLine2, centerX, 400);
       ctx.restore();
     }
+
+    // Synchronously create dataURL and background blob/file so share is instant
+    try {
+      const dataUrl = canvas.toDataURL('image/png', 1.0);
+      setPosterDataUrl(dataUrl);
+
+      canvas.toBlob((blob) => {
+        if (blob) {
+          setPosterBlob(blob);
+          const safeName = fullName.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '') || 'DaiBieu';
+          const file = new File([blob], `Poster_ThuMoi_${safeName}_VietHan2026.png`, { type: 'image/png' });
+          setPosterFile(file);
+        }
+      }, 'image/png', 1.0);
+    } catch (e) {
+      console.warn('Could not export canvas to blob:', e);
+    }
   }, [
     templateLoaded,
     userImage,
@@ -422,7 +443,7 @@ export const PosterCreatorModal: React.FC<PosterCreatorModalProps> = ({
     renderAvatarPreview();
   }, [renderCanvas, renderAvatarPreview]);
 
-  // Touch / Mouse Dragging for Avatar in Step 2 or Full Canvas
+  // Touch / Mouse Dragging for Avatar in Step 2
   const handleStartDrag = (clientX: number, clientY: number) => {
     if (!userImage) return;
     setIsDragging(true);
@@ -439,206 +460,142 @@ export const PosterCreatorModal: React.FC<PosterCreatorModalProps> = ({
     setIsDragging(false);
   };
 
-  // 8. File generation helper
-  const getPosterFileAndBlob = async (): Promise<{ blob: Blob; file: File; dataUrl: string } | null> => {
-    renderCanvas();
-    const canvas = canvasRef.current;
-    if (!canvas) return null;
-
-    const dataUrl = canvas.toDataURL('image/png', 1.0);
+  // 8. Robust Download Helper (Works on both Mobile and Desktop)
+  const handleDownload = () => {
     const safeName = fullName.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '') || 'DaiBieu';
-    const fileName = `Poster_ThuMoi_${safeName}_HoiThaoVietHan2026.png`;
+    const fileName = `Poster_ThuMoi_${safeName}_VietHan2026.png`;
 
-    return new Promise((resolve) => {
-      canvas.toBlob((blob) => {
-        if (!blob) {
-          resolve(null);
-          return;
-        }
-        const file = new File([blob], fileName, { type: 'image/png' });
-        resolve({ blob, file, dataUrl });
-      }, 'image/png', 1.0);
-    });
-  };
-
-  // 9. Download Poster
-  const handleDownload = async () => {
-    setIsProcessingShare(true);
     try {
-      const res = await getPosterFileAndBlob();
-      if (!res) throw new Error('Render failed');
+      if (posterBlob) {
+        const blobUrl = URL.createObjectURL(posterBlob);
+        const link = document.createElement('a');
+        link.download = fileName;
+        link.href = blobUrl;
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          document.body.removeChild(link);
+          URL.revokeObjectURL(blobUrl);
+        }, 1000);
+        showToast('🎉 Đã tải ảnh poster về máy thành công!');
+        return;
+      }
 
-      const link = document.createElement('a');
-      link.download = res.file.name;
-      link.href = res.dataUrl;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      showToast('🎉 Đã tải ảnh poster chuẩn HD về máy thành công!');
-    } catch (e) {
-      showToast('❌ Không thể tải ảnh. Quý khách vui lòng thử lại.');
-    } finally {
-      setIsProcessingShare(false);
+      if (posterDataUrl) {
+        const link = document.createElement('a');
+        link.download = fileName;
+        link.href = posterDataUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast('🎉 Đã tải ảnh poster về máy thành công!');
+        return;
+      }
+    } catch (err) {
+      showToast('💡 Quý khách có thể chạm giữ vào ảnh 1 giây để Lưu ảnh về điện thoại.');
     }
   };
 
-  // 10. Copy Image to Clipboard
+  // 9. Copy Image to Clipboard
   const handleCopyImage = async () => {
-    setIsProcessingShare(true);
-    try {
-      const res = await getPosterFileAndBlob();
-      if (!res) throw new Error('Render failed');
+    if (!posterBlob) {
+      handleDownload();
+      return;
+    }
 
+    try {
       if (typeof ClipboardItem !== 'undefined' && navigator.clipboard && navigator.clipboard.write) {
         // @ts-ignore
-        const item = new ClipboardItem({ 'image/png': res.blob });
+        const item = new ClipboardItem({ 'image/png': posterBlob });
         await navigator.clipboard.write([item]);
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), 3000);
         showToast('✅ Đã sao chép ảnh! Bạn có thể dán (Ctrl+V) ngay vào khung chat Zalo hoặc Facebook.');
       } else {
         handleDownload();
-        showToast('ℹ️ Trình duyệt chưa hỗ trợ sao chép ảnh trực tiếp. Hệ thống đã tải ảnh về máy cho bạn!');
       }
     } catch (e) {
       handleDownload();
-      showToast('ℹ️ Đã tự động tải ảnh về máy để bạn đính kèm vào tin nhắn!');
-    } finally {
-      setIsProcessingShare(false);
     }
   };
 
-  // 11. Share to Zalo (Auto mix and attach image to Zalo app on mobile)
+  // 10. Share to Zalo: INSTANT Synchronous Call for Mobile Web Share API
   const handleShareZalo = async () => {
-    setIsProcessingShare(true);
-    try {
-      const res = await getPosterFileAndBlob();
-      if (!res) throw new Error('Render failed');
+    const safeName = fullName.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '') || 'DaiBieu';
+    const fileName = `Poster_ThuMoi_${safeName}_VietHan2026.png`;
 
-      // Auto download to ensure photo is saved locally
-      const link = document.createElement('a');
-      link.download = res.file.name;
-      link.href = res.dataUrl;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      // Try Web Share API (Primary mobile mechanism to attach image to Zalo app)
-      const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
-      if (isMobile && navigator.canShare && navigator.canShare({ files: [res.file] })) {
-        try {
-          await navigator.share({
-            files: [res.file],
-            title: 'Poster Thư Mời Hội Nghị Thẩm Mỹ Việt – Hàn 2026',
-            text: `Trân trọng kính mời quý đồng nghiệp tham dự Hội Nghị Khoa Học Thẩm Mỹ Việt – Hàn 2026 cùng ${fullName}!`,
-          });
-          showToast('✅ Đang mở trình chia sẻ! Hãy chọn biểu tượng Zalo để gửi ngay kèm ảnh.');
-          return;
-        } catch (err: any) {
-          if (err.name === 'AbortError') return;
-        }
-      }
-
-      // Try copying to clipboard
+    // Priority 1: Instant Native Share on Mobile with File Attached (No preceding await!)
+    if (posterFile && typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [posterFile] })) {
       try {
-        if (typeof ClipboardItem !== 'undefined') {
-          // @ts-ignore
-          const item = new ClipboardItem({ 'image/png': res.blob });
-          await navigator.clipboard.write([item]);
-        }
-      } catch (_) {}
-
-      // Open Zalo on mobile or desktop
-      if (isMobile) {
-        showToast('📲 Đã lưu ảnh vào máy! Đang mở ứng dụng Zalo để bạn gửi ảnh...');
-        window.location.href = 'zalo://';
-        setTimeout(() => {
-          window.open('https://zalo.me/', '_blank');
-        }, 1200);
-      } else {
-        showToast('💡 Đã tải ảnh poster và sao chép vào bộ nhớ tạm! Đang mở Zalo Web, bạn chỉ cần dán (Ctrl+V) để gửi ảnh.');
-        window.open('https://chat.zalo.me/', '_blank');
-      }
-    } catch (e) {
-      showToast('❌ Lỗi khi xử lý chia sẻ. Quý khách vui lòng tải ảnh về máy và gửi qua Zalo.');
-    } finally {
-      setIsProcessingShare(false);
-    }
-  };
-
-  // 12. Share to Facebook (Auto mix and attach image to Facebook app on mobile)
-  const handleShareFacebook = async () => {
-    setIsProcessingShare(true);
-    try {
-      const res = await getPosterFileAndBlob();
-      if (!res) throw new Error('Render failed');
-
-      // Auto download
-      const link = document.createElement('a');
-      link.download = res.file.name;
-      link.href = res.dataUrl;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      // Try Web Share API (Mobile native share sheet attaches photo directly to Facebook/Feed/Stories)
-      const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
-      if (isMobile && navigator.canShare && navigator.canShare({ files: [res.file] })) {
-        try {
-          await navigator.share({
-            files: [res.file],
-            title: 'Poster Thư Mời Hội Nghị Thẩm Mỹ Việt – Hàn 2026',
-            text: `Trân trọng kính mời quý đồng nghiệp tham dự Hội Nghị Khoa Học Thẩm Mỹ Việt – Hàn 2026 cùng ${fullName}! #HoiThaoThamMyVietHan2026 #KBIT2026`,
-          });
-          showToast('✅ Đang mở trình chia sẻ! Hãy chọn biểu tượng Facebook để đăng bài kèm ảnh.');
-          return;
-        } catch (err: any) {
-          if (err.name === 'AbortError') return;
-        }
-      }
-
-      // Open Facebook app or sharer dialog
-      if (isMobile) {
-        showToast('📲 Đã lưu ảnh vào máy! Đang mở ứng dụng Facebook để bạn đính kèm ảnh đăng bài...');
-        window.location.href = 'fb://feed';
-        setTimeout(() => {
-          const shareUrl = encodeURIComponent(window.location.origin);
-          window.open(`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`, '_blank');
-        }, 1200);
-      } else {
-        const shareUrl = encodeURIComponent(window.location.origin);
-        window.open(`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`, '_blank', 'width=626,height=436');
-        showToast('💡 Đã tải ảnh poster về máy! Bạn có thể đính kèm ảnh vừa tải vào bài viết Facebook.');
-      }
-    } catch (e) {
-      showToast('❌ Lỗi khi xử lý chia sẻ. Quý khách vui lòng tải ảnh về máy và đăng lên Facebook.');
-    } finally {
-      setIsProcessingShare(false);
-    }
-  };
-
-  // 13. Native Share for iOS / Android Menu
-  const handleNativeShare = async () => {
-    setIsProcessingShare(true);
-    try {
-      const res = await getPosterFileAndBlob();
-      if (!res) throw new Error('Render failed');
-
-      if (navigator.canShare && navigator.canShare({ files: [res.file] })) {
         await navigator.share({
-          files: [res.file],
+          files: [posterFile],
+          title: 'Poster Thư Mời Hội Nghị Thẩm Mỹ Việt – Hàn 2026',
+          text: `Trân trọng kính mời quý đồng nghiệp tham dự Hội Nghị Khoa Học Thẩm Mỹ Việt – Hàn 2026 cùng ${fullName}!`,
+        });
+        return;
+      } catch (err: any) {
+        if (err.name === 'AbortError') return; // User simply closed the share sheet
+      }
+    }
+
+    // Priority 2: Fallback: Auto download image and open Zalo
+    handleDownload();
+
+    const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+    if (isMobile) {
+      showToast('💡 Đã lưu ảnh vào máy! Đang mở Zalo để bạn gửi ảnh...');
+      // Direct navigation to Zalo
+      window.location.href = 'https://zalo.me/';
+    } else {
+      showToast('💡 Đã tải poster về máy! Đang mở Zalo Web để bạn gửi ảnh...');
+      window.open('https://chat.zalo.me/', '_blank');
+    }
+  };
+
+  // 11. Share to Facebook: INSTANT Synchronous Call for Mobile Web Share API
+  const handleShareFacebook = async () => {
+    const safeName = fullName.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '') || 'DaiBieu';
+    const fileName = `Poster_ThuMoi_${safeName}_VietHan2026.png`;
+
+    // Priority 1: Instant Native Share on Mobile with File Attached
+    if (posterFile && typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [posterFile] })) {
+      try {
+        await navigator.share({
+          files: [posterFile],
+          title: 'Poster Thư Mời Hội Nghị Thẩm Mỹ Việt – Hàn 2026',
+          text: `Trân trọng kính mời quý đồng nghiệp tham dự Hội Nghị Khoa Học Thẩm Mỹ Việt – Hàn 2026 cùng ${fullName}! #HoiThaoThamMyVietHan2026 #KBIT2026`,
+        });
+        return;
+      } catch (err: any) {
+        if (err.name === 'AbortError') return;
+      }
+    }
+
+    // Priority 2: Fallback: Auto download image and open Facebook sharer
+    handleDownload();
+
+    const shareUrl = encodeURIComponent(window.location.origin);
+    const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`;
+    window.open(fbUrl, '_blank');
+    showToast('💡 Đã tải ảnh poster về máy! Bạn hãy đính kèm ảnh vừa tải vào bài viết Facebook nhé.');
+  };
+
+  // 12. General Native Share Menu
+  const handleNativeShare = async () => {
+    if (posterFile && typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [posterFile] })) {
+      try {
+        await navigator.share({
+          files: [posterFile],
           title: 'Thư Mời Tham Dự Hội Nghị Thẩm Mỹ Việt – Hàn 2026',
           text: `Trân trọng kính mời quý đồng nghiệp tham dự Hội Nghị Khoa Học Thẩm Mỹ Việt – Hàn 2026 cùng ${fullName}!`,
           url: window.location.origin,
         });
-      } else {
-        handleDownload();
+        return;
+      } catch (e: any) {
+        if (e.name === 'AbortError') return;
       }
-    } catch (e) {
-      handleDownload();
-    } finally {
-      setIsProcessingShare(false);
     }
+    handleDownload();
   };
 
   if (!isOpen) return null;
@@ -770,7 +727,9 @@ export const PosterCreatorModal: React.FC<PosterCreatorModalProps> = ({
             }`}
           >
             <div className="w-full max-w-[480px]">
+              {/* Poster Preview Container (Always Rendered) */}
               <div className="relative w-full aspect-[1024/959] rounded-2xl overflow-hidden shadow-xl border border-slate-200 bg-white group select-none">
+                {/* Full Resolution Canvas */}
                 <canvas
                   ref={canvasRef}
                   onMouseDown={(e) => handleStartDrag(e.clientX, e.clientY)}
@@ -784,10 +743,19 @@ export const PosterCreatorModal: React.FC<PosterCreatorModalProps> = ({
                     if (e.touches.length > 0) handleMoveDrag(e.touches[0].clientX, e.touches[0].clientY);
                   }}
                   onTouchEnd={handleEndDrag}
-                  className={`w-full h-full object-contain ${
+                  className={`w-full h-full object-contain ${posterDataUrl ? 'hidden' : 'block'} ${
                     userImage ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'
                   }`}
                 />
+
+                {/* Rendered IMG Tag for Mobile Long-Press / Native iOS Save Image Support */}
+                {posterDataUrl && (
+                  <img
+                    src={posterDataUrl}
+                    alt="Poster Thư Mời Hội Thảo"
+                    className="w-full h-full object-contain pointer-events-auto select-auto"
+                  />
+                )}
 
                 {/* Prompt overlay if no photo yet */}
                 {!userImage && (
@@ -811,15 +779,21 @@ export const PosterCreatorModal: React.FC<PosterCreatorModalProps> = ({
                 )}
               </div>
 
+              {/* Helpful Tip for Mobile Users */}
+              <div className="mt-1.5 text-center">
+                <p className="text-[11px] text-slate-500">
+                  💡 Trên điện thoại: Có thể <strong>chạm giữ vào ảnh 1 giây</strong> để Lưu ảnh hoặc Chia sẻ trực tiếp
+                </p>
+              </div>
+
               {/* Step 3 Quick Action Bar (Mobile & Desktop) */}
               {currentStep === 3 && (
-                <div className="mt-4 space-y-2.5 w-full animate-fade-in">
+                <div className="mt-3.5 space-y-2.5 w-full animate-fade-in">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {/* Share Zalo Button */}
                     <button
                       type="button"
                       onClick={handleShareZalo}
-                      disabled={isProcessingShare}
                       className="w-full py-3 px-3.5 rounded-xl bg-gradient-to-r from-[#0068ff] to-[#0052cc] hover:from-[#005bd9] hover:to-[#0047b3] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
                     >
                       <Share2 className="w-4 h-4" />
@@ -833,7 +807,6 @@ export const PosterCreatorModal: React.FC<PosterCreatorModalProps> = ({
                     <button
                       type="button"
                       onClick={handleShareFacebook}
-                      disabled={isProcessingShare}
                       className="w-full py-3 px-3.5 rounded-xl bg-gradient-to-r from-[#1877f2] to-[#0d5ec4] hover:from-[#156cdb] hover:to-[#0b4fa8] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
                     >
                       <Share2 className="w-4 h-4" />
@@ -849,7 +822,6 @@ export const PosterCreatorModal: React.FC<PosterCreatorModalProps> = ({
                     <button
                       type="button"
                       onClick={handleDownload}
-                      disabled={isProcessingShare}
                       className="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#002045] to-[#c83271] text-white text-xs font-bold shadow-xs hover:shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98]"
                     >
                       <Download className="w-4 h-4" />
@@ -860,7 +832,6 @@ export const PosterCreatorModal: React.FC<PosterCreatorModalProps> = ({
                     <button
                       type="button"
                       onClick={handleCopyImage}
-                      disabled={isProcessingShare}
                       className="py-2.5 px-3 rounded-xl bg-white border border-slate-200 hover:border-slate-300 text-slate-700 text-xs font-bold shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-[0.98]"
                       title="Sao chép ảnh vào Clipboard"
                     >
@@ -1346,13 +1317,13 @@ export const PosterCreatorModal: React.FC<PosterCreatorModalProps> = ({
                   </div>
                   <ul className="text-xs text-slate-700 space-y-2 list-disc pl-4 leading-relaxed">
                     <li>
-                      <strong>Chia sẻ qua Zalo:</strong> Hệ thống tự mix poster, tải ảnh về điện thoại và mở ứng dụng Zalo đính kèm sẵn ảnh để bạn gửi ngay cho đồng nghiệp.
+                      <strong>Chia sẻ qua Zalo:</strong> Mở ngay ứng dụng Zalo đính kèm sẵn ảnh poster để gửi tin nhắn hoặc đăng nhật ký.
                     </li>
                     <li>
-                      <strong>Chia sẻ lên Facebook:</strong> Tự động mở app Facebook và đính kèm ảnh poster vào bài viết hoặc Story của bạn.
+                      <strong>Chia sẻ lên Facebook:</strong> Mở app Facebook và đính kèm ảnh poster vào bài viết hoặc Story của bạn.
                     </li>
                     <li>
-                      <strong>Tải Poster HD:</strong> Lưu file ảnh PNG chất lượng cao (1024×959 px) vào thư viện ảnh.
+                      <strong>Chạm giữ ảnh:</strong> Trên điện thoại, bạn có thể chạm và giữ vào poster 1 giây để chọn "Lưu hình ảnh" hoặc "Chia sẻ".
                     </li>
                   </ul>
                 </div>
