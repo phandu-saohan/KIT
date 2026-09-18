@@ -897,13 +897,15 @@ export const DEFAULT_EMAIL_TEMPLATES: EmailTemplate[] = [
 
 export const DEFAULT_EMAIL_CAMPAIGN: EmailCampaignConfig = {
   senderName: 'Ban Tổ Chức Hội Nghị Thẩm Mỹ Việt – Hàn 2026',
-  senderEmail: 'invitation@kbitassociation.com',
+  senderEmail: 'onboarding@resend.dev',
   replyToEmail: 'support@kbitassociation.com',
+  sendProvider: 'resend',
+  resendApiKey: '',
+  resendDomain: '',
   smtpHost: 'smtp.gmail.com',
   smtpPort: 587,
   smtpUser: '',
   smtpPassword: '',
-  resendApiKey: '',
   recipients: INITIAL_EMAIL_RECIPIENTS,
   templates: DEFAULT_EMAIL_TEMPLATES,
   selectedTemplateId: 'tpl-doctor',

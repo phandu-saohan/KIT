@@ -178,7 +178,7 @@ interface CMSContextType {
   updateEmailCampaignConfig: (updated: Partial<EmailCampaignConfig>) => void;
   addEmailRecipient: (recipient: EmailRecipient) => void;
   removeEmailRecipient: (id: string) => void;
-  updateEmailRecipientStatus: (id: string, status: EmailRecipient['status'], error?: string) => void;
+  updateEmailRecipientStatus: (id: string, status: EmailRecipient['status'], error?: string, resendEmailId?: string) => void;
   bulkAddEmailRecipients: (recipients: EmailRecipient[]) => void;
   resetEmailRecipientsStatus: () => void;
   resetToDefaults: () => void;
@@ -700,7 +700,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  const updateEmailRecipientStatus = (id: string, status: EmailRecipient['status'], error?: string) => {
+  const updateEmailRecipientStatus = (id: string, status: EmailRecipient['status'], error?: string, resendEmailId?: string) => {
     setCmsData((prev) => {
       const cfg = prev.emailCampaignConfig || DEFAULT_EMAIL_CAMPAIGN;
       return {
@@ -714,6 +714,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                   status,
                   sentAt: status === 'sent' ? new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : r.sentAt,
                   errorMessage: error,
+                  resendEmailId: resendEmailId || r.resendEmailId,
                 }
               : r
           ),

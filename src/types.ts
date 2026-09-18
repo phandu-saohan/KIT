@@ -235,6 +235,7 @@ export interface EmailRecipient {
   status: 'pending' | 'sending' | 'sent' | 'failed';
   sentAt?: string;
   errorMessage?: string;
+  resendEmailId?: string;
 }
 
 export interface EmailTemplate {
@@ -249,11 +250,13 @@ export interface EmailCampaignConfig {
   senderName: string;
   senderEmail: string;
   replyToEmail: string;
+  sendProvider?: 'resend' | 'simulation';
+  resendApiKey?: string;
+  resendDomain?: string;
   smtpHost?: string;
   smtpPort?: number;
   smtpUser?: string;
   smtpPassword?: string;
-  resendApiKey?: string;
   recipients: EmailRecipient[];
   templates: EmailTemplate[];
   selectedTemplateId: string;
