@@ -1,4 +1,4 @@
-import { isDbConfigured, getDb, ensureTablesExist } from './db.js';
+import { isDbConfigured, getDb, ensureTablesExist } from './db';
 
 export default async function handler(req: any, res: any) {
   // CORS Headers
@@ -133,19 +133,143 @@ export default async function handler(req: any, res: any) {
         });
       }
 
-      const jsonStr = JSON.stringify(cmsPayload);
+      // If specific sub-section update requested for experts / speakers
+      if ((cmsPayload.type === 'experts' || cmsPayload.type === 'speakers') && cmsPayload.data) {
+        const expertsJson = JSON.stringify(cmsPayload.data);
+        await sql`
+          INSERT INTO cms_data (key, data, updated_at)
+          VALUES ('main', jsonb_build_object('experts', ${expertsJson}::jsonb), CURRENT_TIMESTAMP)
+          ON CONFLICT (key) DO UPDATE SET
+            data = jsonb_set(COALESCE(cms_data.data, '{}'::jsonb), '{experts}', ${expertsJson}::jsonb, true),
+            updated_at = CURRENT_TIMESTAMP;
+        `;
+        return res.status(200).json({
+          success: true,
+          message: 'Lưu danh sách Chuyên gia & Báo cáo viên vào Vercel Postgres thành công.',
+          updatedAt: new Date().toISOString(),
+        });
+      }
+
+      // If specific sub-section update requested for agenda
+      if (cmsPayload.type === 'agenda' && cmsPayload.data) {
+        const agendaJson = JSON.stringify(cmsPayload.data);
+        await sql`
+          INSERT INTO cms_data (key, data, updated_at)
+          VALUES ('main', jsonb_build_object('agenda', ${agendaJson}::jsonb), CURRENT_TIMESTAMP)
+          ON CONFLICT (key) DO UPDATE SET
+            data = jsonb_set(COALESCE(cms_data.data, '{}'::jsonb), '{agenda}', ${agendaJson}::jsonb, true),
+            updated_at = CURRENT_TIMESTAMP;
+        `;
+        return res.status(200).json({
+          success: true,
+          message: 'Lưu Lịch trình hội thảo vào Vercel Postgres thành công.',
+          updatedAt: new Date().toISOString(),
+        });
+      }
+
+      // If specific sub-section update requested for partners
+      if (cmsPayload.type === 'partners' && cmsPayload.data) {
+        const partnersJson = JSON.stringify(cmsPayload.data);
+        await sql`
+          INSERT INTO cms_data (key, data, updated_at)
+          VALUES ('main', jsonb_build_object('partners', ${partnersJson}::jsonb), CURRENT_TIMESTAMP)
+          ON CONFLICT (key) DO UPDATE SET
+            data = jsonb_set(COALESCE(cms_data.data, '{}'::jsonb), '{partners}', ${partnersJson}::jsonb, true),
+            updated_at = CURRENT_TIMESTAMP;
+        `;
+        return res.status(200).json({
+          success: true,
+          message: 'Lưu danh sách Đơn vị đồng hành & Nhà tài trợ vào Vercel Postgres thành công.',
+          updatedAt: new Date().toISOString(),
+        });
+      }
+
+      // If specific sub-section update requested for highlights
+      if (cmsPayload.type === 'highlights' && cmsPayload.data) {
+        const highlightsJson = JSON.stringify(cmsPayload.data);
+        await sql`
+          INSERT INTO cms_data (key, data, updated_at)
+          VALUES ('main', jsonb_build_object('highlights', ${highlightsJson}::jsonb), CURRENT_TIMESTAMP)
+          ON CONFLICT (key) DO UPDATE SET
+            data = jsonb_set(COALESCE(cms_data.data, '{}'::jsonb), '{highlights}', ${highlightsJson}::jsonb, true),
+            updated_at = CURRENT_TIMESTAMP;
+        `;
+        return res.status(200).json({
+          success: true,
+          message: 'Lưu Điểm nhấn hội thảo vào Vercel Postgres thành công.',
+          updatedAt: new Date().toISOString(),
+        });
+      }
+
+      // If specific sub-section update requested for footer
+      if ((cmsPayload.type === 'footer' || cmsPayload.type === 'footerConfig') && cmsPayload.data) {
+        const footerJson = JSON.stringify(cmsPayload.data);
+        await sql`
+          INSERT INTO cms_data (key, data, updated_at)
+          VALUES ('main', jsonb_build_object('footerConfig', ${footerJson}::jsonb), CURRENT_TIMESTAMP)
+          ON CONFLICT (key) DO UPDATE SET
+            data = jsonb_set(COALESCE(cms_data.data, '{}'::jsonb), '{footerConfig}', ${footerJson}::jsonb, true),
+            updated_at = CURRENT_TIMESTAMP;
+        `;
+        return res.status(200).json({
+          success: true,
+          message: 'Lưu thông tin Chân trang & Liên hệ vào Vercel Postgres thành công.',
+          updatedAt: new Date().toISOString(),
+        });
+      }
+
+      // If specific sub-section update requested for media library
+      if ((cmsPayload.type === 'media' || cmsPayload.type === 'mediaLibrary') && cmsPayload.data) {
+        const mediaJson = JSON.stringify(cmsPayload.data);
+        await sql`
+          INSERT INTO cms_data (key, data, updated_at)
+          VALUES ('main', jsonb_build_object('mediaLibrary', ${mediaJson}::jsonb), CURRENT_TIMESTAMP)
+          ON CONFLICT (key) DO UPDATE SET
+            data = jsonb_set(COALESCE(cms_data.data, '{}'::jsonb), '{mediaLibrary}', ${mediaJson}::jsonb, true),
+            updated_at = CURRENT_TIMESTAMP;
+        `;
+        return res.status(200).json({
+          success: true,
+          message: 'Lưu Thư viện hình ảnh vào Vercel Postgres thành công.',
+          updatedAt: new Date().toISOString(),
+        });
+      }
+
+      // If specific sub-section update requested for admin account
+      if ((cmsPayload.type === 'account' || cmsPayload.type === 'adminAccount') && cmsPayload.data) {
+        const accountJson = JSON.stringify(cmsPayload.data);
+        await sql`
+          INSERT INTO cms_data (key, data, updated_at)
+          VALUES ('main', jsonb_build_object('adminAccount', ${accountJson}::jsonb), CURRENT_TIMESTAMP)
+          ON CONFLICT (key) DO UPDATE SET
+            data = jsonb_set(COALESCE(cms_data.data, '{}'::jsonb), '{adminAccount}', ${accountJson}::jsonb, true),
+            updated_at = CURRENT_TIMESTAMP;
+        `;
+        return res.status(200).json({
+          success: true,
+          message: 'Lưu Thông tin tài khoản quản trị vào Vercel Postgres thành công.',
+          updatedAt: new Date().toISOString(),
+        });
+      }
+
+      // Full CMS Save: Omit registrations to keep payload lightweight and prevent conflicts with the registrations table
+      const cleanPayload = { ...cmsPayload };
+      delete cleanPayload.registrations;
+      delete cleanPayload.type;
+
+      const jsonStr = JSON.stringify(cleanPayload);
 
       await sql`
         INSERT INTO cms_data (key, data, updated_at)
         VALUES ('main', ${jsonStr}::jsonb, CURRENT_TIMESTAMP)
         ON CONFLICT (key) DO UPDATE SET
-          data = EXCLUDED.data,
+          data = COALESCE(cms_data.data, '{}'::jsonb) || ${jsonStr}::jsonb,
           updated_at = CURRENT_TIMESTAMP;
       `;
 
       return res.status(200).json({
         success: true,
-        message: 'Lưu cấu hình CMS vào Vercel Postgres thành công.',
+        message: 'Lưu toàn bộ các module CMS vào Vercel Postgres thành công.',
         updatedAt: new Date().toISOString(),
       });
     }

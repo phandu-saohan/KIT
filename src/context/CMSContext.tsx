@@ -216,6 +216,13 @@ interface CMSContextType {
   saveEventDetailsToCloud: (eventDetails?: Partial<EventDetails>) => Promise<boolean>;
   saveEmailCampaignToCloud: (emailCampaignConfig?: Partial<EmailCampaignConfig>) => Promise<boolean>;
   saveConfirmEmailTemplateToCloud: (confirmEmailTemplate?: Partial<ConfirmEmailTemplate>) => Promise<boolean>;
+  saveExpertsToCloud: (experts?: ExpertSpeaker[]) => Promise<boolean>;
+  saveAgendaToCloud: (agenda?: AgendaItem[]) => Promise<boolean>;
+  savePartnersToCloud: (partners?: Partner[]) => Promise<boolean>;
+  saveHighlightsToCloud: (highlights?: HighlightItem[]) => Promise<boolean>;
+  saveFooterToCloud: (footerConfig?: Partial<FooterConfig>) => Promise<boolean>;
+  saveAdminAccountToCloud: (adminAccount?: Partial<AdminAccountConfig>) => Promise<boolean>;
+  saveMediaToCloud: (mediaLibrary?: string[]) => Promise<boolean>;
   isPosterModalOpen: boolean;
   posterModalAttendee: Partial<AttendeeBadge> | null;
   openPosterModal: (attendee?: Partial<AttendeeBadge> | null) => void;
@@ -588,9 +595,38 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               } catch {}
 
               setCmsData((prev) => {
-                return {
+                const mergedExperts = Array.isArray(parsedData.experts) && parsedData.experts.length > 0
+                  ? parsedData.experts
+                  : prev.experts;
+                const mergedAgenda = Array.isArray(parsedData.agenda) && parsedData.agenda.length > 0
+                  ? parsedData.agenda
+                  : prev.agenda;
+                const mergedPartners = Array.isArray(parsedData.partners) && parsedData.partners.length > 0
+                  ? parsedData.partners
+                  : prev.partners;
+                const mergedHighlights = Array.isArray(parsedData.highlights) && parsedData.highlights.length > 0
+                  ? parsedData.highlights
+                  : prev.highlights;
+                const mergedFooter = {
+                  ...DEFAULT_FOOTER_CONFIG,
+                  ...(prev.footerConfig || {}),
+                  ...(parsedData.footerConfig || {}),
+                };
+                const mergedMedia = Array.isArray(parsedData.mediaLibrary) && parsedData.mediaLibrary.length > 0
+                  ? parsedData.mediaLibrary
+                  : prev.mediaLibrary;
+                const mergedAdminAccount = parsedData.adminAccount || prev.adminAccount;
+
+                const fullData: CMSData = {
                   ...prev,
                   ...parsedData,
+                  experts: mergedExperts,
+                  agenda: mergedAgenda,
+                  partners: mergedPartners,
+                  highlights: mergedHighlights,
+                  footerConfig: mergedFooter,
+                  mediaLibrary: mergedMedia,
+                  adminAccount: mergedAdminAccount,
                   seoConfig: mergedSeo,
                   eventDetails: {
                     ...mergedEvent,
@@ -600,8 +636,14 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                   },
                   emailCampaignConfig: mergedEmailCampaign,
                   confirmEmailTemplate: mergedConfirmTemplate,
-                  registrations: cloudRegistrations || parsedData.registrations || prev.registrations,
+                  registrations: cloudRegistrations || prev.registrations,
                 };
+
+                try {
+                  localStorage.setItem(STORAGE_KEY, JSON.stringify(fullData));
+                } catch {}
+
+                return fullData;
               });
             } else if (!cmsJson.hasCustomData) {
               // Database connected on Vercel but empty -> auto-seed current CMS data to Vercel Postgres!
@@ -739,6 +781,160 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return false;
   };
 
+  // Dedicated lightweight cloud sync for Experts / Speakers
+  const saveExpertsToCloud = async (customExperts?: ExpertSpeaker[]): Promise<boolean> => {
+    try {
+      const targetExperts = customExperts || cmsDataRef.current.experts;
+      const res = await fetch('/api/cms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'experts', data: targetExperts }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success) {
+          setIsCloudDbConnected(true);
+          return true;
+        }
+      }
+    } catch (err) {
+      console.warn('Could not sync Experts to Vercel Postgres:', err);
+    }
+    return false;
+  };
+
+  // Dedicated lightweight cloud sync for Agenda
+  const saveAgendaToCloud = async (customAgenda?: AgendaItem[]): Promise<boolean> => {
+    try {
+      const targetAgenda = customAgenda || cmsDataRef.current.agenda;
+      const res = await fetch('/api/cms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'agenda', data: targetAgenda }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success) {
+          setIsCloudDbConnected(true);
+          return true;
+        }
+      }
+    } catch (err) {
+      console.warn('Could not sync Agenda to Vercel Postgres:', err);
+    }
+    return false;
+  };
+
+  // Dedicated lightweight cloud sync for Partners
+  const savePartnersToCloud = async (customPartners?: Partner[]): Promise<boolean> => {
+    try {
+      const targetPartners = customPartners || cmsDataRef.current.partners;
+      const res = await fetch('/api/cms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'partners', data: targetPartners }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success) {
+          setIsCloudDbConnected(true);
+          return true;
+        }
+      }
+    } catch (err) {
+      console.warn('Could not sync Partners to Vercel Postgres:', err);
+    }
+    return false;
+  };
+
+  // Dedicated lightweight cloud sync for Highlights
+  const saveHighlightsToCloud = async (customHighlights?: HighlightItem[]): Promise<boolean> => {
+    try {
+      const targetHighlights = customHighlights || cmsDataRef.current.highlights;
+      const res = await fetch('/api/cms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'highlights', data: targetHighlights }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success) {
+          setIsCloudDbConnected(true);
+          return true;
+        }
+      }
+    } catch (err) {
+      console.warn('Could not sync Highlights to Vercel Postgres:', err);
+    }
+    return false;
+  };
+
+  // Dedicated lightweight cloud sync for Footer
+  const saveFooterToCloud = async (customFooter?: Partial<FooterConfig>): Promise<boolean> => {
+    try {
+      const targetFooter = { ...(cmsDataRef.current.footerConfig || DEFAULT_FOOTER_CONFIG), ...(customFooter || {}) };
+      const res = await fetch('/api/cms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'footer', data: targetFooter }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success) {
+          setIsCloudDbConnected(true);
+          return true;
+        }
+      }
+    } catch (err) {
+      console.warn('Could not sync Footer to Vercel Postgres:', err);
+    }
+    return false;
+  };
+
+  // Dedicated lightweight cloud sync for Admin Account
+  const saveAdminAccountToCloud = async (customAccount?: Partial<AdminAccountConfig>): Promise<boolean> => {
+    try {
+      const targetAccount = { ...(cmsDataRef.current.adminAccount || DEFAULT_ADMIN_ACCOUNT), ...(customAccount || {}) };
+      const res = await fetch('/api/cms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'adminAccount', data: targetAccount }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success) {
+          setIsCloudDbConnected(true);
+          return true;
+        }
+      }
+    } catch (err) {
+      console.warn('Could not sync Admin Account to Vercel Postgres:', err);
+    }
+    return false;
+  };
+
+  // Dedicated lightweight cloud sync for Media Library
+  const saveMediaToCloud = async (customMedia?: string[]): Promise<boolean> => {
+    try {
+      const targetMedia = customMedia || cmsDataRef.current.mediaLibrary;
+      const res = await fetch('/api/cms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'mediaLibrary', data: (targetMedia || []).slice(0, 30) }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success) {
+          setIsCloudDbConnected(true);
+          return true;
+        }
+      }
+    } catch (err) {
+      console.warn('Could not sync Media to Vercel Postgres:', err);
+    }
+    return false;
+  };
+
   const saveCmsToCloud = async (dataToSave?: CMSData): Promise<boolean> => {
     try {
       const source = dataToSave || cmsDataRef.current;
@@ -778,14 +974,15 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       } catch {}
 
-      // Keep payload lightweight (under 2MB) to stay safely within Vercel 4.5MB Serverless Function limits
+      // Keep payload lightweight (under 200KB) by stripping registrations (they reside in their own dedicated table 'registrations')
+      const { registrations: _ignored, ...cleanSource } = source;
       const payload = {
-        ...source,
+        ...cleanSource,
         seoConfig: currentSeo,
         eventDetails: currentEvent,
         emailCampaignConfig: currentEmailCampaign,
         confirmEmailTemplate: currentConfirmTemplate,
-        mediaLibrary: (source.mediaLibrary || []).slice(0, 6),
+        mediaLibrary: (source.mediaLibrary || []).slice(0, 30),
       };
 
       const res = await fetch('/api/cms', {
@@ -1794,6 +1991,13 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         saveEventDetailsToCloud,
         saveEmailCampaignToCloud,
         saveConfirmEmailTemplateToCloud,
+        saveExpertsToCloud,
+        saveAgendaToCloud,
+        savePartnersToCloud,
+        saveHighlightsToCloud,
+        saveFooterToCloud,
+        saveAdminAccountToCloud,
+        saveMediaToCloud,
         isPosterModalOpen,
         posterModalAttendee,
         openPosterModal,

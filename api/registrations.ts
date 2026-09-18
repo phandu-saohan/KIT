@@ -1,4 +1,4 @@
-import { isDbConfigured, getDb, ensureTablesExist } from './db.js';
+import { isDbConfigured, getDb, ensureTablesExist } from './db';
 
 export default async function handler(req: any, res: any) {
   // CORS Headers

@@ -100,6 +100,13 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
     saveCmsToCloud,
     saveSeoToCloud,
     saveEventDetailsToCloud,
+    saveExpertsToCloud,
+    saveAgendaToCloud,
+    savePartnersToCloud,
+    saveHighlightsToCloud,
+    saveFooterToCloud,
+    saveAdminAccountToCloud,
+    saveMediaToCloud,
     openPosterModal,
   } = useCMS();
 
@@ -286,19 +293,25 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
     }
   }, [cmsData.adminAccount?.username, cmsData.adminAccount?.password]);
 
-  const handleSaveAdminAccount = (e: React.FormEvent) => {
+  const handleSaveAdminAccount = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!adminUsernameInput.trim() || !adminPasswordInput.trim()) {
       alert('Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!');
       return;
     }
-    updateAdminAccount({
+    const newAcc = {
       username: adminUsernameInput.trim(),
       password: adminPasswordInput.trim(),
-    });
+    };
+    updateAdminAccount(newAcc);
     setAccountUpdatedMsg(true);
     setTimeout(() => setAccountUpdatedMsg(false), 4000);
-    showToast('Đã cập nhật thông tin tài khoản & mật khẩu quản trị thành công!');
+    const ok = await saveAdminAccountToCloud(newAcc);
+    if (ok) {
+      showToast('✅ Đã lưu tài khoản & mật khẩu vào Vercel Postgres thành công!');
+    } else {
+      showToast('✅ Đã cập nhật thông tin tài khoản & mật khẩu quản trị!');
+    }
   };
 
   const [isSaving, setIsSaving] = useState(false);
@@ -439,6 +452,120 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
       }
     } catch (err: any) {
       showToast('❌ Lỗi khi lưu cấu hình SEO: ' + (err?.message || 'Thử lại'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveSpeakers = async () => {
+    setIsSaving(true);
+    try {
+      const ok = await saveExpertsToCloud(cmsData.experts);
+      await handleManualSave(false);
+      setSaveSuccessTick(true);
+      setTimeout(() => setSaveSuccessTick(false), 3500);
+      if (ok) {
+        showToast('✅ Đã lưu danh sách Chuyên gia & Báo cáo viên vào Vercel Postgres thành công!');
+      } else {
+        showToast('✅ Đã lưu thông tin chuyên gia thành công!');
+      }
+    } catch (err: any) {
+      showToast('❌ Lỗi khi lưu chuyên gia: ' + (err?.message || 'Thử lại'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveAgenda = async () => {
+    setIsSaving(true);
+    try {
+      const ok = await saveAgendaToCloud(cmsData.agenda);
+      await handleManualSave(false);
+      setSaveSuccessTick(true);
+      setTimeout(() => setSaveSuccessTick(false), 3500);
+      if (ok) {
+        showToast('✅ Đã lưu Lịch trình hội thảo vào Vercel Postgres thành công!');
+      } else {
+        showToast('✅ Đã lưu lịch trình hội thảo thành công!');
+      }
+    } catch (err: any) {
+      showToast('❌ Lỗi khi lưu lịch trình: ' + (err?.message || 'Thử lại'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSavePartners = async () => {
+    setIsSaving(true);
+    try {
+      const ok = await savePartnersToCloud(cmsData.partners);
+      await handleManualSave(false);
+      setSaveSuccessTick(true);
+      setTimeout(() => setSaveSuccessTick(false), 3500);
+      if (ok) {
+        showToast('✅ Đã lưu Đơn vị đồng hành & Nhà tài trợ vào Vercel Postgres thành công!');
+      } else {
+        showToast('✅ Đã lưu đơn vị đồng hành thành công!');
+      }
+    } catch (err: any) {
+      showToast('❌ Lỗi khi lưu đối tác: ' + (err?.message || 'Thử lại'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveHighlights = async () => {
+    setIsSaving(true);
+    try {
+      const ok = await saveHighlightsToCloud(cmsData.highlights);
+      await handleManualSave(false);
+      setSaveSuccessTick(true);
+      setTimeout(() => setSaveSuccessTick(false), 3500);
+      if (ok) {
+        showToast('✅ Đã lưu Điểm nhấn hội thảo vào Vercel Postgres thành công!');
+      } else {
+        showToast('✅ Đã lưu điểm nhấn hội thảo thành công!');
+      }
+    } catch (err: any) {
+      showToast('❌ Lỗi khi lưu điểm nhấn: ' + (err?.message || 'Thử lại'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveFooter = async () => {
+    setIsSaving(true);
+    try {
+      const ok = await saveFooterToCloud(cmsData.footerConfig);
+      await handleManualSave(false);
+      setSaveSuccessTick(true);
+      setTimeout(() => setSaveSuccessTick(false), 3500);
+      if (ok) {
+        showToast('✅ Đã lưu thông tin Chân trang & Liên hệ vào Vercel Postgres thành công!');
+      } else {
+        showToast('✅ Đã lưu chân trang thành công!');
+      }
+    } catch (err: any) {
+      showToast('❌ Lỗi khi lưu chân trang: ' + (err?.message || 'Thử lại'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveMedia = async () => {
+    setIsSaving(true);
+    try {
+      const ok = await saveMediaToCloud(cmsData.mediaLibrary);
+      await handleManualSave(false);
+      setSaveSuccessTick(true);
+      setTimeout(() => setSaveSuccessTick(false), 3500);
+      if (ok) {
+        showToast('✅ Đã lưu Thư viện hình ảnh vào Vercel Postgres thành công!');
+      } else {
+        showToast('✅ Đã lưu thư viện media thành công!');
+      }
+    } catch (err: any) {
+      showToast('❌ Lỗi khi lưu thư viện media: ' + (err?.message || 'Thử lại'));
     } finally {
       setIsSaving(false);
     }
@@ -4158,29 +4285,42 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                     </p>
                   </div>
 
-                  <button
-                    onClick={() => {
-                      const newId = `exp-new-${Date.now()}`;
-                      const newExpert: ExpertSpeaker = {
-                        id: newId,
-                        name: 'GS.BS. CHUYÊN GIA MỚI',
-                        roleTitle: 'Báo cáo viên',
-                        bioPoints: ['Giáo sư / Bác sĩ chuyên khoa Phẫu thuật Thẩm mỹ', 'Hội viên Hiệp hội Thẩm mỹ Quốc tế'],
-                        country: 'KR',
-                        countryName: 'Hàn Quốc',
-                        avatarUrl: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=500&auto=format&fit=crop&q=80',
-                        badgeOrg: 'CHUYÊN GIA',
-                        badgeColor: 'bg-[#174ea6] text-white',
-                      };
-                      addExpert(newExpert);
-                      setSelectedExpertId(newId);
-                      showToast('Đã thêm chuyên gia mới!');
-                    }}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#174ea6] hover:bg-[#123e85] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Thêm chuyên gia mới</span>
-                  </button>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={handleSaveSpeakers}
+                      disabled={isSaving}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+                      title="Lưu danh sách chuyên gia vào Vercel Postgres"
+                    >
+                      <Save className="w-4 h-4" />
+                      <span>{isSaving ? 'Đang lưu...' : 'Lưu Chuyên Gia (Vercel DB)'}</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        const newId = `exp-new-${Date.now()}`;
+                        const newExpert: ExpertSpeaker = {
+                          id: newId,
+                          name: 'GS.BS. CHUYÊN GIA MỚI',
+                          roleTitle: 'Báo cáo viên',
+                          bioPoints: ['Giáo sư / Bác sĩ chuyên khoa Phẫu thuật Thẩm mỹ', 'Hội viên Hiệp hội Thẩm mỹ Quốc tế'],
+                          country: 'KR',
+                          countryName: 'Hàn Quốc',
+                          avatarUrl: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=500&auto=format&fit=crop&q=80',
+                          badgeOrg: 'CHUYÊN GIA',
+                          badgeColor: 'bg-[#174ea6] text-white',
+                        };
+                        addExpert(newExpert);
+                        setSelectedExpertId(newId);
+                        showToast('Đã thêm chuyên gia mới!');
+                      }}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#174ea6] hover:bg-[#123e85] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Thêm chuyên gia mới</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Expert Selection Pills */}
@@ -4551,15 +4691,14 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                     </button>
 
                     <button
-                      onClick={async () => {
-                        await handleManualSave(true);
-                        showToast('✅ Đã lưu toàn bộ lịch trình hội thảo vào CMS thành công!');
-                      }}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
-                      title="Lưu toàn bộ lịch trình vào bộ nhớ CMS & Cloud"
+                      type="button"
+                      onClick={handleSaveAgenda}
+                      disabled={isSaving}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+                      title="Lưu toàn bộ lịch trình vào Vercel Postgres"
                     >
                       <Save className="w-3.5 h-3.5" />
-                      <span>Lưu vào CMS</span>
+                      <span>{isSaving ? 'Đang lưu...' : 'Lưu Lịch Trình (Vercel DB)'}</span>
                     </button>
 
                     <button
@@ -4850,7 +4989,18 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={handleSaveMedia}
+                      disabled={isSaving}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+                      title="Lưu thư viện hình ảnh vào Vercel Postgres"
+                    >
+                      <Save className="w-4 h-4" />
+                      <span>{isSaving ? 'Đang lưu...' : 'Lưu Kho Ảnh (Vercel DB)'}</span>
+                    </button>
+
                     <input
                       type="file"
                       ref={generalMediaRef}
@@ -4859,6 +5009,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                       onChange={handleGeneralMediaUpload}
                     />
                     <button
+                      type="button"
                       onClick={() => generalMediaRef.current?.click()}
                       className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
                     >
@@ -4945,8 +5096,20 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <button
+                      type="button"
+                      onClick={handleSavePartners}
+                      disabled={isSaving}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+                      title="Lưu danh sách đối tác vào Vercel Postgres"
+                    >
+                      <Save className="w-4 h-4" />
+                      <span>{isSaving ? 'Đang lưu...' : 'Lưu Đối Tác (Vercel DB)'}</span>
+                    </button>
+
+                    <button
+                      type="button"
                       onClick={handleAddNewPartner}
                       className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#174ea6] hover:bg-[#133e85] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
                     >
@@ -5154,13 +5317,26 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                ========================================================================= */}
             {activeAdminTab === 'highlights' && (
               <div className="space-y-6">
-                <div>
-                  <h2 className="text-[20px] font-black text-slate-900">
-                    Điểm Nhấn Sự Kiện &amp; Chứng Nhận CME
-                  </h2>
-                  <p className="text-[13px] text-slate-500">
-                    Quản lý khối tiêu đề giới thiệu và 4 cột mốc quan trọng về quy mô, khu triển lãm, ngôn ngữ và CME.
-                  </p>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-[20px] font-black text-slate-900">
+                      Điểm Nhấn Sự Kiện &amp; Chứng Nhận CME
+                    </h2>
+                    <p className="text-[13px] text-slate-500">
+                      Quản lý khối tiêu đề giới thiệu và 4 cột mốc quan trọng về quy mô, khu triển lãm, ngôn ngữ và CME.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleSaveHighlights}
+                    disabled={isSaving}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95 shrink-0"
+                    title="Lưu điểm nhấn vào Vercel Postgres"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>{isSaving ? 'Đang lưu...' : 'Lưu Điểm Nhấn (Vercel DB)'}</span>
+                  </button>
                 </div>
 
                 {/* KHỐI GIỚI THIỆU TỔNG QUAN (THAY THẾ PHẦN KHOANH ĐỎ CŨ) */}
@@ -6305,7 +6481,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                ========================================================================= */}
             {activeAdminTab === 'footer' && (
               <div className="space-y-6 max-w-4xl">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
                     <h2 className="text-[20px] font-black text-slate-900 flex items-center gap-2">
                       <span>Quản Trị Nội Dung Chân Trang (Footer)</span>
@@ -6317,6 +6493,17 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
                       Tùy chỉnh thông tin thương hiệu, đơn vị chủ trì, hiệp hội đồng hành, hotline liên hệ và bản quyền chân trang.
                     </p>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={handleSaveFooter}
+                    disabled={isSaving}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95 shrink-0"
+                    title="Lưu chân trang vào Vercel Postgres"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>{isSaving ? 'Đang lưu...' : 'Lưu Chân Trang (Vercel DB)'}</span>
+                  </button>
                 </div>
 
                 {/* Khối 1: Thương hiệu & Thông điệp */}
