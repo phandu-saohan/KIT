@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   CheckCircle,
   Award,
@@ -15,9 +15,13 @@ import {
   ShieldCheck,
   Check,
   Sparkles,
+  Mail,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
 import { RegistrationFormData, AttendeeBadge } from '../types';
 import { useCMS } from '../context/CMSContext';
+import { sendRegistrationConfirmationEmail } from '../utils/registrationEmail';
 import QRCode from 'qrcode';
 
 interface EventOption {
@@ -77,7 +81,8 @@ const BUSINESS_GOALS = [
 ];
 
 export const RegistrationSection: React.FC = () => {
-  const { cmsData, addRegistration } = useCMS();
+  const { cmsData, addRegistration, incrementHostingerSentToday, incrementGmailSentToday } = useCMS();
+  const sectionRef = useRef<HTMLElement>(null);
   const totalSeats = cmsData.eventDetails.totalSeats || 1000;
   const currentRegistered = (cmsData.eventDetails.initialRegistered || 820) + cmsData.registrations.length - 2;
   const remainingSeats = Math.max(0, totalSeats - Math.min(totalSeats, currentRegistered));
@@ -111,8 +116,25 @@ export const RegistrationSection: React.FC = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [registeredBadge, setRegisteredBadge] = useState<AttendeeBadge | null>(null);
+  const [emailSendingStatus, setEmailSendingStatus] = useState<{
+    status: 'idle' | 'sending' | 'sent' | 'failed';
+    message?: string;
+    provider?: string;
+  }>({ status: 'idle' });
   const [fromMobileQr, setFromMobileQr] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Smoothly anchor view to registration section when badge is created to avoid jumping downwards
+  useEffect(() => {
+    if (registeredBadge && sectionRef.current) {
+      const yOffset = -70;
+      const y = sectionRef.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({
+        top: Math.max(0, y),
+        behavior: 'smooth',
+      });
+    }
+  }, [registeredBadge]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -285,15 +307,86 @@ export const RegistrationSection: React.FC = () => {
       qrCodeUrl: qrCodeUrl,
     };
 
-    setTimeout(() => {
+    setTimeout(async () => {
       setRegisteredBadge(newBadge);
       addRegistration(newBadge);
       setIsSubmitting(false);
+
+      // Prevent window from jumping downwards when form unmounts
+      if (sectionRef.current) {
+        const yOffset = -70;
+        const y = sectionRef.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({
+          top: Math.max(0, y),
+          behavior: 'smooth',
+        });
+      }
+
+      // Automatically dispatch confirmation email to attendee
+      if (formData.email && formData.email.includes('@')) {
+        setEmailSendingStatus({ status: 'sending' });
+        try {
+          const res = await sendRegistrationConfirmationEmail(newBadge, cmsData.emailCampaignConfig);
+          if (res.success) {
+            setEmailSendingStatus({
+              status: 'sent',
+              message: `Đã tự động gửi thông tin xác nhận & thẻ đại biểu về hòm thư: ${newBadge.email}`,
+              provider: res.provider,
+            });
+            if (res.provider === 'hostinger' && res.accountId) {
+              incrementHostingerSentToday(res.accountId);
+            } else if (res.provider === 'gmail' && res.accountId) {
+              incrementGmailSentToday(res.accountId);
+            }
+          } else {
+            setEmailSendingStatus({
+              status: 'failed',
+              message: res.message || 'Không thể gửi email tự động lúc này.',
+            });
+          }
+        } catch (err: any) {
+          setEmailSendingStatus({
+            status: 'failed',
+            message: err?.message || 'Lỗi mạng khi gửi email.',
+          });
+        }
+      }
     }, 450);
+  };
+
+  const handleResendEmail = async () => {
+    if (!registeredBadge || !registeredBadge.email) return;
+    setEmailSendingStatus({ status: 'sending' });
+    try {
+      const res = await sendRegistrationConfirmationEmail(registeredBadge, cmsData.emailCampaignConfig);
+      if (res.success) {
+        setEmailSendingStatus({
+          status: 'sent',
+          message: `Đã gửi lại thành công thư xác nhận về ${registeredBadge.email}`,
+          provider: res.provider,
+        });
+        if (res.provider === 'hostinger' && res.accountId) {
+          incrementHostingerSentToday(res.accountId);
+        } else if (res.provider === 'gmail' && res.accountId) {
+          incrementGmailSentToday(res.accountId);
+        }
+      } else {
+        setEmailSendingStatus({
+          status: 'failed',
+          message: res.message || 'Chưa thể gửi email.',
+        });
+      }
+    } catch (err: any) {
+      setEmailSendingStatus({
+        status: 'failed',
+        message: err?.message || 'Lỗi kết nối khi gửi lại email.',
+      });
+    }
   };
 
   const handleReset = () => {
     setRegisteredBadge(null);
+    setEmailSendingStatus({ status: 'idle' });
     setFormData((prev) => ({
       ...prev,
       fullName: '',
@@ -305,6 +398,14 @@ export const RegistrationSection: React.FC = () => {
       address: '',
       notes: '',
     }));
+    if (sectionRef.current) {
+      const yOffset = -70;
+      const y = sectionRef.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({
+        top: Math.max(0, y),
+        behavior: 'smooth',
+      });
+    }
   };
 
   const handlePrintBadge = () => {
@@ -312,7 +413,7 @@ export const RegistrationSection: React.FC = () => {
   };
 
   return (
-    <section className="w-full py-12 sm:py-16 bg-[#f8faff] relative border-b border-[#e2eaf8] scroll-mt-6" id="dang-ky">
+    <section ref={sectionRef} className="w-full py-12 sm:py-16 bg-[#f8faff] relative border-b border-[#e2eaf8] scroll-mt-6" id="dang-ky">
       <div id="dang-ky-tham-du" className="scroll-mt-14" />
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
@@ -1030,15 +1131,69 @@ export const RegistrationSection: React.FC = () => {
             </aside>
           </div>
         ) : (
-          <div className="max-w-2xl mx-auto flex flex-col gap-5 animate-fade-in" id="attendee-ticket">
+          <div className="max-w-2xl mx-auto flex flex-col gap-5 animate-fade-in scroll-mt-20" id="attendee-ticket">
             {/* SUCCESS VIEW & E-BADGE */}
             <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center gap-3 text-emerald-900 text-xs sm:text-sm">
               <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
-              <div>
+              <div className="flex-1">
                 <p className="font-bold text-[14px]">Đăng ký tham dự thành công!</p>
                 <p className="text-[12px] text-emerald-800 mt-0.5">Thẻ đại biểu của quý khách đã được tạo thành công bên dưới.</p>
               </div>
             </div>
+
+            {/* AUTOMATED EMAIL CONFIRMATION STATUS BANNER */}
+            {emailSendingStatus.status === 'sending' && (
+              <div className="p-3.5 rounded-2xl bg-blue-50 border border-blue-200 flex items-center gap-3 text-blue-900 text-xs">
+                <Loader2 className="w-4 h-4 text-blue-600 animate-spin shrink-0" />
+                <p className="font-medium">
+                  Đang tự động gửi thư xác nhận và mã thẻ về hòm thư <span className="font-bold underline">{registeredBadge.email}</span>...
+                </p>
+              </div>
+            )}
+
+            {emailSendingStatus.status === 'sent' && (
+              <div className="p-3.5 rounded-2xl bg-emerald-50/90 border border-emerald-300 flex items-center justify-between gap-3 text-emerald-900 text-xs shadow-2xs">
+                <div className="flex items-center gap-2.5">
+                  <div className="size-7 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0">
+                    <Mail className="w-4 h-4 text-emerald-700" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-[12.5px] text-emerald-900">Đã gửi email xác nhận &amp; thẻ đại biểu thành công!</p>
+                    <p className="text-[11.5px] text-emerald-700 mt-0.5">
+                      Thư xác nhận chi tiết đã được chuyển tới <span className="font-bold underline">{registeredBadge.email}</span>. Vui lòng kiểm tra hộp thư đến (hoặc thư rác / spam).
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleResendEmail}
+                  className="px-2.5 py-1 text-[11px] font-bold text-emerald-800 hover:bg-emerald-100 rounded-lg border border-emerald-200 transition-colors shrink-0 cursor-pointer"
+                >
+                  Gửi lại
+                </button>
+              </div>
+            )}
+
+            {emailSendingStatus.status === 'failed' && (
+              <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-between gap-3 text-amber-900 text-xs shadow-2xs">
+                <div className="flex items-center gap-2.5">
+                  <div className="size-7 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
+                    <AlertCircle className="w-4 h-4 text-amber-700" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-[12.5px] text-amber-900">Chưa thể gửi email tự động tới {registeredBadge.email}</p>
+                    <p className="text-[11.5px] text-amber-700 mt-0.5">{emailSendingStatus.message || 'Quý khách vẫn có thể lưu thẻ hoặc nhấn thử gửi lại.'}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleResendEmail}
+                  className="px-2.5 py-1 text-[11px] font-bold text-amber-800 hover:bg-amber-100 rounded-lg border border-amber-300 transition-colors shrink-0 cursor-pointer"
+                >
+                  Thử gửi lại
+                </button>
+              </div>
+            )}
 
             {/* E-Badge Pass */}
             <div className="p-6 sm:p-7 rounded-3xl bg-gradient-to-br from-[#002045] via-[#1a365d] to-[#c83271] text-white shadow-xl relative overflow-hidden border border-white/20">
@@ -1113,6 +1268,20 @@ export const RegistrationSection: React.FC = () => {
               >
                 <Printer className="w-4 h-4" />
                 <span>In Thẻ / Lưu PDF</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleResendEmail}
+                disabled={emailSendingStatus.status === 'sending'}
+                className="px-4 py-2.5 rounded-xl bg-white border border-[#e2eaf8] text-slate-700 hover:text-[#002045] text-[12.5px] font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-[0.98] disabled:opacity-50"
+              >
+                {emailSendingStatus.status === 'sending' ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-[#c83271]" />
+                ) : (
+                  <Mail className="w-3.5 h-3.5 text-[#c83271]" />
+                )}
+                <span>Gửi lại email xác nhận</span>
               </button>
 
               <a
