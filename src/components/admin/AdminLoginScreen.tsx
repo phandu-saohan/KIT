@@ -152,20 +152,6 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
               <span>{isSubmitting ? 'Đang xác thực...' : 'Đăng Nhập CMS'}</span>
             </button>
           </form>
-
-          {/* Default Credentials Hint Box */}
-          <div className="mt-5 p-3 rounded-xl bg-blue-50/80 border border-blue-100 text-[11.5px] text-slate-600 space-y-1">
-            <p className="font-bold text-[#174ea6] flex items-center gap-1.5">
-              <span>💡 Tài khoản quản trị mặc định:</span>
-            </p>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between text-slate-700 font-mono text-[11px] gap-1">
-              <span>Tài khoản: <strong className="text-[#002045]">admin</strong></span>
-              <span>Mật khẩu: <strong className="text-[#c83271]">kbit@2026</strong></span>
-            </div>
-            <p className="text-[10.5px] text-slate-500 pt-0.5">
-              *(Bạn có thể đổi tài khoản và mật khẩu này bên trong CMS sau khi đăng nhập).*
-            </p>
-          </div>
         </div>
       </div>
 
