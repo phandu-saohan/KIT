@@ -154,7 +154,7 @@ export const ScientificAgenda: React.FC = () => {
     <section className="w-full pt-3 sm:pt-4 pb-10 sm:pb-16 bg-[#f8faff] relative border-b border-slate-200/80" id="chuong-trinh">
       <div className="max-w-[1320px] mx-auto px-3 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 sm:mb-8">
+        <div className="mb-6 sm:mb-8">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-50 border border-pink-200/70 text-[#d52b66] text-[11px] font-bold uppercase tracking-wider mb-2 shadow-2xs">
               <Sparkles className="w-3.5 h-3.5" />
@@ -171,56 +171,6 @@ export const ScientificAgenda: React.FC = () => {
                 {cmsData.eventDetails.venueName || 'Bệnh viện Trung ương Quân đội 108, Hà Nội'}
               </span>
             </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            {/* View Mode Toggle Button */}
-            <div className="inline-flex items-center p-1 bg-white border border-slate-200/90 rounded-2xl shadow-2xs">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                  viewMode === 'grid'
-                    ? 'bg-[#174ea6] text-white shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                }`}
-                title="Bảng biểu 4 Hội trường chuẩn"
-              >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                <span className="hidden xs:inline">Bảng 4 Hội trường</span>
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                  viewMode === 'list'
-                    ? 'bg-[#174ea6] text-white shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                }`}
-                title="Danh sách dòng thời gian chi tiết"
-              >
-                <List className="w-3.5 h-3.5" />
-                <span className="hidden xs:inline">Dòng thời gian</span>
-              </button>
-            </div>
-
-            <span className="inline-flex items-center gap-1.5 text-slate-700 text-[12px] sm:text-[13px] font-semibold bg-white border border-slate-200/80 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-2xl shadow-2xs">
-              <Clock className="w-4 h-4 text-[#174ea6]" />
-              <span>{allAgenda.length} Mục</span>
-            </span>
-
-            <a
-              href="#dang-ky-tham-du"
-              className="px-4 py-2 rounded-2xl bg-[#d52b66] hover:bg-[#b81d51] text-white text-[12px] sm:text-[13px] font-black transition-all shadow-sm active:scale-95 cursor-pointer"
-            >
-              Đăng ký tham dự
-            </a>
-
-            <button
-              onClick={handlePrint}
-              className="hidden sm:inline-flex p-2.5 rounded-2xl bg-white border border-slate-200/80 hover:bg-slate-50 text-slate-700 transition-colors cursor-pointer shadow-2xs"
-              title="In lịch trình hội nghị"
-            >
-              <Printer className="w-4 h-4 text-[#174ea6]" />
-            </button>
           </div>
         </div>
 
@@ -274,77 +224,47 @@ export const ScientificAgenda: React.FC = () => {
            ========================================================================= */}
         {viewMode === 'grid' && (
           <div className="space-y-4">
-            {/* Mobile Controls: Layout Switcher & Hall Filter Bar */}
+            {/* Mobile Controls: Quick Hall Filter Bar */}
             <div className="md:hidden space-y-2.5">
-              {/* 1. Layout Mode Switcher (Cards vs Horizontal Table) */}
-              <div className="flex items-center justify-between gap-1.5 p-1 bg-white rounded-2xl border border-slate-200/90 shadow-2xs">
+              {/* Quick Hall Filter Chips on Mobile */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar pt-0.5">
                 <button
                   type="button"
-                  onClick={() => setMobileLayoutMode('cards')}
-                  className={`flex-1 py-2 px-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                    mobileLayoutMode === 'cards'
-                      ? 'bg-[#174ea6] text-white shadow-xs font-extrabold'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  onClick={() => setMobileHallFilter('all')}
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
+                    mobileHallFilter === 'all'
+                      ? 'bg-[#232a55] text-white shadow-xs'
+                      : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
                   }`}
                 >
-                  <List className="w-3.5 h-3.5" />
-                  <span>Thẻ theo giờ (Dễ đọc)</span>
+                  Tất cả 4 phòng
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setMobileLayoutMode('table')}
-                  className={`flex-1 py-2 px-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                    mobileLayoutMode === 'table'
-                      ? 'bg-[#174ea6] text-white shadow-xs font-extrabold'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                  }`}
-                >
-                  <LayoutGrid className="w-3.5 h-3.5" />
-                  <span>Bảng cuộn ngang 4 phòng</span>
-                </button>
+                {hallHeaders.map((h) => {
+                  const numStr = String(h.num) as '1' | '2' | '3' | '4';
+                  const isSelected = mobileHallFilter === numStr;
+                  return (
+                    <button
+                      key={h.num}
+                      type="button"
+                      onClick={() => setMobileHallFilter(numStr)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap shrink-0 transition-all flex items-center gap-1.5 cursor-pointer ${
+                        isSelected
+                          ? 'text-white shadow-xs ring-2 ring-offset-1 ring-slate-400'
+                          : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+                      }`}
+                      style={{
+                        backgroundColor: isSelected ? h.bg : undefined,
+                      }}
+                    >
+                      <span
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{ backgroundColor: isSelected ? '#ffffff' : h.bg }}
+                      />
+                      <span>HT {h.num}</span>
+                    </button>
+                  );
+                })}
               </div>
-
-              {/* 2. Quick Hall Filter Chips on Mobile (active in cards mode) */}
-              {mobileLayoutMode === 'cards' && (
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar pt-0.5">
-                  <button
-                    type="button"
-                    onClick={() => setMobileHallFilter('all')}
-                    className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
-                      mobileHallFilter === 'all'
-                        ? 'bg-[#232a55] text-white shadow-xs'
-                        : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
-                    }`}
-                  >
-                    Tất cả 4 phòng
-                  </button>
-                  {hallHeaders.map((h) => {
-                    const numStr = String(h.num) as '1' | '2' | '3' | '4';
-                    const isSelected = mobileHallFilter === numStr;
-                    return (
-                      <button
-                        key={h.num}
-                        type="button"
-                        onClick={() => setMobileHallFilter(numStr)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap shrink-0 transition-all flex items-center gap-1.5 cursor-pointer ${
-                          isSelected
-                            ? 'text-white shadow-xs ring-2 ring-offset-1 ring-slate-400'
-                            : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
-                        }`}
-                        style={{
-                          backgroundColor: isSelected ? h.bg : undefined,
-                        }}
-                      >
-                        <span
-                          className="w-2 h-2 rounded-full shrink-0"
-                          style={{ backgroundColor: isSelected ? '#ffffff' : h.bg }}
-                        />
-                        <span>HT {h.num}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
             </div>
 
             {/* MOBILE CARDS VIEW (Displayed on mobile when mobileLayoutMode === 'cards') */}
