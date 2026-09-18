@@ -199,7 +199,7 @@ interface CMSContextType {
   uploadImageFile: (file: File) => Promise<string>;
   isCloudDbConnected: boolean;
   refreshFromCloud: () => Promise<void>;
-  saveCmsToCloud: () => Promise<boolean>;
+  saveCmsToCloud: (dataToSave?: CMSData) => Promise<boolean>;
 }
 
 export const isPathAdmin = (): boolean => {
@@ -313,17 +313,23 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isAdminOpen, setIsAdminOpenState] = useState<boolean>(() => isPathAdmin());
   const [activeAdminTab, setActiveAdminTabState] = useState<string>(() => getInitialAdminTab());
   const [isCloudDbConnected, setIsCloudDbConnected] = useState<boolean>(false);
+  const cmsDataRef = useRef<CMSData>(cmsData);
+  useEffect(() => {
+    cmsDataRef.current = cmsData;
+  }, [cmsData]);
 
   // Cloud Database Synchronization (Vercel Postgres)
   const refreshFromCloud = async () => {
     try {
       // 1. Fetch Registrations from Vercel Postgres
+      let cloudRegistrations: AttendeeBadge[] | null = null;
       const regRes = await fetch('/api/registrations');
       if (regRes.ok) {
         const regJson = await regRes.json();
         if (regJson.isDbConfigured) {
           setIsCloudDbConnected(true);
           if (regJson.success && Array.isArray(regJson.data) && regJson.data.length > 0) {
+            cloudRegistrations = regJson.data;
             setCmsData((prev) => ({
               ...prev,
               registrations: regJson.data,
@@ -342,12 +348,24 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const cmsJson = await cmsRes.json();
         if (cmsJson.isDbConfigured) {
           setIsCloudDbConnected(true);
-          if (cmsJson.success && cmsJson.hasCustomData && cmsJson.data) {
-            setCmsData((prev) => ({
-              ...prev,
-              ...cmsJson.data,
-              registrations: prev.registrations,
-            }));
+          if (cmsJson.success) {
+            if (cmsJson.hasCustomData && cmsJson.data) {
+              const parsedData = typeof cmsJson.data === 'string' ? JSON.parse(cmsJson.data) : cmsJson.data;
+              setCmsData((prev) => ({
+                ...prev,
+                ...parsedData,
+                registrations: cloudRegistrations || parsedData.registrations || prev.registrations,
+                eventDetails: {
+                  ...parsedData.eventDetails,
+                  initialRegistered: cloudRegistrations
+                    ? Math.max(parsedData.eventDetails?.initialRegistered || 0, cloudRegistrations.length)
+                    : (parsedData.eventDetails?.initialRegistered || prev.eventDetails.initialRegistered),
+                },
+              }));
+            } else if (!cmsJson.hasCustomData) {
+              // Database connected on Vercel but empty -> auto-seed current CMS data to Vercel Postgres!
+              saveCmsToCloud(cmsDataRef.current);
+            }
           }
         }
       }
@@ -356,12 +374,13 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const saveCmsToCloud = async (): Promise<boolean> => {
+  const saveCmsToCloud = async (dataToSave?: CMSData): Promise<boolean> => {
     try {
+      const payload = dataToSave || cmsDataRef.current;
       const res = await fetch('/api/cms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(cmsData),
+        body: JSON.stringify(payload),
       });
       if (res.ok) {
         const json = await res.json();
@@ -466,6 +485,9 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (json !== lastSavedJsonRef.current) {
           lastSavedJsonRef.current = json;
           localStorage.setItem(STORAGE_KEY, json);
+
+          // Automatically sync changes and additions to Vercel Postgres database!
+          saveCmsToCloud(cmsData);
         }
       } catch (err) {
         console.warn('LocalStorage quota warning or size limit, attempting safe recovery...', err);
@@ -477,11 +499,12 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const jsonSafe = JSON.stringify(safeData);
           lastSavedJsonRef.current = jsonSafe;
           localStorage.setItem(STORAGE_KEY, jsonSafe);
+          saveCmsToCloud(safeData);
         } catch (e2) {
           console.error('Critical localStorage save failure:', e2);
         }
       }
-    }, 250);
+    }, 600);
 
     return () => clearTimeout(timer);
   }, [cmsData]);

@@ -45,12 +45,14 @@ export default async function handler(req: any, res: any) {
         });
       }
 
+      const parsedData = typeof rows[0].data === 'string' ? JSON.parse(rows[0].data) : rows[0].data;
+
       return res.status(200).json({
         success: true,
         isDbConfigured: true,
         hasCustomData: true,
         updatedAt: rows[0].updated_at,
-        data: rows[0].data,
+        data: parsedData,
       });
     }
 

@@ -1,12 +1,22 @@
 import { neon } from '@neondatabase/serverless';
 
 export function getConnectionString(): string | undefined {
-  return (
-    process.env.POSTGRES_URL ||
-    process.env.POSTGRES_PRISMA_URL ||
-    process.env.POSTGRES_URL_NON_POOLING ||
-    process.env.DATABASE_URL
-  );
+  if (process.env.POSTGRES_URL) return process.env.POSTGRES_URL;
+  if (process.env.POSTGRES_PRISMA_URL) return process.env.POSTGRES_PRISMA_URL;
+  if (process.env.POSTGRES_URL_NON_POOLING) return process.env.POSTGRES_URL_NON_POOLING;
+  if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
+  if (process.env.VERCEL_POSTGRES_URL) return process.env.VERCEL_POSTGRES_URL;
+  if (process.env.POSTGRES_URL_NO_SSL) return process.env.POSTGRES_URL_NO_SSL;
+
+  if (process.env.POSTGRES_HOST && process.env.POSTGRES_USER && process.env.POSTGRES_PASSWORD) {
+    const host = process.env.POSTGRES_HOST;
+    const user = encodeURIComponent(process.env.POSTGRES_USER);
+    const pass = encodeURIComponent(process.env.POSTGRES_PASSWORD);
+    const db = process.env.POSTGRES_DATABASE || 'verceldb';
+    return `postgres://${user}:${pass}@${host}:5432/${db}?sslmode=require`;
+  }
+
+  return undefined;
 }
 
 export function isDbConfigured(): boolean {

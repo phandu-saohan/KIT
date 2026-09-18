@@ -278,7 +278,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
       // 2. Trigger cloud sync if connected
       let cloudSuccess = false;
       try {
-        cloudSuccess = await saveCmsToCloud();
+        cloudSuccess = await saveCmsToCloud(cmsData);
       } catch {}
 
       const now = new Date();
@@ -648,11 +648,11 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
           <button
             type="button"
             onClick={async () => {
-              const ok = await saveCmsToCloud();
+              const ok = await saveCmsToCloud(cmsData);
               if (ok) {
-                showToast('Đã lưu và đồng bộ toàn bộ CMS lên Vercel Postgres thành công!');
+                showToast('✅ Đã lưu và đồng bộ toàn bộ CMS vào Vercel Postgres thành công!');
               } else {
-                showToast('Đã lưu cấu hình vào bộ nhớ máy (Vercel Postgres chưa kích hoạt)');
+                showToast('💾 Đã lưu cấu hình vào bộ nhớ máy (Vercel Postgres chưa kích hoạt biến POSTGRES_URL)');
               }
             }}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#002045] to-[#174ea6] text-white text-xs font-bold hover:shadow-md transition-all cursor-pointer"
