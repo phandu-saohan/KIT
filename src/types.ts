@@ -243,6 +243,7 @@ export interface EmailRecipient {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   organization?: string;
   recipientType?: 'doctor' | 'business' | 'vip' | 'general';
   status: 'pending' | 'sending' | 'sent' | 'failed';

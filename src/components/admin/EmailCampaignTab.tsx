@@ -37,6 +37,8 @@ import {
   ToggleLeft,
   ToggleRight,
   Server,
+  Phone,
+  FileDown,
 } from 'lucide-react';
 import { useCMS } from '../../context/CMSContext';
 import { EmailRecipient, EmailTemplate, GmailSenderAccount } from '../../types';
@@ -95,6 +97,14 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
   const [previewRecipientId, setPreviewRecipientId] = useState<string>(recipients[0]?.id || '');
   const [activeTabSubView, setActiveTabSubView] = useState<'editor' | 'preview'>('editor');
 
+  // CSV 3-Column Upload & Preview States
+  const csvFileInputRef = useRef<HTMLInputElement>(null);
+  const [showCsvPreviewModal, setShowCsvPreviewModal] = useState(false);
+  const [parsedCsvData, setParsedCsvData] = useState<Array<{ name: string; email: string; phone: string }>>([]);
+  const [csvFileName, setCsvFileName] = useState('');
+  const [csvDuplicateCount, setCsvDuplicateCount] = useState(0);
+  const [csvDefaultAudience, setCsvDefaultAudience] = useState<'doctor' | 'business' | 'vip' | 'general'>('doctor');
+
   // Show/Hide App Passwords
   const [showPasswordMap, setShowPasswordMap] = useState<Record<string, boolean>>({});
   const toggleShowPassword = (id: string) => {
@@ -126,6 +136,7 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
   // New recipient form state
   const [newRecipName, setNewRecipName] = useState('');
   const [newRecipEmail, setNewRecipEmail] = useState('');
+  const [newRecipPhone, setNewRecipPhone] = useState('');
   const [newRecipOrg, setNewRecipOrg] = useState('');
   const [newRecipType, setNewRecipType] = useState<'doctor' | 'business' | 'vip' | 'general'>('doctor');
 
@@ -134,6 +145,7 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
     id: 'sample',
     name: 'TS.BS. Nguyễn Văn Hùng',
     email: 'dr.hung@benhvien108.vn',
+    phone: '0908 123 456',
     organization: 'Bệnh viện Trung ương Quân đội 108',
     recipientType: 'doctor',
     status: 'pending',
@@ -150,6 +162,8 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
 
     return text
       .replace(/{{name}}/g, recip.name || 'Quý Đại biểu')
+      .replace(/{{phone}}/g, recip.phone || '')
+      .replace(/{{email}}/g, recip.email || '')
       .replace(/{{organization}}/g, recip.organization || 'Quý Đơn vị')
       .replace(/{{event_name}}/g, eventName)
       .replace(/{{event_date}}/g, eventDate)
@@ -179,6 +193,7 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
     const matchesSearch =
       r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       r.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (r.phone || '').includes(searchTerm) ||
       (r.organization || '').toLowerCase().includes(searchTerm.toLowerCase());
 
     if (!matchesSearch) return false;
@@ -197,6 +212,203 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
   const addLog = (text: string, type: 'info' | 'success' | 'error' = 'info', account?: string) => {
     const time = new Date().toLocaleTimeString('vi-VN');
     setCampaignLogs((prev) => [{ time, text, type, account }, ...prev.slice(0, 199)]);
+  };
+
+  // Split CSV line respecting quotes
+  const parseCsvLine = (text: string, delimiter: string): string[] => {
+    const result: string[] = [];
+    let cur = '';
+    let inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (c === '"') {
+        if (inQuotes && text[i + 1] === '"') {
+          cur += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (c === delimiter && !inQuotes) {
+        result.push(cur.trim());
+        cur = '';
+      } else {
+        cur += c;
+      }
+    }
+    result.push(cur.trim());
+    return result;
+  };
+
+  // Handle CSV file upload (3 Columns: Tên, Email, Số điện thoại)
+  const handleFileUploadCsv = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        let content = (event.target?.result as string) || '';
+        // Strip UTF-8 BOM
+        if (content.charCodeAt(0) === 0xfeff) {
+          content = content.slice(1);
+        }
+
+        const lines = content.split(/\r\n|\n/).filter((l) => l.trim().length > 0);
+        if (lines.length === 0) {
+          alert('File CSV rỗng, không có dữ liệu!');
+          return;
+        }
+
+        // Detect delimiter: comma, semicolon, or tab
+        const sampleLine = lines[0];
+        let delimiter = ',';
+        if (sampleLine.includes(';') && !sampleLine.includes(',')) delimiter = ';';
+        else if (sampleLine.includes('\t')) delimiter = '\t';
+
+        let startIndex = 0;
+        let nameCol = 0;
+        let emailCol = 1;
+        let phoneCol = 2;
+
+        // Check if header row exists
+        const firstRowCells = parseCsvLine(sampleLine, delimiter).map((c) => c.toLowerCase());
+        const isHeader = firstRowCells.some(
+          (c) =>
+            c.includes('tên') ||
+            c.includes('ten') ||
+            c.includes('name') ||
+            c.includes('họ') ||
+            c.includes('email') ||
+            c.includes('sđt') ||
+            c.includes('sdt') ||
+            c.includes('phone') ||
+            c.includes('thoại') ||
+            c.includes('thoai')
+        );
+
+        if (isHeader) {
+          startIndex = 1;
+          firstRowCells.forEach((c, idx) => {
+            if (c.includes('email') || c.includes('mail')) {
+              emailCol = idx;
+            } else if (
+              c.includes('phone') ||
+              c.includes('sđt') ||
+              c.includes('sdt') ||
+              c.includes('thoại') ||
+              c.includes('thoai') ||
+              c.includes('tel') ||
+              c.includes('mobile')
+            ) {
+              phoneCol = idx;
+            } else if (c.includes('tên') || c.includes('ten') || c.includes('name') || c.includes('họ') || c.includes('ho')) {
+              nameCol = idx;
+            }
+          });
+        }
+
+        const existingEmails = new Set(recipients.map((r) => r.email.toLowerCase().trim()));
+        const seenInFile = new Set<string>();
+        const validRecords: Array<{ name: string; email: string; phone: string }> = [];
+        let duplicateCount = 0;
+
+        for (let i = startIndex; i < lines.length; i++) {
+          const cells = parseCsvLine(lines[i], delimiter);
+          if (cells.length < 2 && !cells[0]?.includes('@')) continue;
+
+          let rawName = cells[nameCol] || '';
+          let rawEmail = cells[emailCol] || '';
+          let rawPhone = cells[phoneCol] || '';
+
+          // Fallback if columns are shifted: locate cell containing @
+          if (!rawEmail.includes('@')) {
+            const emailCandidate = cells.find((c) => c.includes('@'));
+            if (emailCandidate) {
+              rawEmail = emailCandidate;
+              const remaining = cells.filter((c) => c !== rawEmail);
+              rawName = remaining[0] || rawName;
+              rawPhone = remaining[1] || rawPhone;
+            }
+          }
+
+          const cleanEmail = rawEmail.replace(/["']/g, '').trim().toLowerCase();
+          const cleanName = rawName.replace(/["']/g, '').trim();
+          let cleanPhone = rawPhone.replace(/["']/g, '').trim();
+
+          if (!cleanEmail || !cleanEmail.includes('@')) continue;
+
+          if (existingEmails.has(cleanEmail) || seenInFile.has(cleanEmail)) {
+            duplicateCount++;
+            continue;
+          }
+
+          seenInFile.add(cleanEmail);
+          validRecords.push({
+            name: cleanName || cleanEmail.split('@')[0],
+            email: cleanEmail,
+            phone: cleanPhone,
+          });
+        }
+
+        if (validRecords.length === 0) {
+          alert('Không tìm thấy bản ghi email hợp lệ nào trong file CSV!');
+          return;
+        }
+
+        setParsedCsvData(validRecords);
+        setCsvFileName(file.name);
+        setCsvDuplicateCount(duplicateCount);
+        setShowCsvPreviewModal(true);
+      } catch (err: any) {
+        alert('Lỗi đọc file CSV: ' + (err?.message || String(err)));
+      } finally {
+        if (csvFileInputRef.current) csvFileInputRef.current.value = '';
+      }
+    };
+    reader.readAsText(file, 'UTF-8');
+  };
+
+  // Confirm Import CSV
+  const handleConfirmImportCsv = () => {
+    if (parsedCsvData.length === 0) return;
+
+    const newRecipients: EmailRecipient[] = parsedCsvData.map((item, idx) => ({
+      id: `csv-${Date.now()}-${idx}-${Math.random().toString(36).substr(2, 4)}`,
+      name: item.name,
+      email: item.email,
+      phone: item.phone,
+      organization: 'Chưa cập nhật',
+      recipientType: csvDefaultAudience,
+      status: 'pending',
+    }));
+
+    bulkAddEmailRecipients(newRecipients);
+    setShowCsvPreviewModal(false);
+    setParsedCsvData([]);
+    showToast(`✅ Đã nạp thành công ${newRecipients.length} khách mời vào danh bạ!`);
+  };
+
+  // Download Sample CSV
+  const handleDownloadSampleCsv = () => {
+    const sampleRows = [
+      ['Họ và tên', 'Email', 'Số điện thoại'],
+      ['TS.BS. Nguyễn Văn An', 'nguyenvanan@gmail.com', '0901234567'],
+      ['ThS.BS. Trần Thị Mai', 'tranthimai@bv108.vn', '0912345678'],
+      ['BS.CKII. Lê Hoàng Nam', 'hoangnam@vinmec.com', '0988776655'],
+      ['Ông Phạm Minh Đức', 'duc.pham@kbeautycorp.vn', '0934567890'],
+      ['Bà Hoàng Kim Oanh', 'kimoanh@aestheticgroup.vn', '0918999111'],
+    ];
+
+    const csvContent = '\uFEFF' + sampleRows.map((r) => r.join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'Mau_danh_ba_3_cot_Ten_Email_SDT.csv';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    showToast('Đã tải file CSV mẫu (3 cột) thành công!');
   };
 
   // Test single Gmail SMTP connection
@@ -353,12 +565,12 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
       id: 'test-preview',
       name: 'Bác sĩ / Đại biểu Thử Nghiệm',
       email: testEmailAddress.trim(),
+      phone: '0901234567',
       organization: 'Bệnh viện / Doanh nghiệp Đối tác',
       recipientType: selectedTemplate.targetAudience === 'business' ? 'business' : 'doctor',
       status: 'pending',
     };
 
-    // Pick first ready Gmail account if using Gmail Pool
     const testGmail = sendProvider === 'gmail_pool' ? (readyGmailAccounts[0] || gmailPool[0]) : undefined;
     const result = await sendEmailToRecipient(testRecipient, selectedTemplate, testGmail);
     setIsSendingTest(false);
@@ -422,17 +634,16 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
       let chosenGmail: GmailSenderAccount | undefined = undefined;
 
       if (sendProvider === 'gmail_pool') {
-        // Find available accounts that have not reached daily quota (sentToday < dailyQuota)
         const currentPool = cmsData.emailCampaignConfig?.gmailPool || gmailPool;
         const availableAccounts = currentPool.filter((g) => g.isActive && g.email && g.appPassword && (g.sentToday || 0) < (g.dailyQuota || 500));
 
         if (availableAccounts.length === 0) {
-          addLog('⚠️ Toàn bộ 5 tài khoản Gmail đã đạt hạn ngạch 500 email hôm nay! Tạm dừng chiến dịch.', 'error');
+          addLog('⚠️ Toàn bộ tài khoản Gmail đã đạt hạn ngạch 500 email hôm nay! Tạm dừng chiến dịch.', 'error');
           alert('Tất cả các tài khoản Gmail trong cụm đã đạt giới hạn 500 email hôm nay (Tổng cộng tối đa 2,500 email/ngày). Hệ thống tạm dừng để bảo vệ tài khoản.');
           break;
         }
 
-        // Round-Robin selection: pick next account in circular fashion
+        // Round-Robin selection
         chosenGmail = availableAccounts[roundRobinPointer % availableAccounts.length];
         roundRobinPointer++;
       }
@@ -475,6 +686,7 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
       id: `rec-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
       name: newRecipName.trim(),
       email: newRecipEmail.trim(),
+      phone: newRecipPhone.trim() || '',
       organization: newRecipOrg.trim() || 'Chưa cập nhật',
       recipientType: newRecipType,
       status: 'pending',
@@ -484,6 +696,7 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
     setShowAddRecipientModal(false);
     setNewRecipName('');
     setNewRecipEmail('');
+    setNewRecipPhone('');
     setNewRecipOrg('');
     showToast(`Đã thêm ${newRec.name} vào danh sách nhận thư.`);
   };
@@ -502,6 +715,7 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
         id: `reg-rec-${reg.id}`,
         name: reg.fullName || 'Bác sĩ / Đại biểu',
         email: reg.email,
+        phone: reg.phone || '',
         organization: reg.institution || 'Cơ quan Y tế / Thẩm mỹ',
         recipientType: reg.attendeeType === 'doctor' ? 'doctor' : 'business',
         status: 'pending',
@@ -514,12 +728,12 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
   // Import Sample VIP aesthetic doctors
   const handleImportSampleVIPs = () => {
     const sampleVIPs: EmailRecipient[] = [
-      { id: 'vip-1', name: 'PGS.TS.BS. Lê Hành', email: 'lehanh.plastic@gmail.com', organization: 'Hội Phẫu Thuật Thẩm Mỹ Việt Nam (VSAPS)', recipientType: 'vip', status: 'pending' },
-      { id: 'vip-2', name: 'TS.BS. Phạm Cao Kiêm', email: 'dr.caokiem@bv108.vn', organization: 'Bệnh viện Trung ương Quân đội 108', recipientType: 'doctor', status: 'pending' },
-      { id: 'vip-3', name: 'BS.CKII. Vũ Thái Hà', email: 'drthaiha.skin@gmail.com', organization: 'Khoa Laser & Săn sóc da - BV Da liễu TƯ', recipientType: 'doctor', status: 'pending' },
-      { id: 'vip-4', name: 'Bà Nguyễn Thị Lan Hương', email: 'huong.nguyen@wontechmed.vn', organization: 'Wontech Laser Vietnam', recipientType: 'business', status: 'pending' },
-      { id: 'vip-5', name: 'ThS.BS. Hoàng Thanh Tuấn', email: 'thanhtuan.thammy@gmail.com', organization: 'Học viện Quân Y 103', recipientType: 'doctor', status: 'pending' },
-      { id: 'vip-6', name: 'Ông Kim Min Soo', email: 'minsoo.kim@hironic.co.kr', organization: 'Hironic Korea Regional HQ', recipientType: 'business', status: 'pending' },
+      { id: 'vip-1', name: 'PGS.TS.BS. Lê Hành', email: 'lehanh.plastic@gmail.com', phone: '0903 111 222', organization: 'Hội Phẫu Thuật Thẩm Mỹ Việt Nam (VSAPS)', recipientType: 'vip', status: 'pending' },
+      { id: 'vip-2', name: 'TS.BS. Phạm Cao Kiêm', email: 'dr.caokiem@bv108.vn', phone: '0912 333 444', organization: 'Bệnh viện Trung ương Quân đội 108', recipientType: 'doctor', status: 'pending' },
+      { id: 'vip-3', name: 'BS.CKII. Vũ Thái Hà', email: 'drthaiha.skin@gmail.com', phone: '0988 555 666', organization: 'Khoa Laser & Săn sóc da - BV Da liễu TƯ', recipientType: 'doctor', status: 'pending' },
+      { id: 'vip-4', name: 'Bà Nguyễn Thị Lan Hương', email: 'huong.nguyen@wontechmed.vn', phone: '0934 777 888', organization: 'Wontech Laser Vietnam', recipientType: 'business', status: 'pending' },
+      { id: 'vip-5', name: 'ThS.BS. Hoàng Thanh Tuấn', email: 'thanhtuan.thammy@gmail.com', phone: '0977 999 000', organization: 'Học viện Quân Y 103', recipientType: 'doctor', status: 'pending' },
+      { id: 'vip-6', name: 'Ông Kim Min Soo', email: 'minsoo.kim@hironic.co.kr', phone: '+82 10 4159 8777', organization: 'Hironic Korea Regional HQ', recipientType: 'business', status: 'pending' },
     ];
 
     bulkAddEmailRecipients(sampleVIPs);
@@ -539,6 +753,7 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
 
       let name = '';
       let email = '';
+      let phone = '';
       let org = '';
       let type: EmailRecipient['recipientType'] = 'doctor';
 
@@ -551,9 +766,10 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
         const parts = trimmed.split(separator).map((p) => p.trim());
         name = parts[0] || '';
         email = parts[1] || '';
-        org = parts[2] || '';
-        if (parts[3]) {
-          const t = parts[3].toLowerCase();
+        phone = parts[2] || '';
+        org = parts[3] || '';
+        if (parts[4]) {
+          const t = parts[4].toLowerCase();
           if (t.includes('doanh') || t.includes('biz') || t.includes('business')) type = 'business';
           else if (t.includes('vip')) type = 'vip';
           else type = 'doctor';
@@ -568,6 +784,7 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
           id: `bulk-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
           name: name || email.split('@')[0],
           email: email,
+          phone: phone,
           organization: org || 'Chưa cập nhật',
           recipientType: type,
           status: 'pending',
@@ -608,10 +825,11 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
 
   // Export CSV of recipients and sending status
   const handleExportCampaignCsv = () => {
-    const headers = ['Họ và Tên', 'Email', 'Cơ Quan / Đơn Vị', 'Đối Tượng', 'Trạng Thái', 'Tài Khoản Gửi', 'Thời Gian Gửi', 'Ghi Chú Lỗi'];
+    const headers = ['Họ và Tên', 'Email', 'Số Điện Thoại', 'Cơ Quan / Đơn Vị', 'Đối Tượng', 'Trạng Thái', 'Tài Khoản Gửi', 'Thời Gian Gửi', 'Ghi Chú Lỗi'];
     const rows = recipients.map((r) => [
       `"${r.name.replace(/"/g, '""')}"`,
       `"${r.email}"`,
+      `"${r.phone || ''}"`,
       `"${(r.organization || '').replace(/"/g, '""')}"`,
       `"${r.recipientType || 'general'}"`,
       `"${r.status === 'sent' ? 'Đã gửi thành công' : r.status === 'failed' ? 'Thất bại' : r.status === 'sending' ? 'Đang gửi' : 'Chưa gửi'}"`,
@@ -634,6 +852,15 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
+      {/* Hidden File Input for CSV upload */}
+      <input
+        type="file"
+        ref={csvFileInputRef}
+        onChange={handleFileUploadCsv}
+        accept=".csv, text/csv, .txt"
+        className="hidden"
+      />
+
       {/* Top Banner & Provider Status Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 p-6 rounded-3xl bg-gradient-to-r from-[#002045] via-[#174ea6] to-[#4f46e5] text-white shadow-md relative overflow-hidden">
         <div className="absolute right-0 top-0 translate-x-10 -translate-y-10 w-72 h-72 bg-white/10 rounded-full blur-3xl pointer-events-none" />
@@ -647,7 +874,6 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
                 <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
                   Chiến Dịch Gửi Thư Mời Hàng Loạt
                 </h2>
-                {/* Provider Pill */}
                 {sendProvider === 'gmail_pool' ? (
                   <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-500/25 text-emerald-300 text-xs font-bold border border-emerald-400/40">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -661,7 +887,7 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
                 )}
               </div>
               <p className="text-xs sm:text-sm text-blue-100/90 font-medium">
-                Quản lý cụm 5 tài khoản Gmail (500 thư/ngày/tài khoản = 2,500 thư/ngày) hoặc Resend API đám mây
+                Hỗ trợ tải lên file CSV 3 cột (Tên, Email, SĐT), xoay vòng 5 tài khoản Gmail hoặc Resend đám mây
               </p>
             </div>
           </div>
@@ -699,7 +925,7 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
       {/* Provider Selector Switcher Bar */}
       <div className="p-2 bg-white rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          <span className="text-xs font-bold text-slate-700 px-3">Cổng gửi email chính:</span>
+          <span className="text-xs font-bold text-slate-700 px-3">Cổng gửi email:</span>
           <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 rounded-xl w-full sm:w-auto">
             <button
               type="button"
@@ -737,9 +963,7 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
         )}
       </div>
 
-      {/* =========================================================================
-          SECTION: QUẢN LÝ CỤM 5 TÀI KHOẢN GMAIL (500 EMAIL/NGÀY MỖI TÀI KHOẢN)
-         ========================================================================= */}
+      {/* SECTION: QUẢN LÝ CỤM 5 TÀI KHOẢN GMAIL */}
       {sendProvider === 'gmail_pool' && (
         <div className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/90 shadow-xs space-y-4">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -749,7 +973,7 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
                 <span>Cụm 5 Tài Khoản Gmail Tự Động Xoay Vòng (Load Balancing)</span>
               </h3>
               <p className="text-xs text-slate-500">
-                Mỗi tài khoản gửi tối đa <strong>500 email/ngày</strong> theo chuẩn Google. Hệ thống tự động phân phối đều, tự ngắt tài khoản khi đủ 500 và chuyển sang tài khoản tiếp theo.
+                Mỗi tài khoản gửi tối đa <strong>500 email/ngày</strong>. Hệ thống xoay vòng đều qua 5 tài khoản, tự ngắt tài khoản khi đủ 500 và chuyển sang tài khoản tiếp theo.
               </p>
             </div>
 
@@ -804,7 +1028,6 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
                       : 'bg-white border-slate-200 hover:border-indigo-300 hover:shadow-xs'
                   }`}
                 >
-                  {/* Card Header: Slot & Active Toggle */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="w-6 h-6 rounded-lg bg-[#174ea6] text-white font-black text-xs flex items-center justify-center">
@@ -819,7 +1042,6 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
                       type="button"
                       onClick={() => updateGmailSenderAccount(account.id, { isActive: !account.isActive })}
                       className="text-xs font-bold flex items-center gap-1 cursor-pointer"
-                      title={account.isActive ? 'Tạm tắt tài khoản này' : 'Bật tài khoản này'}
                     >
                       {account.isActive ? (
                         <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10.5px]">Đang bật</span>
@@ -829,7 +1051,6 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
                     </button>
                   </div>
 
-                  {/* Inputs: Gmail Address + App Password */}
                   <div className="space-y-2">
                     <div>
                       <label className="block text-[11px] font-bold text-slate-600 mb-0.5">
@@ -876,7 +1097,6 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
                     </div>
                   </div>
 
-                  {/* Daily Quota Counter & Progress Bar */}
                   <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 space-y-1.5">
                     <div className="flex items-center justify-between text-[11px]">
                       <span className="text-slate-600 font-semibold">Đã gửi hôm nay:</span>
@@ -899,12 +1119,11 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
 
                     {isQuotaReached && (
                       <p className="text-[10px] text-amber-800 font-bold">
-                        ⚠️ Đã gửi đủ 500 email hôm nay. Hệ thống sẽ tự động bỏ qua tài khoản này và chuyển sang các tài khoản còn lại.
+                        ⚠️ Đã gửi đủ 500 email hôm nay. Hệ thống tự động chuyển sang các tài khoản còn lại.
                       </p>
                     )}
                   </div>
 
-                  {/* Test Feedback Message */}
                   {testRes && (
                     <div
                       className={`p-2 rounded-lg text-[10.5px] font-medium leading-relaxed ${
@@ -916,7 +1135,6 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
                     </div>
                   )}
 
-                  {/* Card Action Buttons */}
                   <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-xs">
                     <button
                       type="button"
@@ -924,7 +1142,7 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
                       disabled={isTesting}
                       className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[11px] transition-colors cursor-pointer flex items-center gap-1"
                     >
-                      {isTesting ? <RefreshCw className="w-3 h-3 animate-spin" /> : <ShieldCheck className="w-3 h-3" />}
+                      {isTesting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5" />}
                       <span>Kiểm tra kết nối</span>
                     </button>
 
@@ -1172,6 +1390,7 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
               <div className="flex flex-wrap gap-1.5">
                 {[
                   { tag: '{{name}}', label: 'Tên đại biểu', color: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+                  { tag: '{{phone}}', label: 'Số điện thoại', color: 'bg-teal-50 text-teal-700 border-teal-200' },
                   { tag: '{{organization}}', label: 'Cơ quan / Bệnh viện', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
                   { tag: '{{event_name}}', label: 'Tên hội nghị', color: 'bg-blue-50 text-blue-700 border-blue-200' },
                   { tag: '{{event_date}}', label: 'Ngày diễn ra', color: 'bg-amber-50 text-amber-700 border-amber-200' },
@@ -1226,7 +1445,6 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
         {/* Right Column: Live Gmail / Email Client Simulator (5 Cols) */}
         <div className="lg:col-span-5 space-y-4">
           <div className="rounded-3xl bg-white border border-slate-200/90 shadow-md overflow-hidden flex flex-col h-full min-h-[580px]">
-            {/* Simulated Email Client Top Bar */}
             <div className="px-4 py-3 bg-[#f2f6fc] border-b border-slate-200 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1.5">
@@ -1247,7 +1465,7 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
                 >
                   {recipients.map((r) => (
                     <option key={r.id} value={r.id}>
-                      {r.name} ({r.organization || r.email})
+                      {r.name} ({r.phone ? `${r.phone} • ` : ''}{r.email})
                     </option>
                   ))}
                 </select>
@@ -1273,6 +1491,7 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
                     </div>
                     <div className="text-[11px] text-slate-500">
                       Gửi tới: <strong className="text-slate-800">{previewRecipient.name}</strong> &lt;{previewRecipient.email}&gt;
+                      {previewRecipient.phone && <span className="ml-1 text-slate-400">({previewRecipient.phone})</span>}
                     </div>
                   </div>
                 </div>
@@ -1283,7 +1502,6 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
             {/* Rendered Email HTML Content View */}
             <div className="p-5 flex-1 overflow-y-auto bg-[#fafafa]">
               <div className="bg-white p-6 rounded-2xl shadow-xs border border-slate-200/80 text-xs sm:text-[13px] text-slate-800 leading-relaxed space-y-3 font-sans">
-                {/* Simulated Header Logo */}
                 <div className="pb-3 border-b border-slate-100 flex items-center justify-between">
                   <span className="text-[11px] font-black uppercase text-[#174ea6] tracking-wider">
                     HỘI THẢO THẨM MỸ VIỆT – HÀN 2026
@@ -1293,13 +1511,11 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
                   </span>
                 </div>
 
-                {/* Body Content with HTML dangerouslySetInnerHTML */}
                 <div
                   className="prose prose-sm max-w-none text-slate-700"
                   dangerouslySetInnerHTML={{ __html: currentHtml }}
                 />
 
-                {/* Footer simulation */}
                 <div className="pt-4 mt-4 border-t border-slate-100 text-[11px] text-slate-400 space-y-1">
                   <p>Email này được gửi từ Ban Tổ Chức Hội Thảo Khoa Học Thẩm Mỹ Việt – Hàn 2026.</p>
                   <p>Địa chỉ: {cmsData.eventDetails.location || 'Bệnh viện Trung ương Quân đội 108, Hà Nội'}</p>
@@ -1319,36 +1535,58 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
               <span>Quản Lý Danh Sách Người Nhận ({filteredRecipients.length}/{totalRecipients})</span>
             </h3>
             <p className="text-xs text-slate-500">
-              Thêm bác sĩ, đối tác kinh doanh hoặc nhập tự động từ các đại biểu đã đăng ký trên website
+              Tải lên file CSV 3 cột (Tên, Email, SĐT), nhập từ đại biểu đăng ký web hoặc dán danh sách nhanh
             </p>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
+            {/* PRIMARY: Upload CSV 3 Columns */}
+            <button
+              type="button"
+              onClick={() => csvFileInputRef.current?.click()}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-black text-xs shadow-md transition-all cursor-pointer active:scale-95"
+              title="Tải lên file CSV có 3 cột: Tên, Email, Số điện thoại"
+            >
+              <Upload className="w-3.5 h-3.5 text-white" />
+              <span>Tải Lên File CSV (3 Cột)</span>
+            </button>
+
+            {/* Download Sample CSV template */}
+            <button
+              type="button"
+              onClick={handleDownloadSampleCsv}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors cursor-pointer"
+              title="Tải file CSV mẫu (3 cột) để điền thông tin"
+            >
+              <FileDown className="w-3.5 h-3.5 text-slate-600" />
+              <span>Tải File Mẫu (CSV)</span>
+            </button>
+
             <button
               type="button"
               onClick={handleImportFromRegistrations}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs border border-emerald-200 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs border border-emerald-200 transition-colors cursor-pointer"
             >
               <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Nhập từ Đăng ký Web ({cmsData.registrations?.length || 0})</span>
+              <span>Từ Web ({cmsData.registrations?.length || 0})</span>
             </button>
 
             <button
               type="button"
               onClick={handleImportSampleVIPs}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-800 font-bold text-xs border border-purple-200 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-800 font-bold text-xs border border-purple-200 transition-colors cursor-pointer"
             >
               <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-              <span>Nhập VIP Mẫu</span>
+              <span>VIP Mẫu</span>
             </button>
 
             <button
               type="button"
               onClick={() => setShowBulkPasteModal(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-800 font-bold text-xs border border-blue-200 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-800 font-bold text-xs border border-blue-200 transition-colors cursor-pointer"
             >
               <Upload className="w-3.5 h-3.5 text-blue-600" />
-              <span>Dán Danh Sách Nhanh</span>
+              <span>Dán Nhanh</span>
             </button>
 
             <button
@@ -1369,7 +1607,7 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Tìm theo tên, email, bệnh viện..."
+              placeholder="Tìm theo tên, email, SĐT, bệnh viện..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-slate-200 text-xs outline-none focus:border-indigo-600"
@@ -1411,6 +1649,7 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
                 <tr>
                   <th className="py-3 px-4">Đại Biểu / Khách Mời</th>
                   <th className="py-3 px-4">Email</th>
+                  <th className="py-3 px-4">Số Điện Thoại</th>
                   <th className="py-3 px-4">Cơ Quan / Đơn Vị</th>
                   <th className="py-3 px-4">Đối Tượng</th>
                   <th className="py-3 px-4">Trạng Thái &amp; Tài Khoản Gửi</th>
@@ -1420,7 +1659,7 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
               <tbody className="divide-y divide-slate-100 font-medium">
                 {filteredRecipients.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-slate-400">
+                    <td colSpan={7} className="py-8 text-center text-slate-400">
                       Không tìm thấy người nhận nào phù hợp với bộ lọc.
                     </td>
                   </tr>
@@ -1432,6 +1671,15 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
                       </td>
                       <td className="py-3 px-4 font-mono text-slate-600">
                         {recip.email}
+                      </td>
+                      <td className="py-3 px-4 font-mono">
+                        {recip.phone ? (
+                          <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 font-bold text-[11px]">
+                            {recip.phone}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
                       </td>
                       <td className="py-3 px-4 text-slate-600">
                         {recip.organization || '—'}
@@ -1477,7 +1725,7 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
                               title={recip.errorMessage || 'Lỗi gửi'}
                             >
                               <AlertCircle className="w-3 h-3" />
-                              <span>Lỗi gửi: {recip.errorMessage?.slice(0, 32)}...</span>
+                              <span>Lỗi gửi: {recip.errorMessage?.slice(0, 28)}...</span>
                             </span>
                           )}
                           {recip.status === 'pending' && (
@@ -1487,7 +1735,6 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
                           )}
                         </div>
 
-                        {/* Account or Resend ID info */}
                         {recip.sentByAccount && (
                           <div className="text-[10px] font-mono text-slate-500">
                             Gửi qua: <span className="text-emerald-700 font-bold">{recip.sentByAccount}</span>
@@ -1567,6 +1814,125 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
         </div>
       )}
 
+      {/* POPUP MODAL: XÁC NHẬN IMPORT FILE CSV (3 CỘT: TÊN, EMAIL, SĐT) */}
+      {showCsvPreviewModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-2xl rounded-3xl p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="text-lg font-black text-slate-900 flex items-center gap-2.5">
+                <Upload className="w-5 h-5 text-emerald-600" />
+                <span>Xác Nhận Nhập Danh Bạ Từ File CSV</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowCsvPreviewModal(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* File Info Bar */}
+            <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-wrap items-center justify-between gap-2 text-xs">
+              <div className="space-y-0.5">
+                <span className="text-emerald-950 font-bold">Tên file: </span>
+                <span className="font-mono text-emerald-800 font-bold">{csvFileName}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-black text-[11px]">
+                  {parsedCsvData.length} liên hệ hợp lệ
+                </span>
+                {csvDuplicateCount > 0 && (
+                  <span className="px-2.5 py-1 rounded-lg bg-amber-100 text-amber-900 font-bold text-[11px]">
+                    Đã lọc {csvDuplicateCount} email trùng lặp
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Audience selection for imported rows */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                Gán nhóm đối tượng cho danh sách này:
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {[
+                  { key: 'doctor', label: 'Bác Sĩ & Chuyên Gia' },
+                  { key: 'business', label: 'Doanh Nghiệp B2B' },
+                  { key: 'vip', label: 'Khách Mời VIP' },
+                  { key: 'general', label: 'Đại Biểu Tự Do' },
+                ].map((aud) => (
+                  <button
+                    key={aud.key}
+                    type="button"
+                    onClick={() => setCsvDefaultAudience(aud.key as any)}
+                    className={`p-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer text-center ${
+                      csvDefaultAudience === aud.key
+                        ? 'border-emerald-500 bg-emerald-50 text-emerald-800 ring-2 ring-emerald-200'
+                        : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    {aud.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Preview Table of first 6 rows */}
+            <div className="space-y-1.5">
+              <span className="text-[11.5px] font-bold text-slate-700">
+                Xem trước các dòng dữ liệu đọc được (3 cột chuẩn):
+              </span>
+              <div className="rounded-2xl border border-slate-200 overflow-hidden">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                    <tr>
+                      <th className="py-2.5 px-3">STT</th>
+                      <th className="py-2.5 px-3">Họ và Tên</th>
+                      <th className="py-2.5 px-3">Email</th>
+                      <th className="py-2.5 px-3">Số Điện Thoại</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {parsedCsvData.slice(0, 6).map((item, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50">
+                        <td className="py-2 px-3 text-slate-400 font-mono">#{idx + 1}</td>
+                        <td className="py-2 px-3 font-bold text-slate-900">{item.name}</td>
+                        <td className="py-2 px-3 font-mono text-slate-700">{item.email}</td>
+                        <td className="py-2 px-3 font-mono text-emerald-700 font-bold">{item.phone || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {parsedCsvData.length > 6 && (
+                <p className="text-[10.5px] text-slate-500 text-right">
+                  ... và {parsedCsvData.length - 6} liên hệ khác
+                </p>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setShowCsvPreviewModal(false)}
+                className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmImportCsv}
+                className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black cursor-pointer shadow-md active:scale-95"
+              >
+                Xác Nhận Nạp {parsedCsvData.length} Khách Mời
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* POPUP MODAL: Hướng dẫn tạo Mật khẩu ứng dụng (App Password) cho Gmail */}
       {showGmailHelpModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
@@ -1588,7 +1954,7 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
             </div>
 
             <p className="text-xs text-slate-600 leading-relaxed">
-              Google yêu cầu sử dụng <strong>Mật khẩu ứng dụng (16 chữ cái)</strong> thay cho mật khẩu đăng nhập thông thường để gửi email qua SMTP/phần mềm an toàn. Mỗi tài khoản Gmail chỉ mất 1 phút cài đặt:
+              Google yêu cầu sử dụng <strong>Mật khẩu ứng dụng (16 chữ cái)</strong> thay cho mật khẩu đăng nhập thông thường để gửi email qua SMTP an toàn. Mỗi tài khoản Gmail chỉ mất 1 phút cài đặt:
             </p>
 
             <div className="space-y-3 text-xs">
@@ -1716,6 +2082,17 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
               </div>
 
               <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Số Điện Thoại</label>
+                <input
+                  type="tel"
+                  placeholder="VD: 0908 123 456"
+                  value={newRecipPhone}
+                  onChange={(e) => setNewRecipPhone(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs outline-none focus:border-indigo-600"
+                />
+              </div>
+
+              <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Cơ Quan / Bệnh Viện / Công Ty</label>
                 <input
                   type="text"
@@ -1772,14 +2149,14 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
             <p className="text-xs text-slate-500">
               Hỗ trợ copy paste trực tiếp từ file Excel hoặc file text. Định dạng:
               <br />
-              <code className="text-indigo-600 font-mono">Tên, Email, Bệnh viện, Nhóm (Bác sĩ/Doanh nghiệp)</code>
+              <code className="text-indigo-600 font-mono">Tên, Email, Số điện thoại, Bệnh viện</code>
               <br />
               hoặc đơn giản là mỗi dòng 1 địa chỉ email.
             </p>
 
             <textarea
               rows={8}
-              placeholder={`BS. Nguyễn Văn A, dr.a@gmail.com, BV 108, Bác sĩ\nBà Trần Thị B, b.tran@kbeauty.vn, K-Beauty Corp, Doanh nghiệp\ncustomer@example.com`}
+              placeholder={`BS. Nguyễn Văn A, dr.a@gmail.com, 0901234567, BV 108\nBà Trần Thị B, b.tran@kbeauty.vn, 0912345678, K-Beauty Corp\ncustomer@example.com`}
               value={bulkPasteText}
               onChange={(e) => setBulkPasteText(e.target.value)}
               className="w-full p-3.5 rounded-2xl border border-slate-200 text-xs font-mono outline-none focus:border-indigo-600"
@@ -1824,7 +2201,6 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
             </div>
 
             <div className="space-y-4">
-              {/* Sender Name */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
                   Tên Người Gửi Hiển Thị (Sender Name)
@@ -1838,7 +2214,6 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
                 />
               </div>
 
-              {/* Reply-To Email */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
                   Email Nhận Phản Hồi (Reply-To Email)
@@ -1855,7 +2230,6 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
                 </p>
               </div>
 
-              {/* Resend API Section */}
               <div className="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-200/80 space-y-2.5">
                 <div className="flex items-center justify-between">
                   <label className="block text-xs font-black text-indigo-950 flex items-center gap-1.5">

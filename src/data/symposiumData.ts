@@ -814,14 +814,14 @@ export const DEFAULT_SEO_CONFIG: SEOConfig = {
 };
 
 export const INITIAL_EMAIL_RECIPIENTS: EmailRecipient[] = [
-  { id: 'rec-1', name: 'BS. CKII. Nguyễn Hoàng Nam', email: 'dr.nam.nguyen@gmail.com', organization: 'BV Da Liễu Trung Ương', recipientType: 'doctor', status: 'pending' },
-  { id: 'rec-2', name: 'ThS.BS. Lê Thị Mai Anh', email: 'maianh.le@bv108.vn', organization: 'Khoa Phẫu Thuật Tạo Hình - BV 108', recipientType: 'doctor', status: 'pending' },
-  { id: 'rec-3', name: 'TS.BS. Trần Quốc Bảo', email: 'dr.baotran@gmail.com', organization: 'Phòng khám Thẩm mỹ Quốc tế Saigon', recipientType: 'doctor', status: 'pending' },
-  { id: 'rec-4', name: 'BS.CKI. Đỗ Thị Thu Trang', email: 'thutrang.do@vinmec.com', organization: 'Bệnh viện ĐKQT Vinmec Times City', recipientType: 'doctor', status: 'pending' },
-  { id: 'rec-5', name: 'Ông Phạm Minh Đức', email: 'duc.pham@kbeautycorp.vn', organization: 'Công ty Thiết bị Y tế K-Beauty Tech', recipientType: 'business', status: 'pending' },
-  { id: 'rec-6', name: 'Bà Hoàng Kim Oanh', email: 'kimoanh@aestheticgroup.vn', organization: 'Viện Thẩm Mỹ Quốc Tế Royal', recipientType: 'business', status: 'pending' },
-  { id: 'rec-7', name: 'TS.BS. Vũ Đình Hùng', email: 'hung.vd@hmu.edu.vn', organization: 'Đại Học Y Hà Nội', recipientType: 'vip', status: 'pending' },
-  { id: 'rec-8', name: 'BS. Nguyễn Phương Thảo', email: 'phuongthao.clinic@gmail.com', organization: 'Thảo Beauty Clinic Đà Nẵng', recipientType: 'doctor', status: 'pending' },
+  { id: 'rec-1', name: 'BS. CKII. Nguyễn Hoàng Nam', email: 'dr.nam.nguyen@gmail.com', phone: '0908 123 456', organization: 'BV Da Liễu Trung Ương', recipientType: 'doctor', status: 'pending' },
+  { id: 'rec-2', name: 'ThS.BS. Lê Thị Mai Anh', email: 'maianh.le@bv108.vn', phone: '0912 345 678', organization: 'Khoa Phẫu Thuật Tạo Hình - BV 108', recipientType: 'doctor', status: 'pending' },
+  { id: 'rec-3', name: 'TS.BS. Trần Quốc Bảo', email: 'dr.baotran@gmail.com', phone: '0983 222 333', organization: 'Phòng khám Thẩm mỹ Quốc tế Saigon', recipientType: 'doctor', status: 'pending' },
+  { id: 'rec-4', name: 'BS.CKI. Đỗ Thị Thu Trang', email: 'thutrang.do@vinmec.com', phone: '0977 888 999', organization: 'Bệnh viện ĐKQT Vinmec Times City', recipientType: 'doctor', status: 'pending' },
+  { id: 'rec-5', name: 'Ông Phạm Minh Đức', email: 'duc.pham@kbeautycorp.vn', phone: '0934 567 890', organization: 'Công ty Thiết bị Y tế K-Beauty Tech', recipientType: 'business', status: 'pending' },
+  { id: 'rec-6', name: 'Bà Hoàng Kim Oanh', email: 'kimoanh@aestheticgroup.vn', phone: '0918 999 111', organization: 'Viện Thẩm Mỹ Quốc Tế Royal', recipientType: 'business', status: 'pending' },
+  { id: 'rec-7', name: 'TS.BS. Vũ Đình Hùng', email: 'hung.vd@hmu.edu.vn', phone: '0903 456 789', organization: 'Đại Học Y Hà Nội', recipientType: 'vip', status: 'pending' },
+  { id: 'rec-8', name: 'BS. Nguyễn Phương Thảo', email: 'phuongthao.clinic@gmail.com', phone: '0966 555 444', organization: 'Thảo Beauty Clinic Đà Nẵng', recipientType: 'doctor', status: 'pending' },
 ];
 
 export const DEFAULT_EMAIL_TEMPLATES: EmailTemplate[] = [
