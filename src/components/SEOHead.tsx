@@ -59,11 +59,15 @@ export const SEOHead: React.FC = () => {
 
     const fullOgImage = getFullImageUrl(seo.ogImageUrl || '/BG.png');
     const fullCanonical = seo.canonicalUrl || window.location.href;
-    const faviconUrl = seo.faviconUrl || '/images/partners/bv108.png';
+    const faviconUrl = seo.faviconUrl || '/favicon.png';
+    // Add cache-bust param so browser reloads favicon when admin changes it
+    const faviconHref = faviconUrl.startsWith('data:')
+      ? faviconUrl
+      : `${faviconUrl}${faviconUrl.includes('?') ? '&' : '?'}v=${Date.now()}`;
 
     // 2. Favicon & Apple Touch Icon
-    setLinkTag('icon', faviconUrl);
-    setLinkTag('apple-touch-icon', faviconUrl);
+    setLinkTag('icon', faviconHref);
+    setLinkTag('apple-touch-icon', faviconHref);
 
     // 3. Standard Meta Tags
     setMetaTag('name', 'description', seo.metaDescription);

@@ -908,13 +908,31 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Dedicated lightweight cloud sync for Media Library
+  // Note: base64 data URLs are too large for DB storage - only save remote URLs and local static paths
   const saveMediaToCloud = async (customMedia?: string[]): Promise<boolean> => {
     try {
       const targetMedia = customMedia || cmsDataRef.current.mediaLibrary;
+      // Filter out base64 data URLs (they are huge and cause DB payload overflow)
+      // Only keep remote URLs (http/https) and static paths (/images/...) which are lightweight
+      const cloudSafeMedia = (targetMedia || [])
+        .filter((url) => url && !url.startsWith('data:'))
+        .slice(0, 50);
+
+      // Also save full list (including base64) to localStorage for this browser session
+      try {
+        const fullMedia = (targetMedia || []).slice(0, 24);
+        localStorage.setItem('kbit_media_library', JSON.stringify(fullMedia));
+      } catch {}
+
+      if (cloudSafeMedia.length === 0) {
+        // Nothing to save to cloud (all images are base64 local uploads)
+        return false;
+      }
+
       const res = await fetch('/api/cms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'mediaLibrary', data: (targetMedia || []).slice(0, 30) }),
+        body: JSON.stringify({ type: 'mediaLibrary', data: cloudSafeMedia }),
       });
       if (res.ok) {
         const json = await res.json();

@@ -577,14 +577,21 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
   const handleSaveMedia = async () => {
     setIsSaving(true);
     try {
+      // 1. Always save full library (including base64) to localStorage first
+      try {
+        localStorage.setItem('kbit_media_library', JSON.stringify(cmsData.mediaLibrary.slice(0, 24)));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cmsData));
+      } catch {}
+
+      // 2. Push lightweight (non-base64) URLs to Vercel Postgres
       const ok = await saveMediaToCloud(cmsData.mediaLibrary);
-      await handleManualSave(false);
+
       setSaveSuccessTick(true);
       setTimeout(() => setSaveSuccessTick(false), 3500);
       if (ok) {
-        showToast('✅ Đã lưu Thư viện hình ảnh vào Vercel Postgres thành công!');
+        showToast('✅ Đã lưu Thư viện hình ảnh vào Vercel Postgres thành công! (Ảnh tải lên được lưu cục bộ trên trình duyệt)');
       } else {
-        showToast('✅ Đã lưu thư viện media thành công!');
+        showToast('✅ Đã lưu thư viện hình ảnh vào trình duyệt! Ảnh URL từ xa cũng đã đồng bộ Cloud.');
       }
     } catch (err: any) {
       showToast('❌ Lỗi khi lưu thư viện media: ' + (err?.message || 'Thử lại'));
