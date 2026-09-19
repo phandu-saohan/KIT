@@ -68,6 +68,7 @@ export default async function handler(req: any, res: any) {
       // If specific sub-section update requested (e.g. { type: 'seo', data: seoConfig })
       if (cmsPayload.type === 'seo' && cmsPayload.data) {
         const seoJson = JSON.stringify(cmsPayload.data);
+        console.log('[CMS API] Saving SEO, keys:', Object.keys(cmsPayload.data), 'size:', seoJson.length);
         await sql`
           INSERT INTO cms_data (key, data, updated_at)
           VALUES ('main', jsonb_build_object('seoConfig', ${seoJson}::jsonb), CURRENT_TIMESTAMP)
@@ -75,6 +76,7 @@ export default async function handler(req: any, res: any) {
             data = jsonb_set(COALESCE(cms_data.data, '{}'::jsonb), '{seoConfig}', ${seoJson}::jsonb, true),
             updated_at = CURRENT_TIMESTAMP;
         `;
+        console.log('[CMS API] SEO saved successfully');
         return res.status(200).json({
           success: true,
           message: 'Lưu cấu hình SEO vào Vercel Postgres thành công.',
@@ -85,6 +87,7 @@ export default async function handler(req: any, res: any) {
       // If specific sub-section update requested for eventDetails / banner
       if ((cmsPayload.type === 'eventDetails' || cmsPayload.type === 'general') && cmsPayload.data) {
         const eventJson = JSON.stringify(cmsPayload.data);
+        console.log('[CMS API] Saving EventDetails, size:', eventJson.length);
         await sql`
           INSERT INTO cms_data (key, data, updated_at)
           VALUES ('main', jsonb_build_object('eventDetails', ${eventJson}::jsonb), CURRENT_TIMESTAMP)
@@ -92,6 +95,7 @@ export default async function handler(req: any, res: any) {
             data = jsonb_set(COALESCE(cms_data.data, '{}'::jsonb), '{eventDetails}', ${eventJson}::jsonb, true),
             updated_at = CURRENT_TIMESTAMP;
         `;
+        console.log('[CMS API] EventDetails saved successfully');
         return res.status(200).json({
           success: true,
           message: 'Lưu cài đặt sự kiện & banner vào Vercel Postgres thành công.',
