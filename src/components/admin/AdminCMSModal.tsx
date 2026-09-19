@@ -84,6 +84,7 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
     addPartner,
     deletePartner,
     addRegistration,
+    bulkAddRegistrations,
     updateRegistration,
     deleteRegistration,
     updateFooterConfig,
@@ -215,6 +216,15 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
   const mapImageFileRef = useRef<HTMLInputElement>(null);
   const ogImageFileRef = useRef<HTMLInputElement>(null);
   const faviconFileRef = useRef<HTMLInputElement>(null);
+  const csvImportRef = useRef<HTMLInputElement>(null);
+
+  // CSV Import States
+  const [csvPreviewModalOpen, setCsvPreviewModalOpen] = useState(false);
+  const [csvPreviewData, setCsvPreviewData] = useState<AttendeeBadge[]>([]);
+  const [csvFileName, setCsvFileName] = useState('');
+  const [csvInvalidCount, setCsvInvalidCount] = useState(0);
+  const [csvImportMode, setCsvImportMode] = useState<'append' | 'replace'>('append');
+  const [isImportingCsv, setIsImportingCsv] = useState(false);
 
   const handleStartEditAttendee = (attendee: AttendeeBadge) => {
     setEditingAttendee(attendee);
@@ -406,19 +416,25 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
   const handleSaveGeneralSettings = async () => {
     setIsSaving(true);
     try {
+      // Snapshot current state
       const currentEv = { ...(cmsData.eventDetails || DEFAULT_EVENT_DETAILS) };
+
+      // 1. Save to localStorage first (fast, synchronous)
       try {
         localStorage.setItem('kbit_event_details', JSON.stringify(currentEv));
       } catch (e) {
         console.warn('kbit_event_details save error:', e);
       }
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cmsData));
+      } catch {}
+
+      // 2. Push to Vercel Postgres (targeted patch - no interference with other fields)
       const eventCloudSuccess = await saveEventDetailsToCloud(currentEv);
-      const manualSuccess = await handleManualSave(false);
-      const cloudSuccess = eventCloudSuccess || manualSuccess;
 
       setSaveSuccessTick(true);
       setTimeout(() => setSaveSuccessTick(false), 3500);
-      if (cloudSuccess) {
+      if (eventCloudSuccess) {
         showToast('✅ Đã lưu Cài đặt chung & Hero Banner và đồng bộ Cloud thành công!');
       } else {
         showToast('✅ Đã lưu Cài đặt chung & Hero Banner vào trình duyệt thành công! Hiệu lực ngay.');
@@ -433,19 +449,25 @@ export const AdminCMSModal: React.FC<AdminCMSModalProps> = ({ onLogout }) => {
   const handleSaveSEO = async () => {
     setIsSaving(true);
     try {
+      // Snapshot current state
       const currentSeo = { ...(cmsData.seoConfig || DEFAULT_SEO_CONFIG) };
+
+      // 1. Save to localStorage first (fast, synchronous)
       try {
         localStorage.setItem('kbit_seo_config', JSON.stringify(currentSeo));
       } catch (e) {
         console.warn('kbit_seo_config save error:', e);
       }
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cmsData));
+      } catch {}
+
+      // 2. Push to Vercel Postgres (targeted patch - no interference with other fields)
       const seoCloudSuccess = await saveSeoToCloud(currentSeo);
-      const manualSuccess = await handleManualSave(false);
-      const cloudSuccess = seoCloudSuccess || manualSuccess;
 
       setSaveSuccessTick(true);
       setTimeout(() => setSaveSuccessTick(false), 3500);
-      if (cloudSuccess) {
+      if (seoCloudSuccess) {
         showToast('✅ Đã lưu cấu hình SEO và đồng bộ cơ sở dữ liệu Vercel Postgres thành công!');
       } else {
         showToast('✅ Đã lưu cấu hình SEO & hình ảnh chia sẻ thành công! Có hiệu lực ngay.');

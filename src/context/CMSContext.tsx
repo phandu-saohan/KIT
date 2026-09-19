@@ -560,6 +560,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               } catch {}
 
               // Cloud is the single source of truth across all devices/sessions
+              // Order: DEFAULT → local (fallback) → cloud (always wins)
               const mergedSeo = {
                 ...DEFAULT_SEO_CONFIG,
                 ...(localSeoConfig || {}),
@@ -570,18 +571,20 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 ...(localEventDetails || {}),
                 ...(parsedData.eventDetails || {}),
               };
+              // For EmailCampaign: cloud wins over local
               const mergedEmailCampaign = mergeEmailCampaignConfigs(
                 DEFAULT_EMAIL_CAMPAIGN,
-                parsedData.emailCampaignConfig,
-                localEmailCampaign
+                localEmailCampaign,
+                parsedData.emailCampaignConfig
               );
+              // For ConfirmTemplate: cloud wins over local
               const mergedConfirmTemplate = {
                 ...DEFAULT_CONFIRM_EMAIL_TEMPLATE,
-                ...(parsedData.confirmEmailTemplate || {}),
                 ...(localConfirmTemplate || {}),
+                ...(parsedData.confirmEmailTemplate || {}),
               };
 
-              // Keep dedicated local keys in sync with the cloud so refreshes always show latest data
+              // Sync cloud data back to localStorage so next load is consistent
               try {
                 localStorage.setItem('kbit_seo_config', JSON.stringify(mergedSeo));
               } catch {}
@@ -658,19 +661,11 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // Dedicated lightweight cloud sync for SEO (resilient against payload size limits)
+  // Dedicated lightweight cloud sync for SEO
   const saveSeoToCloud = async (customSeo?: Partial<SEOConfig>): Promise<boolean> => {
     try {
-      // Base with defaults, merge cached local, then new data always wins last
-      let targetSeo: Partial<SEOConfig> = { ...DEFAULT_SEO_CONFIG };
-      try {
-        const savedSeoRaw = localStorage.getItem('kbit_seo_config');
-        if (savedSeoRaw) {
-          targetSeo = { ...targetSeo, ...JSON.parse(savedSeoRaw) };
-        }
-      } catch {}
-      // New data from user always overrides cache
-      targetSeo = { ...targetSeo, ...(customSeo || cmsDataRef.current.seoConfig || {}) };
+      // Use the passed data directly - caller is responsible for passing the latest state
+      const targetSeo = { ...DEFAULT_SEO_CONFIG, ...(customSeo || cmsDataRef.current.seoConfig || {}) };
 
       const res = await fetch('/api/cms', {
         method: 'POST',
@@ -693,16 +688,8 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Dedicated lightweight cloud sync for Event Details & Banner
   const saveEventDetailsToCloud = async (customDetails?: Partial<EventDetails>): Promise<boolean> => {
     try {
-      // Base with defaults, merge cached local, then new data always wins last
-      let targetEv: Partial<EventDetails> = { ...DEFAULT_EVENT_DETAILS };
-      try {
-        const savedEvRaw = localStorage.getItem('kbit_event_details');
-        if (savedEvRaw) {
-          targetEv = { ...targetEv, ...JSON.parse(savedEvRaw) };
-        }
-      } catch {}
-      // New data from user always overrides cache
-      targetEv = { ...targetEv, ...(customDetails || cmsDataRef.current.eventDetails || {}) };
+      // Use the passed data directly - caller is responsible for passing the latest state
+      const targetEv = { ...DEFAULT_EVENT_DETAILS, ...(customDetails || cmsDataRef.current.eventDetails || {}) };
 
       const res = await fetch('/api/cms', {
         method: 'POST',
