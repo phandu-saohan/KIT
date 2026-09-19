@@ -69,7 +69,6 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
     incrementHostingerSentToday,
     resetHostingerDailyQuotas,
     saveEmailCampaignToCloud,
-    saveCmsToCloud,
   } = useCMS();
 
   const [isSavingCloud, setIsSavingCloud] = useState(false);
@@ -78,16 +77,18 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
   const handleSaveEmailConfigToCloud = async () => {
     setIsSavingCloud(true);
     try {
-      if (cmsData.emailCampaignConfig) {
-        try {
-          localStorage.setItem('kbit_email_campaign_config', JSON.stringify(cmsData.emailCampaignConfig));
-        } catch (e) {
-          console.warn('kbit_email_campaign_config save error:', e);
-        }
+      const latestConfig = cmsData.emailCampaignConfig;
+
+      // 1. Save to localStorage first (fast, always works)
+      try {
+        localStorage.setItem('kbit_email_campaign_config', JSON.stringify(latestConfig));
+      } catch (e) {
+        console.warn('kbit_email_campaign_config save error:', e);
       }
-      const cloudSuccess = await saveEmailCampaignToCloud(cmsData.emailCampaignConfig);
-      const fullSuccess = await saveCmsToCloud(cmsData);
-      const ok = cloudSuccess || fullSuccess;
+
+      // 2. Push directly to Vercel Postgres (targeted patch only - no full CMS payload)
+      const ok = await saveEmailCampaignToCloud(latestConfig);
+
       setIsSavingCloud(false);
       setSaveCloudSuccessTick(true);
       setTimeout(() => setSaveCloudSuccessTick(false), 3500);

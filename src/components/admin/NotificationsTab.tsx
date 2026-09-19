@@ -31,8 +31,6 @@ export const NotificationsTab: React.FC<NotificationsTabProps> = ({ showToast })
     cmsData,
     updateConfirmEmailTemplate,
     saveConfirmEmailTemplateToCloud,
-    saveEmailCampaignToCloud,
-    saveCmsToCloud,
     updateHostingerSenderAccount,
     updateEmailCampaignConfig,
     setActiveAdminTab,
@@ -65,23 +63,19 @@ export const NotificationsTab: React.FC<NotificationsTabProps> = ({ showToast })
 
   const handleSave = async () => {
     setIsSaving(true);
+    // Apply draft to React state first
     updateConfirmEmailTemplate(draft);
+
+    // 1. Save to localStorage (fast, always works)
     try {
       localStorage.setItem('kbit_confirm_email_template', JSON.stringify(draft));
     } catch {}
 
     try {
+      // 2. Push only the confirmEmailTemplate to Vercel Postgres (targeted patch, lightweight)
       const okCloud = await saveConfirmEmailTemplateToCloud(draft);
-      let okEmail = false;
-      if (cmsData.emailCampaignConfig) {
-        try {
-          localStorage.setItem('kbit_email_campaign_config', JSON.stringify(cmsData.emailCampaignConfig));
-        } catch {}
-        okEmail = await saveEmailCampaignToCloud(cmsData.emailCampaignConfig);
-      }
-      const okFull = await saveCmsToCloud({ ...cmsData, confirmEmailTemplate: draft });
       setIsSaving(false);
-      if (okCloud || okEmail || okFull) {
+      if (okCloud) {
         showToast("✅ Đã lưu cấu hình Email Xác Nhận & thông tin Hostinger SMTP vào Vercel Postgres!");
       } else {
         showToast("✅ Đã lưu cấu hình email xác nhận vào trình duyệt!");

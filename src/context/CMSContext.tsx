@@ -712,18 +712,10 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Dedicated lightweight cloud sync for Email Campaign
   const saveEmailCampaignToCloud = async (customConfig?: Partial<EmailCampaignConfig>): Promise<boolean> => {
     try {
-      let targetCfg = customConfig || cmsDataRef.current.emailCampaignConfig;
-      try {
-        const savedEmailRaw = localStorage.getItem('kbit_email_campaign_config');
-        if (savedEmailRaw) {
-          targetCfg = mergeEmailCampaignConfigs(
-            DEFAULT_EMAIL_CAMPAIGN,
-            targetCfg,
-            JSON.parse(savedEmailRaw)
-          );
-        }
-      } catch {}
+      // Use the passed data directly - caller is responsible for passing the latest state
+      const targetCfg = customConfig || cmsDataRef.current.emailCampaignConfig;
 
+      // Save to localStorage first (always, as fallback)
       try {
         localStorage.setItem('kbit_email_campaign_config', JSON.stringify(targetCfg));
       } catch {}
@@ -749,13 +741,8 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Dedicated lightweight cloud sync for Confirmation Email Template
   const saveConfirmEmailTemplateToCloud = async (customTemplate?: Partial<ConfirmEmailTemplate>): Promise<boolean> => {
     try {
-      let targetTpl = customTemplate || cmsDataRef.current.confirmEmailTemplate;
-      try {
-        const savedTplRaw = localStorage.getItem('kbit_confirm_email_template');
-        if (savedTplRaw) {
-          targetTpl = { ...DEFAULT_CONFIRM_EMAIL_TEMPLATE, ...(targetTpl || {}), ...JSON.parse(savedTplRaw) };
-        }
-      } catch {}
+      // Use the passed data directly - caller is responsible for passing the latest state
+      const targetTpl = { ...DEFAULT_CONFIRM_EMAIL_TEMPLATE, ...(customTemplate || cmsDataRef.current.confirmEmailTemplate || {}) };
 
       const res = await fetch('/api/cms', {
         method: 'POST',
@@ -994,7 +981,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } catch {}
       currentConfirmTemplate = { ...currentConfirmTemplate, ...(source.confirmEmailTemplate || {}) };
 
-      // Keep payload lightweight (under 200KB) by stripping registrations (they reside in their own dedicated table 'registrations')
+      // Keep payload lightweight: strip registrations (own table) + filter base64 images (too heavy for DB)
       const { registrations: _ignored, ...cleanSource } = source;
       const payload = {
         ...cleanSource,
@@ -1002,7 +989,8 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         eventDetails: currentEvent,
         emailCampaignConfig: currentEmailCampaign,
         confirmEmailTemplate: currentConfirmTemplate,
-        mediaLibrary: (source.mediaLibrary || []).slice(0, 30),
+        // Only save remote URLs and static paths - never base64 (causes payload overflow)
+        mediaLibrary: (source.mediaLibrary || []).filter((u) => u && !u.startsWith('data:')).slice(0, 50),
       };
 
       const res = await fetch('/api/cms', {
