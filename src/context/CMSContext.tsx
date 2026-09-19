@@ -172,6 +172,7 @@ interface CMSContextType {
   addPartner: (partner: Partner) => void;
   deletePartner: (id: string) => void;
   addRegistration: (attendee: AttendeeBadge) => void;
+  bulkAddRegistrations: (attendees: AttendeeBadge[], mode?: 'append' | 'replace') => Promise<boolean>;
   updateRegistration: (id: string, updated: Partial<AttendeeBadge>) => void;
   deleteRegistration: (id: string) => void;
   updateFooterConfig: (updated: Partial<FooterConfig>) => void;
@@ -660,13 +661,16 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Dedicated lightweight cloud sync for SEO (resilient against payload size limits)
   const saveSeoToCloud = async (customSeo?: Partial<SEOConfig>): Promise<boolean> => {
     try {
-      let targetSeo = customSeo || cmsDataRef.current.seoConfig;
+      // Base with defaults, merge cached local, then new data always wins last
+      let targetSeo: Partial<SEOConfig> = { ...DEFAULT_SEO_CONFIG };
       try {
         const savedSeoRaw = localStorage.getItem('kbit_seo_config');
         if (savedSeoRaw) {
-          targetSeo = { ...DEFAULT_SEO_CONFIG, ...(targetSeo || {}), ...JSON.parse(savedSeoRaw) };
+          targetSeo = { ...targetSeo, ...JSON.parse(savedSeoRaw) };
         }
       } catch {}
+      // New data from user always overrides cache
+      targetSeo = { ...targetSeo, ...(customSeo || cmsDataRef.current.seoConfig || {}) };
 
       const res = await fetch('/api/cms', {
         method: 'POST',
@@ -689,13 +693,16 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Dedicated lightweight cloud sync for Event Details & Banner
   const saveEventDetailsToCloud = async (customDetails?: Partial<EventDetails>): Promise<boolean> => {
     try {
-      let targetEv = customDetails || cmsDataRef.current.eventDetails;
+      // Base with defaults, merge cached local, then new data always wins last
+      let targetEv: Partial<EventDetails> = { ...DEFAULT_EVENT_DETAILS };
       try {
         const savedEvRaw = localStorage.getItem('kbit_event_details');
         if (savedEvRaw) {
-          targetEv = { ...DEFAULT_EVENT_DETAILS, ...(targetEv || {}), ...JSON.parse(savedEvRaw) };
+          targetEv = { ...targetEv, ...JSON.parse(savedEvRaw) };
         }
       } catch {}
+      // New data from user always overrides cache
+      targetEv = { ...targetEv, ...(customDetails || cmsDataRef.current.eventDetails || {}) };
 
       const res = await fetch('/api/cms', {
         method: 'POST',
@@ -938,41 +945,49 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const saveCmsToCloud = async (dataToSave?: CMSData): Promise<boolean> => {
     try {
       const source = dataToSave || cmsDataRef.current;
-      let currentSeo = source.seoConfig;
+
+      // For each section: start with defaults, layer cached localStorage, then
+      // source (dataToSave) always wins last so new user edits are never overwritten.
+      let currentSeo: Partial<SEOConfig> = { ...DEFAULT_SEO_CONFIG };
       try {
         const savedSeoRaw = localStorage.getItem('kbit_seo_config');
-        if (savedSeoRaw) {
-          currentSeo = { ...DEFAULT_SEO_CONFIG, ...(currentSeo || {}), ...JSON.parse(savedSeoRaw) };
-        }
+        if (savedSeoRaw) currentSeo = { ...currentSeo, ...JSON.parse(savedSeoRaw) };
       } catch {}
+      currentSeo = { ...currentSeo, ...(source.seoConfig || {}) };
 
-      let currentEvent = source.eventDetails;
+      let currentEvent: Partial<EventDetails> = { ...DEFAULT_EVENT_DETAILS };
       try {
         const savedEvRaw = localStorage.getItem('kbit_event_details');
-        if (savedEvRaw) {
-          currentEvent = { ...DEFAULT_EVENT_DETAILS, ...(currentEvent || {}), ...JSON.parse(savedEvRaw) };
-        }
+        if (savedEvRaw) currentEvent = { ...currentEvent, ...JSON.parse(savedEvRaw) };
       } catch {}
+      currentEvent = { ...currentEvent, ...(source.eventDetails || {}) };
 
-      let currentEmailCampaign = source.emailCampaignConfig;
+      let currentEmailCampaign = mergeEmailCampaignConfigs(DEFAULT_EMAIL_CAMPAIGN, undefined, undefined);
       try {
         const savedEmailRaw = localStorage.getItem('kbit_email_campaign_config');
         if (savedEmailRaw) {
           currentEmailCampaign = mergeEmailCampaignConfigs(
             DEFAULT_EMAIL_CAMPAIGN,
-            source.emailCampaignConfig,
-            JSON.parse(savedEmailRaw)
+            JSON.parse(savedEmailRaw),
+            source.emailCampaignConfig
+          );
+        } else {
+          currentEmailCampaign = mergeEmailCampaignConfigs(
+            DEFAULT_EMAIL_CAMPAIGN,
+            undefined,
+            source.emailCampaignConfig
           );
         }
-      } catch {}
+      } catch {
+        currentEmailCampaign = source.emailCampaignConfig || currentEmailCampaign;
+      }
 
-      let currentConfirmTemplate = source.confirmEmailTemplate;
+      let currentConfirmTemplate = { ...DEFAULT_CONFIRM_EMAIL_TEMPLATE };
       try {
         const savedTplRaw = localStorage.getItem('kbit_confirm_email_template');
-        if (savedTplRaw) {
-          currentConfirmTemplate = { ...DEFAULT_CONFIRM_EMAIL_TEMPLATE, ...(currentConfirmTemplate || {}), ...JSON.parse(savedTplRaw) };
-        }
+        if (savedTplRaw) currentConfirmTemplate = { ...currentConfirmTemplate, ...JSON.parse(savedTplRaw) };
       } catch {}
+      currentConfirmTemplate = { ...currentConfirmTemplate, ...(source.confirmEmailTemplate || {}) };
 
       // Keep payload lightweight (under 200KB) by stripping registrations (they reside in their own dedicated table 'registrations')
       const { registrations: _ignored, ...cleanSource } = source;
@@ -1304,6 +1319,47 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       .catch(() => {
         // Fallback: stored in localStorage
       });
+  };
+
+  const bulkAddRegistrations = async (attendees: AttendeeBadge[], mode: 'append' | 'replace' = 'append'): Promise<boolean> => {
+    if (!attendees || attendees.length === 0) return false;
+
+    setCmsData((prev) => {
+      let merged: AttendeeBadge[];
+      if (mode === 'replace') {
+        merged = [...attendees];
+      } else {
+        const existingIds = new Set(prev.registrations.map((r) => r.id));
+        const newItems = attendees.filter((a) => !existingIds.has(a.id));
+        merged = [...newItems, ...prev.registrations];
+      }
+      return {
+        ...prev,
+        registrations: merged,
+        eventDetails: {
+          ...prev.eventDetails,
+          initialRegistered: Math.max(prev.eventDetails.initialRegistered, merged.length),
+        },
+      };
+    });
+
+    try {
+      const res = await fetch('/api/registrations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bulk: true, mode, registrations: attendees }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success) {
+          setIsCloudDbConnected(true);
+          return true;
+        }
+      }
+    } catch (e) {
+      console.warn('Bulk add registrations sync warning:', e);
+    }
+    return false;
   };
 
   const updateRegistration = (id: string, updated: Partial<AttendeeBadge>) => {
@@ -1956,6 +2012,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addPartner,
         deletePartner,
         addRegistration,
+        bulkAddRegistrations,
         updateRegistration,
         deleteRegistration,
         updateFooterConfig,
