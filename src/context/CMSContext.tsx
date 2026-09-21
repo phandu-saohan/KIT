@@ -571,12 +571,23 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 ...(localEventDetails || {}),
                 ...(parsedData.eventDetails || {}),
               };
-              // For EmailCampaign: cloud wins over local
+              // For EmailCampaign: cloud has settings/accounts (no recipients) → restore recipients from localStorage
+              // Recipients are only in localStorage; cloud has config without recipients
+              let localRecipients: any[] = [];
+              try {
+                const lr = localStorage.getItem('kbit_email_recipients');
+                if (lr) localRecipients = JSON.parse(lr);
+                else if (localEmailCampaign?.recipients?.length) localRecipients = localEmailCampaign.recipients;
+              } catch {}
               const mergedEmailCampaign = mergeEmailCampaignConfigs(
                 DEFAULT_EMAIL_CAMPAIGN,
                 localEmailCampaign,
                 parsedData.emailCampaignConfig
               );
+              // Restore recipients from localStorage (not from cloud - cloud doesn't store them)
+              if (localRecipients.length > 0 && (!mergedEmailCampaign.recipients || mergedEmailCampaign.recipients.length === 0)) {
+                mergedEmailCampaign.recipients = localRecipients;
+              }
               // For ConfirmTemplate: cloud wins over local
               const mergedConfirmTemplate = {
                 ...DEFAULT_CONFIRM_EMAIL_TEMPLATE,
@@ -715,15 +726,23 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // Use the passed data directly - caller is responsible for passing the latest state
       const targetCfg = customConfig || cmsDataRef.current.emailCampaignConfig;
 
-      // Save to localStorage first (always, as fallback)
+      // Save full config (including recipients) to localStorage - localStorage handles large lists fine
       try {
         localStorage.setItem('kbit_email_campaign_config', JSON.stringify(targetCfg));
+        // Also save recipients separately for easier access
+        if (targetCfg?.recipients?.length) {
+          localStorage.setItem('kbit_email_recipients', JSON.stringify(targetCfg.recipients));
+        }
       } catch {}
+
+      // For DB: strip 'recipients' - they can have thousands of entries causing payload overflow
+      // DB only stores account settings, templates, provider config
+      const { recipients: _r, ...configOnly } = (targetCfg || {}) as any;
 
       const res = await fetch('/api/cms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'emailCampaign', data: targetCfg }),
+        body: JSON.stringify({ type: 'emailCampaign', data: configOnly }),
       });
       if (res.ok) {
         const json = await res.json();

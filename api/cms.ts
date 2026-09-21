@@ -105,7 +105,10 @@ export default async function handler(req: any, res: any) {
 
       // If specific sub-section update requested for emailCampaign
       if (cmsPayload.type === 'emailCampaign' && cmsPayload.data) {
-        const emailJson = JSON.stringify(cmsPayload.data);
+        // Strip 'recipients' array before saving - it can be very large (hundreds/thousands of emails)
+        // Recipients are stored only in the browser's localStorage, not in the DB
+        const { recipients: _r, ...emailConfigOnly } = cmsPayload.data as any;
+        const emailJson = JSON.stringify(emailConfigOnly);
         await sql`
           INSERT INTO cms_data (key, data, updated_at)
           VALUES ('main', jsonb_build_object('emailCampaignConfig', ${emailJson}::jsonb), CURRENT_TIMESTAMP)
