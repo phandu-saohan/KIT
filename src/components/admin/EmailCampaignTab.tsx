@@ -44,6 +44,7 @@ import {
 import { useCMS } from '../../context/CMSContext';
 import { EmailRecipient, EmailTemplate, GmailSenderAccount, HostingerSenderAccount } from '../../types';
 import { DEFAULT_HOSTINGER_POOL } from '../../data/symposiumData';
+import * as XLSX from 'xlsx';
 
 interface EmailCampaignTabProps {
   showToast: (msg: string) => void;
@@ -299,10 +300,146 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
     return result;
   };
 
+  // Normalize and validate parsed rows from any format (CSV or Excel)
+  const normalizeEmailRows = (
+    rows: Array<{ name: string; email: string; phone: string }>
+  ): { validRecords: Array<{ name: string; email: string; phone: string }>; duplicateCount: number } => {
+    const existingEmails = new Set(recipients.map((r) => r.email.toLowerCase().trim()));
+    const seenInFile = new Set<string>();
+    const validRecords: Array<{ name: string; email: string; phone: string }> = [];
+    let duplicateCount = 0;
+
+    for (const row of rows) {
+      const cleanEmail = (row.email || '').replace(/['"]/g, '').trim().toLowerCase();
+      const cleanName = (row.name || '').replace(/['"]/g, '').trim();
+      const cleanPhone = (row.phone || '').replace(/['"]/g, '').trim();
+
+      if (!cleanEmail || !cleanEmail.includes('@')) continue;
+
+      if (existingEmails.has(cleanEmail) || seenInFile.has(cleanEmail)) {
+        duplicateCount++;
+        continue;
+      }
+
+      seenInFile.add(cleanEmail);
+      validRecords.push({
+        name: cleanName || cleanEmail.split('@')[0],
+        email: cleanEmail,
+        phone: cleanPhone,
+      });
+    }
+
+    return { validRecords, duplicateCount };
+  };
+
+  // Handle Excel file upload (.xlsx / .xls)
+  const handleFileUploadExcel = (file: File): void => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = new Uint8Array(event.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+
+        // Use the first sheet
+        const sheetName = workbook.SheetNames[0];
+        if (!sheetName) {
+          alert('File Excel không có sheet nào!');
+          return;
+        }
+
+        const worksheet = workbook.Sheets[sheetName];
+        // Convert to array of objects (first row as header)
+        const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+        if (!jsonData || jsonData.length === 0) {
+          // Try raw array mode if no header detected
+          const rawRows: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+          if (rawRows.length < 2) {
+            alert('File Excel rỗng hoặc không có dữ liệu!');
+            return;
+          }
+
+          // Map columns by position: col0=Tên, col1=Email, col2=SĐT
+          const headerRow = rawRows[0].map((c: any) => String(c).toLowerCase().trim());
+          let nameIdx = 0, emailIdx = 1, phoneIdx = 2;
+          headerRow.forEach((h, i) => {
+            if (h.includes('email') || h.includes('mail')) emailIdx = i;
+            else if (h.includes('phone') || h.includes('sdt') || h.includes('sđt') || h.includes('thoại') || h.includes('tel')) phoneIdx = i;
+            else if (h.includes('tên') || h.includes('ten') || h.includes('name') || h.includes('họ')) nameIdx = i;
+          });
+
+          const rawParsed = rawRows.slice(1).map((row: any[]) => ({
+            name: String(row[nameIdx] || '').trim(),
+            email: String(row[emailIdx] || '').trim(),
+            phone: String(row[phoneIdx] || '').trim(),
+          }));
+
+          const { validRecords, duplicateCount } = normalizeEmailRows(rawParsed);
+          if (validRecords.length === 0) {
+            alert('Không tìm thấy email hợp lệ trong file Excel!');
+            return;
+          }
+          setParsedCsvData(validRecords);
+          setCsvFileName(file.name);
+          setCsvDuplicateCount(duplicateCount);
+          setShowCsvPreviewModal(true);
+          return;
+        }
+
+        // Map column names (flexible: supports Vietnamese & English headers)
+        const colKeys = Object.keys(jsonData[0]);
+        const findCol = (...terms: string[]) =>
+          colKeys.find((k) => terms.some((t) => k.toLowerCase().includes(t))) || '';
+
+        const nameKey = findCol('tên', 'ten', 'name', 'họ', 'ho', 'full');
+        const emailKey = findCol('email', 'mail', 'e-mail');
+        const phoneKey = findCol('phone', 'sdt', 'sđt', 'thoại', 'thoai', 'tel', 'mobile', 'điện', 'dien');
+
+        const parsed = jsonData.map((row) => {
+          // Try to find email in any column if not found by header
+          let email = emailKey ? String(row[emailKey] || '').trim() : '';
+          if (!email.includes('@')) {
+            const fallback = colKeys.find((k) => String(row[k] || '').includes('@'));
+            if (fallback) email = String(row[fallback] || '').trim();
+          }
+          return {
+            name: nameKey ? String(row[nameKey] || '').trim() : '',
+            email,
+            phone: phoneKey ? String(row[phoneKey] || '').trim() : '',
+          };
+        });
+
+        const { validRecords, duplicateCount } = normalizeEmailRows(parsed);
+        if (validRecords.length === 0) {
+          alert('Không tìm thấy email hợp lệ trong file Excel!');
+          return;
+        }
+        setParsedCsvData(validRecords);
+        setCsvFileName(file.name);
+        setCsvDuplicateCount(duplicateCount);
+        setShowCsvPreviewModal(true);
+      } catch (err: any) {
+        alert('Lỗi đọc file Excel: ' + (err?.message || String(err)));
+      } finally {
+        if (csvFileInputRef.current) csvFileInputRef.current.value = '';
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
   // Handle CSV file upload (3 Columns: Tên, Email, Số điện thoại)
   const handleFileUploadCsv = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const ext = file.name.split('.').pop()?.toLowerCase();
+
+    // Route Excel files to dedicated handler
+    if (ext === 'xlsx' || ext === 'xls') {
+      if (csvFileInputRef.current) csvFileInputRef.current.value = '';
+      handleFileUploadExcel(file);
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -469,6 +606,24 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
     link.click();
     link.remove();
     showToast('Đã tải file CSV mẫu (3 cột) thành công!');
+  };
+
+  // Download Sample Excel (.xlsx)
+  const handleDownloadSampleExcel = () => {
+    const sampleData = [
+      { 'Họ và tên': 'TS.BS. Nguyễn Văn An', 'Email': 'nguyenvanan@gmail.com', 'Số điện thoại': '0901234567' },
+      { 'Họ và tên': 'ThS.BS. Trần Thị Mai', 'Email': 'tranthimai@bv108.vn', 'Số điện thoại': '0912345678' },
+      { 'Họ và tên': 'BS.CKII. Lê Hoàng Nam', 'Email': 'hoangnam@vinmec.com', 'Số điện thoại': '0988776655' },
+      { 'Họ và tên': 'Ông Phạm Minh Đức', 'Email': 'duc.pham@kbeautycorp.vn', 'Số điện thoại': '0934567890' },
+      { 'Họ và tên': 'Bà Hoàng Kim Oanh', 'Email': 'kimoanh@aestheticgroup.vn', 'Số điện thoại': '0918999111' },
+    ];
+    const worksheet = XLSX.utils.json_to_sheet(sampleData);
+    // Set column widths
+    worksheet['!cols'] = [{ wch: 35 }, { wch: 35 }, { wch: 18 }];
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Danh sách email');
+    XLSX.writeFile(workbook, 'Mau_danh_ba_3_cot_Ten_Email_SDT.xlsx');
+    showToast('Đã tải file Excel mẫu (.xlsx) thành công!');
   };
 
   // Test single Gmail SMTP connection
@@ -1052,12 +1207,12 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* Hidden File Input for CSV upload */}
+      {/* Hidden File Input for CSV/Excel upload */}
       <input
         type="file"
         ref={csvFileInputRef}
         onChange={handleFileUploadCsv}
-        accept=".csv, text/csv, .txt"
+        accept=".csv, .xlsx, .xls, text/csv, .txt, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
         className="hidden"
       />
 
@@ -2073,20 +2228,20 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
               <span>Quản Lý Danh Sách Người Nhận ({filteredRecipients.length}/{totalRecipients})</span>
             </h3>
             <p className="text-xs text-slate-500">
-              Tải lên file CSV 3 cột (Tên, Email, SĐT), nhập từ đại biểu đăng ký web hoặc dán danh sách nhanh
+              Tải lên file CSV hoặc Excel (.xlsx/.xls) 3 cột (Tên, Email, SĐT), nhập từ đại biểu đăng ký web hoặc dán danh sách nhanh
             </p>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            {/* PRIMARY: Upload CSV 3 Columns */}
+            {/* PRIMARY: Upload CSV / Excel */}
             <button
               type="button"
               onClick={() => csvFileInputRef.current?.click()}
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-black text-xs shadow-md transition-all cursor-pointer active:scale-95"
-              title="Tải lên file CSV có 3 cột: Tên, Email, Số điện thoại"
+              title="Tải lên file CSV hoặc Excel (.xlsx/.xls) có 3 cột: Tên, Email, Số điện thoại"
             >
               <Upload className="w-3.5 h-3.5 text-white" />
-              <span>Tải Lên File CSV (3 Cột)</span>
+              <span>Tải Lên CSV / Excel</span>
             </button>
 
             {/* Download Sample CSV template */}
@@ -2097,7 +2252,18 @@ export const EmailCampaignTab: React.FC<EmailCampaignTabProps> = ({ showToast })
               title="Tải file CSV mẫu (3 cột) để điền thông tin"
             >
               <FileDown className="w-3.5 h-3.5 text-slate-600" />
-              <span>Tải File Mẫu (CSV)</span>
+              <span>Tải Mẫu CSV</span>
+            </button>
+
+            {/* Download Sample Excel template */}
+            <button
+              type="button"
+              onClick={handleDownloadSampleExcel}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs border border-emerald-200 transition-colors cursor-pointer"
+              title="Tải file Excel mẫu (.xlsx) để điền thông tin"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Tải Mẫu Excel</span>
             </button>
 
             <button
